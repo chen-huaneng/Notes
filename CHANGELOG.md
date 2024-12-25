@@ -11,7 +11,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - The template from [chen-huaneng/note-template: The LaTeX template for notes](https://github.com/chen-huaneng/note-template).
-
-
-
-[1.0.0]: https://github.com/chen-huaneng/note-template/releases/tag/v1.0.0
