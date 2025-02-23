@@ -1,7 +1,5 @@
-% TODO: 增加定理盒子
-
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{note}[2025-02-21 Template for notes]
+\ProvidesClass{note}[2025-02-23 Template for notes]
 
 % 如果不需要奇偶面不同的话切换下面两行的注释顺序，同样要修改fancyhdr的选项
 % \LoadClass[10pt, a4paper, fontset=none, oneside]{ctexbook}
@@ -13,30 +11,211 @@
 
 % \RequirePackage{syntonly} % 编译LaTeX文件后不生成DVI或者PDF文档，只排查错误，要生成文档可以注释\syntaxonly命令
 % \syntaxonly
+
+% 图片
 \RequirePackage{graphicx} % 插入图片
-\RequirePackage{geometry} % 设置页面参数
-\RequirePackage{unicode-math} % 配置 Unicode 数学字体
-\RequirePackage{amsmath} % 用于加载数学公式
 \graphicspath{{images/}{cover/}} % 用于存放图片的目录figures和logo，这样引用图片的时候就不需要指定目录
+% 数学公式
+\RequirePackage{amsmath} % 用于加载数学公式
+\RequirePackage{geometry} % 设置页面参数
 % 参考https://tex.stackexchange.com/questions/659036/option-selecting-named-colours-provided-by-the-xcolor-package
 \RequirePackage[dvipsnames, svgnames, x11names, table]{xcolor} % 用于支持输出颜色
 \RequirePackage{titlesec} % 修改Chapter和Section章节标题的格式
 \RequirePackage{tocloft} % 自定义目录样式
-\RequirePackage{lipsum} % 生成英文测试文本
 \RequirePackage{fancyhdr} % 修改页眉页脚的格式
 \RequirePackage[sort&compress]{gbt7714} % 参考文献样式
 \RequirePackage{hyperref} % 超链接
 \RequirePackage{bookmark} % 生成PDF书签
 \RequirePackage[nottoc]{tocbibind} % 为目录、参考文献和索引生成目录项，禁止为目录生成目录项
 \RequirePackage{epigraph} % 排版引用
+% 字体
+% \RequirePackage{unicode-math} % 配置 Unicode 数学字体
 \RequirePackage[T1]{fontenc} % 改善文档中西欧语言的显示效果
 \RequirePackage{lmodern} % lmodern字体
 \RequirePackage{libertine} % Linux Libertine 字体系列(衬线字体)
 \RequirePackage{tikz} % 绘图
 \RequirePackage{pdfpages} % 导入PDF
+% 表格线
+\RequirePackage{booktabs}
+\RequirePackage{tabularx}
+% 定理盒子
+\RequirePackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
+% 自定义环境
+\RequirePackage{environ}
 
 
 %%%%%%%%%%%%%%%%导入宏包%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%定理盒子%%%%%%%%%%%%%%%%%%%%
+
+
+% 定理盒子配色
+\colorlet{theorem-background-color}{Honeydew}
+\colorlet{theorem-front-color}{ForestGreen!60!black}
+\colorlet{lemma-background-color}{LemonChiffon}
+\colorlet{lemma-front-color}{Goldenrod!70}
+\colorlet{definition-background-color}{AliceBlue}
+\colorlet{definition-front-color}{SteelBlue!70}
+
+\colorlet{model-background-color}{Lavender!8!white}
+\colorlet{model-front-color}{RoyalPurple!70!black}
+
+% 配好颜色未使用的浅色系方案
+% \colorlet{name-1-background-color}{Coral!10!white}
+% \colorlet{name-1-front-color}{Coral!70}
+% \colorlet{name-2-background-color}{SkyBlue!8!white}
+% \colorlet{name-2-front-color}{DodgerBlue!70}
+% \colorlet{name-3-background-color}{LavenderBlush}
+% \colorlet{name-3-front-color}{DeepPink!50!black}
+
+% 定义定理环境
+\newtcbtheorem[number within=chapter]{theorem}{Theorem}{
+    colback=theorem-background-color,    % 背景色
+    colframe=theorem-front-color,  % 边框色
+    fonttitle=\bfseries,     % 标题字体
+    title={Theorem \thetcbcounter}, % 标题格式
+    enhanced,                % 启用增强样式
+    rounded corners,           % 圆角
+    drop fuzzy shadow,        % 阴影效果
+    arc=1mm, % 圆角弧度大小
+    boxrule=0pt, % 边框线宽度
+}{thm} % 定义交叉引用的前缀，如\ref{thm:label}
+
+% 定义引理环境
+\newtcbtheorem[use counter from=theorem]{lemma}{Lemma}{
+    colback=lemma-background-color,
+    colframe=lemma-front-color,
+    fonttitle=\bfseries,
+    title={Lemma \thetcbcounter},
+    enhanced,
+    rounded corners,
+    drop fuzzy shadow,
+    arc=1mm, % 圆角弧度大小
+    boxrule=0pt, % 边框线宽度
+}{lem}
+
+% 定义定义环境
+\newtcbtheorem[use counter from=theorem]{definition}{Definition}{
+    colback=definition-background-color,
+    colframe=definition-front-color,
+    fonttitle=\bfseries,
+    title={Definition \thetcbcounter},
+    enhanced,
+    rounded corners,
+    drop fuzzy shadow,
+    arc=1mm, % 圆角弧度大小
+    boxrule=0pt, % 边框线宽度
+}{def}
+
+% 定义模型环境
+\newtcbtheorem[number within=chapter]{model}{Model}{
+    colback=model-background-color,
+    colframe=model-front-color,
+    fonttitle=\bfseries,
+    title={Model \thetcbcounter},
+    enhanced,
+    rounded corners,
+    drop fuzzy shadow,
+    arc=1mm, % 圆角弧度大小
+    boxrule=0.5pt, % 边框线宽度
+}{model}
+
+% 未使用的环境
+% \newtcbtheorem[number within=chapter]{name-1}{Name-1}{
+%     colback=name-1-background-color,
+%     colframe=name-1-front-color,
+%     fonttitle=\bfseries,
+%     title={Name-1 \thetcbcounter},
+%     enhanced,
+%     rounded corners,
+%     drop fuzzy shadow,
+%     arc=1mm, % 圆角弧度大小
+%     boxrule=0pt, % 边框线宽度
+% }{name-1}
+%
+% \newtcbtheorem[number within=chapter]{name-2}{Name-2}{
+%     colback=name-2-background-color,
+%     colframe=name-2-front-color,
+%     fonttitle=\bfseries,
+%     title={Name-2 \thetcbcounter},
+%     enhanced,
+%     rounded corners,
+%     drop fuzzy shadow,
+%     arc=1mm, % 圆角弧度大小
+%     boxrule=0pt, % 边框线宽度
+% }{name-2}
+%
+% \newtcbtheorem[number within=chapter]{name-3}{Name-3}{
+%     colback=name-3-background-color,
+%     colframe=name-3-front-color,
+%     fonttitle=\bfseries,
+%     title={Name-3 \thetcbcounter},
+%     enhanced,
+%     rounded corners,
+%     drop fuzzy shadow,
+%     arc=1mm, % 圆角弧度大小
+%     boxrule=0pt, % 边框线宽度
+% }{name-3}
+
+
+%%%%%%%%%%%%%%%%定理盒子%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%自定义环境%%%%%%%%%%%%%%%%%%%%
+
+
+% 配色选择
+\definecolor{shallow-purple}{rgb}{0.9,0.9,1} % 浅紫色
+\definecolor{shallow-blue}{RGB}{170, 204, 255} % 浅蓝色
+\colorlet{shallow-yellow}{yellow!30} % 浅黄色
+\colorlet{shallow-green}{green!20} % 浅绿色
+\colorlet{shallow-red}{red!20} % 浅红色
+
+% 定义一个通用的带颜色背景的公式环境
+\newcommand{\defineColoredEq}[2]{%
+  \NewEnviron{coloredeq-#1}[1][]{%
+    \colorbox{shallow-#1}{%
+      $\displaystyle % 确保公式为显示样式
+      \BODY % 环境内容
+      $%
+    }%
+    \if\relax\detokenize{##1}\relax\else\label{##1}\fi % 可选标签
+  }%
+}
+
+% 使用通用命令定义具体的环境
+\defineColoredEq{purple}{}
+\defineColoredEq{blue}{}
+\defineColoredEq{yellow}{}
+\defineColoredEq{green}{}
+\defineColoredEq{red}{}
+
+
+%%%%%%%%%%%%%%%%自定义环境%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%设置公式、表格、图片编号%%%%%%%%%%%%%%
+
+
+% 公式编号
+\numberwithin{equation}{chapter} % 公式编号绑定章节
+\renewcommand{\theequation}{\thechapter-\arabic{equation}} % 修改编号格式
+
+% 表格编号
+\numberwithin{table}{chapter} 
+\renewcommand{\thetable}{\thechapter-\arabic{table}}
+
+% 图片编号
+\numberwithin{figure}{chapter}
+\renewcommand{\thefigure}{\thechapter-\arabic{figure}}
+
+
+%%%%%%%%%%%%%%%%设置公式、表格、图片编号%%%%%%%%%%%%%%
 
 
 
@@ -79,7 +258,7 @@
 ]
 
 % 具体设置参考unicode-math宏包
-\setmathfont{TeX Gyre DejaVu Math} % DejaVu风格数学Unicode字体
+% \setmathfont{TeX Gyre DejaVu Math} % DejaVu风格数学Unicode字体
 
 \linespread{1.25} % 修改行距
 
