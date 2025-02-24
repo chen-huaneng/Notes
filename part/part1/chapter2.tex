@@ -35,12 +35,14 @@ FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}。
 
 FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 
+{
+\newcommand{\mySubstack}[1]{\mathclap{\substack{#1}}}
 \begin{model}{FSTSP MILP}{model-fstsp}
 \begin{align}
     \min \quad & t_{c + 1}  \label{eq:fstsp-obj}\\
     \text{s.t.} \quad & 
     \begin{coloredeq-green}[eq:fstsp-customer-visit]
-        \sum_{\substack{i\in N_{0}\\i\neq j}}x_{ij}+\sum_{\substack{i\in N_{0}\\ i\neq j}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}=1, \quad \forall j \in C
+        \sum_{\substack{i\in N_{0}\\i\neq j}}x_{ij}+\sum_{\substack{i\in N_{0}\\ i\neq j}}\!\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}=1, \quad \forall j \in C
     \end{coloredeq-green}\\
     \quad & 
     \begin{coloredeq-purple}[eq:fstsp-truck-start]
@@ -60,11 +62,11 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
     \end{coloredeq-purple}\\
     \quad & 
     \begin{coloredeq-red}[eq:fstsp-drone-land]
-        \sum_{\substack{j\in C\\j \neq i}}\sum_{\substack{k\in N_{+}\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall i\in N_{0}
+        \sum_{\substack{j\in C\\j \neq i}}\!\sum_{\substack{k\in N_{+}\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall i\in N_{0}
     \end{coloredeq-red}\\
     \quad & 
     \begin{coloredeq-red}[eq:fstsp-drone-takeoff]
-        \sum_{\substack{i\in N_{0}\\i\neq k}}\sum_{\substack{j\in C\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall k \in N_{+}
+        \sum_{\substack{i\in N_{0}\\i\neq k}}\!\sum_{\substack{j\in C\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall k \in N_{+}
     \end{coloredeq-red}\\
     \quad & 
     \begin{coloredeq-yellow}[eq:fstsp-drone-truck-meet]
@@ -76,48 +78,59 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
     \end{coloredeq-yellow}\\
     \quad & 
     \begin{coloredeq-yellow}[eq:fstsp-truck-visit-order]
-        u_k - u_i \geq 1 - (c+2)(1 - \sum_{\substack{j \in C \\ \langle i,j,k \rangle \in P}}y_{ijk}), \quad \forall i \in C, k \in \{N_{+}: k \neq i\}
+        u_k - u_i \geq 1 - (c+2)\left(1 - \sum_{\mySubstack{j \in C \\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C, k \in \{N_{+}: k \neq i\}
     \end{coloredeq-yellow}\\
     \quad & 
     \begin{coloredeq-yellow}[eq:fstsp-truck-drone-takeoff-time-1]
-        t_i' \geq t_i - M(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}), \quad \forall i \in C
+        t_i' \geq t_i - M\left(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C
     \end{coloredeq-yellow}\\
     \quad & 
     \begin{coloredeq-yellow}[eq:fstsp-truck-drone-takeoff-time-2]
-        t_i' \leq t_i + M(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}), \quad \forall i \in C
+        t_i' \leq t_i + M\left(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C
     \end{coloredeq-yellow}\\
     \quad & 
     \begin{coloredeq-yellow}[eq:fstsp-truck-drone-land-time-1]
-        t_k' \geq t_k - M(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}), \quad \forall k \in N_{+}
+        t_k' \geq t_k - M\left(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall k \in N_{+}
     \end{coloredeq-yellow}\\
     \quad & 
     \begin{coloredeq-yellow}[eq:fstsp-truck-drone-land-time-2]
-        t_k' \leq t_k + M(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}), \quad \forall k \in N_{+}
+        t_k' \leq t_k + M\left(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall k \in N_{+}
     \end{coloredeq-yellow}\\
     \quad & 
-    \begin{aligned}
+    \begin{aligned}\label{eq:fstsp-truck-time}
         &\begin{coloredeq-yellow}
-            t_k \geq t_h + \tau_{hk} + s_{L}(\sum_{\substack{l \in C\\ l \neq k}}\sum_{\substack{m \in N_{+}\\ \langle k,l,m \rangle \in P}}y_{klm}) + s_{R}(\sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}) - M(1 - x_{hk}), 
+            t_k \geq t_h + \tau_{hk} + s_{L}\left(\sum_{\substack{l \in C\\ l \neq k}}\sum_{\substack{m \in N_{+}\\ \langle k,l,m \rangle \in P}}y_{klm}\right) + s_{R}\left(\sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right) - M(1 - x_{hk}), 
         \end{coloredeq-yellow}\\
-        &\quad 
+        &\quad
         \begin{coloredeq-yellow}
             \forall h \in N_0, k \in \{N_{+}: k \neq h\}
         \end{coloredeq-yellow}
     \end{aligned}\\
     \quad & 
     \begin{coloredeq-red}[eq:fstsp-drone-time-fly]
-        t_{j}'\geq t_{i}'+\tau_{ij}'-M(1 - \sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}), \quad \forall j\in C', i \in \{N_0: i \neq j\}
+        t_{j}'\geq t_{i}'+\tau_{ij}'-M\left(1 - \sum_{\mySubstack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall j\in C', i \in \{N_0: i \neq j\}
     \end{coloredeq-red}\\
     \quad &
     \begin{coloredeq-red}[eq:fstsp-drone-time-fly-back]
-        t_{k}'\geq t_{j}'+\tau_{jk}'+s_{R}-M(1-\sum_{\substack{i\in N_{0}\\ \langle i,j,k\rangle \in P}}y_{ijk}), \quad \forall j\in C', k\in \{N_{+}: k \neq j\}
+        t_{k}'\geq t_{j}'+\tau_{jk}'+s_{R}-M\left(1-\sum_{\mySubstack{i\in N_{0}\\ \langle i,j,k\rangle \in P}}y_{ijk}\right), \quad \forall j\in C', k\in \{N_{+}: k \neq j\}
     \end{coloredeq-red}\\
     \quad & 
     \begin{coloredeq-red}[eq:fstsp-drone-endurance]
         t_k' - (t_j' - \tau_{ij}') \leq e + M(1 - y_{ijk}), \quad \forall k \in N_{+}, j \in \{C: j\neq k\}, i \in \{N_0: \langle i,j,k \rangle \in P\}
     \end{coloredeq-red}\\
+    \quad &
+    \begin{aligned}\label{eq:fstsp-drone-sortie-order}
+        &\begin{coloredeq-red}
+            t_l' \geq t_k' - M\left(3 - \sum_{\mySubstack{j \in C\\ \langle i,j,k \rangle \in P\\ j \neq l}}y_{ijk} - \sum_{\substack{m \in C \\ m \neq i\\ m \neq k \\ m \neq l}}\sum_{\substack{n \in N_{+}\\ \langle l,m,n\rangle \in P\\ n \neq i\\ n\neq k}}y_{lmn}-p_{il}\right)
+        \end{coloredeq-red}\\
+        &\quad
+        \begin{coloredeq-red}
+            \forall i \in N_0, k \in \{N_{+}: k \neq i\}, l \in \{C: l\neq i, l\neq k\}
+        \end{coloredeq-red}
+    \end{aligned}
 \end{align}
 \end{model}
+}
 
 约束\ref{eq:fstsp-obj}追求最小化卡车到达终点车场$c+1$的有效时间$t_{c+1}$，通过约束
 
@@ -135,13 +148,15 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
         \item 无人机发射、回收节点流约束：约束\ref{eq:fstsp-drone-land}表示无人机可以从非终点车场流出，约束\ref{eq:fstsp-drone-takeoff}表示无人机可以从非起点车场流入。
         \item 无人机访问、回收节点时间戳约束：约束\ref{eq:fstsp-drone-time-fly}表示无人机访问顾客的时间戳应该符合时间逻辑，即不早于起飞时间戳$t_i'$+前往服务顾客点的飞行时长$\tau_{ij}'$，约束\ref{eq:fstsp-drone-time-fly-back}表示无人机回到卡车的时间戳应该符合时间逻辑，即不早于访问顾客点的$t_j'$+返回卡车的飞行时长$\tau_{jk}'$+回收无人机用时$s_R$。
         \item 无人机电量续航约束：约束\ref{eq:fstsp-drone-endurance}表示无人机的飞行时间不能超过其续航时间，即到达汇合点$t_k'$的有效时间-无人机的起飞时间$t_j'-\tau_{ij}'$（不直接使用$t_i'$是因为$t_i'$不是起飞的时间戳而是无人机到达$i$点的时间戳）要在无人机的续航时间$e$之内。
+        \item 无人机飞行次序约束：约束\ref{eq:fstsp-drone-sortie-order}要求无人机对于任意两条路径$\langle i,j,k \rangle$和$\langle l,m,n \rangle$而言，如果无人机先访问顾客点$i$之后的某个时间才访问顾客点$l$（$p_{il}=1$），则无人机必须先完成上一次飞行才能继续下一次飞行（$t_l'\geq t_k'$），并且任意两条路径之间无交叉。
     \end{itemize}
     \item \colorbox{shallow-yellow}{无人机和卡车同步有关的约束：}
     \begin{itemize}
-        \item 无人机发射、回收点卡车访问约束：约束\ref{eq:fstsp-drone-truck-meet}要求对于非起点发射的无人机（$\forall i \in C$），卡车必须经过无人机的起飞点$\sum_{\substack{h \in N_0 \\ h \neq i}}x_{hi}$和降落点$\sum_{\substack{l \in C\\ l \neq k}}x_{lk}$，约束\ref{eq:fstsp-drone-truck-meet-begin}要求对于从起点车场起飞的无人机来说，卡车必须经过无人机的降落点，约束\ref{eq:fstsp-truck-visit-order}要求卡车必须先访问无人机的起飞点再访问无人机的降落点。
+        \item 无人机发射、回收点卡车访问约束：约束\ref{eq:fstsp-drone-truck-meet}要求对于非起点发射的无人机（$\forall i \in C$），卡车必须经过无人机的起飞点$i$和降落点$k$，约束\ref{eq:fstsp-drone-truck-meet-begin}要求对于从起点车场起飞的无人机来说，卡车必须经过无人机的降落点。
+        \item 无人机访问顾客时卡车访问次序约束：约束\ref{eq:fstsp-truck-visit-order}要求卡车必须先访问无人机的起飞点再访问无人机的降落点。
         \item 无人机发射点时间戳约束：约束\ref{eq:fstsp-truck-drone-takeoff-time-1}和\ref{eq:fstsp-truck-drone-takeoff-time-2}为无人机发射点的有效时间约束，要求无人机在发射节点的有效时间等于卡车在该点的有效时间，共同实现了卡车和无人机在发射节点时间上的对齐。
         \item 无人机回收点时间戳约束：约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}为无人机回收点的有效时间约束，要求无人机在回收节点的有效时间等于卡车在该点的有效时间，共同实现了卡车和无人机在回收节点时间上的对齐。
-        \item 卡车访问顾客节点时间戳约束：
+        \item 卡车访问顾客节点时间戳约束：约束\ref{eq:fstsp-truck-time}要求卡车访问当前顾客点$k$时必须要先将需要起飞的无人机$s_L$发射或者需要降落的无人机$s_R$回收，并且要大于到达顾客点$h$的有效时间戳+路径$\langle h,k \rangle$所花费的时间$\tau_{hk}$。
     \end{itemize}
 \end{itemize}
 

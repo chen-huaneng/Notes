@@ -17,6 +17,7 @@
 \graphicspath{{images/}{cover/}} % 用于存放图片的目录figures和logo，这样引用图片的时候就不需要指定目录
 % 数学公式
 \RequirePackage{amsmath} % 用于加载数学公式
+\RequirePackage{mathtools}
 \RequirePackage{geometry} % 设置页面参数
 % 参考https://tex.stackexchange.com/questions/659036/option-selecting-named-colours-provided-by-the-xcolor-package
 \RequirePackage[dvipsnames, svgnames, x11names, table]{xcolor} % 用于支持输出颜色
