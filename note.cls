@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{note}[2025-02-23 Template for notes]
+\ProvidesClass{note}[2025-02-25 Template for notes]
 
 % 如果不需要奇偶面不同的话切换下面两行的注释顺序，同样要修改fancyhdr的选项
 % \LoadClass[10pt, a4paper, fontset=none, oneside]{ctexbook}

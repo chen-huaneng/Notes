@@ -37,100 +37,74 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 
 {
 \newcommand{\mySubstack}[1]{\mathclap{\substack{#1}}}
+\newcommand{\myYellowTag}[1]{\label{#1}\tag{\colorbox{shallow-yellow}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myRedTag}[1]{\label{#1}\tag{\colorbox{shallow-red}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myGreenTag}[1]{\label{#1}\tag{\colorbox{shallow-green}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myPurpleTag}[1]{\label{#1}\tag{\colorbox{shallow-purple}{\theequation}}\addtocounter{equation}{1}}
+
 \begin{model}{FSTSP MILP}{model-fstsp}
 \begin{align}
     \min \quad & t_{c + 1}  \label{eq:fstsp-obj}\\
     \text{s.t.} \quad & 
-    \begin{coloredeq-green}[eq:fstsp-customer-visit]
-        \sum_{\substack{i\in N_{0}\\i\neq j}}x_{ij}+\sum_{\substack{i\in N_{0}\\ i\neq j}}\!\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}=1, \quad \forall j \in C
-    \end{coloredeq-green}\\
+        \sum_{\substack{i\in N_{0}\\i\neq j}}x_{ij}+\sum_{\substack{i\in N_{0}\\ i\neq j}}\!\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}=1, \quad \forall j \in C\myGreenTag{eq:fstsp-customer-visit}\\
     \quad & 
-    \begin{coloredeq-purple}[eq:fstsp-truck-start]
-        \sum_{j\in N_{+}}x_{0j}=1
-    \end{coloredeq-purple}\\
+        \sum_{j\in N_{+}}x_{0j}=1\myPurpleTag{eq:fstsp-truck-start}\\
     \quad & 
-    \begin{coloredeq-purple}[eq:fstsp-truck-return]
-        \sum_{i\in N_{0}}x_{i,c + 1}=1
-    \end{coloredeq-purple}\\
+        \sum_{i\in N_{0}}x_{i,c + 1}=1\myPurpleTag{eq:fstsp-truck-return}\\
     \quad & 
-    \begin{coloredeq-purple}[eq:fstsp-truck-mtz]
-        u_i - u_j + 1 \leq (c + 2)(1 - x_{ij}), \quad \forall i \in C, j \in \{N_{+}:j \neq i\}
-    \end{coloredeq-purple}\\
+        u_i - u_j + 1 \leq (c + 2)(1 - x_{ij}), \quad \forall i \in C, j \in \{N_{+}:j \neq i\}\myPurpleTag{eq:fstsp-truck-mtz}\\
     \quad & 
-    \begin{coloredeq-purple}[eq:fstsp-truck-continuity]
-        \sum_{\substack{i\in N_{0}\\ i \neq j}}x_{ij}=\sum_{\substack{k\in N_{+}\\k\neq j}}x_{jk}, \quad \forall j \in C
-    \end{coloredeq-purple}\\
+        \sum_{\substack{i\in N_{0}\\ i \neq j}}x_{ij}=\sum_{\substack{k\in N_{+}\\k\neq j}}x_{jk}, \quad \forall j \in C\myPurpleTag{eq:fstsp-truck-continuity}\\
     \quad & 
-    \begin{coloredeq-red}[eq:fstsp-drone-land]
-        \sum_{\substack{j\in C\\j \neq i}}\!\sum_{\substack{k\in N_{+}\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall i\in N_{0}
-    \end{coloredeq-red}\\
+        \sum_{\substack{j\in C\\j \neq i}}\!\sum_{\substack{k\in N_{+}\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall i\in N_{0}\myRedTag{eq:fstsp-drone-land}\\
     \quad & 
-    \begin{coloredeq-red}[eq:fstsp-drone-takeoff]
-        \sum_{\substack{i\in N_{0}\\i\neq k}}\!\sum_{\substack{j\in C\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall k \in N_{+}
-    \end{coloredeq-red}\\
+        \sum_{\substack{i\in N_{0}\\i\neq k}}\!\sum_{\substack{j\in C\\\langle i,j,k \rangle\in P}}y_{ijk}\leq1, \quad \forall k \in N_{+}\myRedTag{eq:fstsp-drone-takeoff}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-drone-truck-meet]
-        2 y_{ijk} \leq \sum_{\substack{h \in N_0 \\ h \neq i}}x_{hi} + \sum_{\substack{l \in C\\ l \neq k}}x_{lk}, \quad \forall i \in C, j \in \{C: j \neq i\}, k \in \{N_{+}: \langle i,j,k \rangle \in P\}
-    \end{coloredeq-yellow}\\
+        2 y_{ijk} \leq \sum_{\substack{h \in N_0 \\ h \neq i}}x_{hi} + \sum_{\substack{l \in C\\ l \neq k}}x_{lk}, \quad \forall i \in C, j \in \{C: j \neq i\}, k \in \{N_{+}: \langle i,j,k \rangle \in P\}\myYellowTag{eq:fstsp-drone-truck-meet}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-drone-truck-meet-begin]
-        y_{0jk} \leq \sum_{\substack{h \in N_0 \\ h \neq k}}x_{hk}, \quad \forall j \in C, k \in \{N_{+}: \langle 0,j,k \rangle \in P\}
-    \end{coloredeq-yellow}\\
+        y_{0jk} \leq \sum_{\substack{h \in N_0 \\ h \neq k}}x_{hk}, \quad \forall j \in C, k \in \{N_{+}: \langle 0,j,k \rangle \in P\}\myYellowTag{eq:fstsp-drone-truck-meet-begin}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-truck-visit-order]
-        u_k - u_i \geq 1 - (c+2)\left(1 - \sum_{\mySubstack{j \in C \\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C, k \in \{N_{+}: k \neq i\}
-    \end{coloredeq-yellow}\\
+        u_k - u_i \geq 1 - (c+2)\left(1 - \sum_{\mySubstack{j \in C \\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C, k \in \{N_{+}: k \neq i\}\myYellowTag{eq:fstsp-truck-visit-order}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-truck-drone-takeoff-time-1]
-        t_i' \geq t_i - M\left(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C
-    \end{coloredeq-yellow}\\
+        t_i' \geq t_i - M\left(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C\myYellowTag{eq:fstsp-truck-drone-takeoff-time-1}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-truck-drone-takeoff-time-2]
-        t_i' \leq t_i + M\left(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C
-    \end{coloredeq-yellow}\\
+        t_i' \leq t_i + M\left(1 - \sum_{\substack{j \in C\\ j \neq i}}\sum_{\substack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall i \in C\myYellowTag{eq:fstsp-truck-drone-takeoff-time-2}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-truck-drone-land-time-1]
-        t_k' \geq t_k - M\left(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall k \in N_{+}
-    \end{coloredeq-yellow}\\
+        t_k' \geq t_k - M\left(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall k \in N_{+}\myYellowTag{eq:fstsp-truck-drone-land-time-1}\\
     \quad & 
-    \begin{coloredeq-yellow}[eq:fstsp-truck-drone-land-time-2]
-        t_k' \leq t_k + M\left(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall k \in N_{+}
-    \end{coloredeq-yellow}\\
+        t_k' \leq t_k + M\left(1 - \sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall k \in N_{+}\myYellowTag{eq:fstsp-truck-drone-land-time-2}\\
     \quad & 
-    \begin{aligned}\label{eq:fstsp-truck-time}
-        &\begin{coloredeq-yellow}
-            t_k \geq t_h + \tau_{hk} + s_{L}\left(\sum_{\substack{l \in C\\ l \neq k}}\sum_{\substack{m \in N_{+}\\ \langle k,l,m \rangle \in P}}y_{klm}\right) + s_{R}\left(\sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right) - M(1 - x_{hk}), 
-        \end{coloredeq-yellow}\\
+    \begin{aligned}
+        &
+            t_k \geq t_h + \tau_{hk} + s_{L}\left(\sum_{\substack{l \in C\\ l \neq k}}\sum_{\substack{m \in N_{+}\\ \langle k,l,m \rangle \in P}}y_{klm}\right) + s_{R}\left(\sum_{\substack{i \in N_0\\ i \neq k}}\sum_{\substack{j \in C\\ \langle i,j,k \rangle \in P}}y_{ijk}\right) - M(1 - x_{hk}), \\
         &\quad
-        \begin{coloredeq-yellow}
-            \forall h \in N_0, k \in \{N_{+}: k \neq h\}
-        \end{coloredeq-yellow}
-    \end{aligned}\\
+            \forall h \in N_0, k \in \{N_{+}: k \neq h\}\\
+    \end{aligned}\myYellowTag{eq:fstsp-truck-time}\\
     \quad & 
-    \begin{coloredeq-red}[eq:fstsp-drone-time-fly]
-        t_{j}'\geq t_{i}'+\tau_{ij}'-M\left(1 - \sum_{\mySubstack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall j\in C', i \in \{N_0: i \neq j\}
-    \end{coloredeq-red}\\
+        t_{j}'\geq t_{i}'+\tau_{ij}'-M\left(1 - \sum_{\mySubstack{k \in N_{+}\\ \langle i,j,k \rangle \in P}}y_{ijk}\right), \quad \forall j\in C', i \in \{N_0: i \neq j\}\myRedTag{eq:fstsp-drone-time-fly}\\
     \quad &
-    \begin{coloredeq-red}[eq:fstsp-drone-time-fly-back]
-        t_{k}'\geq t_{j}'+\tau_{jk}'+s_{R}-M\left(1-\sum_{\mySubstack{i\in N_{0}\\ \langle i,j,k\rangle \in P}}y_{ijk}\right), \quad \forall j\in C', k\in \{N_{+}: k \neq j\}
-    \end{coloredeq-red}\\
+        t_{k}'\geq t_{j}'+\tau_{jk}'+s_{R}-M\left(1-\sum_{\mySubstack{i\in N_{0}\\ \langle i,j,k\rangle \in P}}y_{ijk}\right), \quad \forall j\in C', k\in \{N_{+}: k \neq j\}\myRedTag{eq:fstsp-drone-time-fly-back}\\
     \quad & 
-    \begin{coloredeq-red}[eq:fstsp-drone-endurance]
-        t_k' - (t_j' - \tau_{ij}') \leq e + M(1 - y_{ijk}), \quad \forall k \in N_{+}, j \in \{C: j\neq k\}, i \in \{N_0: \langle i,j,k \rangle \in P\}
-    \end{coloredeq-red}\\
+        t_k' - (t_j' - \tau_{ij}') \leq e + M(1 - y_{ijk}), \quad \forall k \in N_{+}, j \in \{C: j\neq k\}, i \in \{N_0: \langle i,j,k \rangle \in P\}\myRedTag{eq:fstsp-drone-endurance}\\
     \quad & u_i - u_j \geq 1 - (c+2)p_{ij}, \quad \forall i \in C, j \in \{C: j \neq i\}\label{eq:fstsp-drone-truck-aide-1}\\
     \quad & u_i - u_j \leq -1 + (c+2)(1 - p_{ij}), \quad \forall i \in C, j \in \{C: j \neq i\}\label{eq:fstsp-drone-truck-aide-2}\\
     \quad & p_{ij} + p_{ji} = 1, \quad \forall i \in C, j \in \{C: j \neq i\}\label{eq:fstsp-drone-order}\\
     \quad &
-    \begin{aligned}\label{eq:fstsp-drone-sortie-order}
-        &\begin{coloredeq-red}
-            t_l' \geq t_k' - M\left(3 - \sum_{\mySubstack{j \in C\\ \langle i,j,k \rangle \in P\\ j \neq l}}y_{ijk} - \sum_{\substack{m \in C \\ m \neq i\\ m \neq k \\ m \neq l}}\sum_{\substack{n \in N_{+}\\ \langle l,m,n\rangle \in P\\ n \neq i\\ n\neq k}}y_{lmn}-p_{il}\right)
-        \end{coloredeq-red}\\
+    \begin{aligned}
+        &
+            t_l' \geq t_k' - M\left(3 - \sum_{\mySubstack{j \in C\\ \langle i,j,k \rangle \in P\\ j \neq l}}y_{ijk} - \sum_{\substack{m \in C \\ m \neq i\\ m \neq k \\ m \neq l}}\sum_{\substack{n \in N_{+}\\ \langle l,m,n\rangle \in P\\ n \neq i\\ n\neq k}}y_{lmn}-p_{il}\right)\\
         &\quad
-        \begin{coloredeq-red}
             \forall i \in N_0, k \in \{N_{+}: k \neq i\}, l \in \{C: l\neq i, l\neq k\}
-        \end{coloredeq-red}
-    \end{aligned}
+    \end{aligned}\myRedTag{eq:fstsp-drone-sortie-order}\\
+    \quad & t_0 = 0\label{eq:truck-start-time}\\
+    \quad & t_0'= 0\label{eq:drone-start-time}\\
+    \quad & p_{0j} = 1, \quad \forall j \in C\label{eq:drone-start-order}\\
+    \quad & x_{ij} \in \{0, 1\}, \quad \forall i \in N_0, j \in \{N_{+}:j \neq i\}\label{eq:x-bound}\\
+    \quad & y_{ijk} \in \{0, 1\}, \quad \forall i \in N_0, j \in \{C:j \neq i\}, k \in \{N_{+}:\langle i,j,k \rangle \in P\}\label{eq:y-bound}\\
+    \quad & 1 \leq u_i \leq c+2, \quad \forall i \in N_{+}\label{eq:u-bound}\\
+    \quad & t_i \geq 0, \quad \forall i \in N\label{eq:truck-time-bound}\\
+    \quad & t_i' \geq 0, \quad \forall i \in N\label{eq:drone-time-bound}\\
+    \quad & p_{ij}\in \{0, 1\}, \quad \forall i \in N_0, j \in \{C: j \neq i\}\label{eq:drone-order-bound}
 \end{align}
 \end{model}
 }
@@ -165,6 +139,7 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
     \begin{itemize}
         \item 卡车访问次序和无人机访问次序约束：约束\ref{eq:fstsp-drone-truck-aide-1}和\ref{eq:fstsp-drone-truck-aide-2}要求无人机访问次序和卡车访问次序的一致性。
         \item 无人机访问顺序约束：约束\ref{eq:fstsp-drone-order}限制了无人机访问任意两个顾客点之间的次序，即不能同时访问不同的顾客点。
+        \item 辅助变量初始值和取值范围：约束\ref{eq:truck-start-time}和\ref{eq:drone-start-time}给定了卡车和无人机有效时间的初始值，约束\ref{eq:drone-start-order}规定了无人机的起点车场的访问次序一定在其他所有顾客节点之前，约束\ref{eq:x-bound}和\ref{eq:y-bound}给定了决策变量的取值范围，约束\ref{eq:u-bound}规定了卡车辅助变量的取值范围，约束\ref{eq:truck-time-bound}和\ref{eq:drone-time-bound}规定了卡车和无人机的有效时间必须是非负实数，约束\ref{eq:drone-order-bound}给定了无人机次序辅助变量的取值范围。
     \end{itemize}
 \end{itemize}
 
