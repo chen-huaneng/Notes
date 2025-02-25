@@ -118,6 +118,9 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
     \begin{coloredeq-red}[eq:fstsp-drone-endurance]
         t_k' - (t_j' - \tau_{ij}') \leq e + M(1 - y_{ijk}), \quad \forall k \in N_{+}, j \in \{C: j\neq k\}, i \in \{N_0: \langle i,j,k \rangle \in P\}
     \end{coloredeq-red}\\
+    \quad & u_i - u_j \geq 1 - (c+2)p_{ij}, \quad \forall i \in C, j \in \{C: j \neq i\}\label{eq:fstsp-drone-truck-aide-1}\\
+    \quad & u_i - u_j \leq -1 + (c+2)(1 - p_{ij}), \quad \forall i \in C, j \in \{C: j \neq i\}\label{eq:fstsp-drone-truck-aide-2}\\
+    \quad & p_{ij} + p_{ji} = 1, \quad \forall i \in C, j \in \{C: j \neq i\}\label{eq:fstsp-drone-order}\\
     \quad &
     \begin{aligned}\label{eq:fstsp-drone-sortie-order}
         &\begin{coloredeq-red}
@@ -157,6 +160,11 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
         \item 无人机发射点时间戳约束：约束\ref{eq:fstsp-truck-drone-takeoff-time-1}和\ref{eq:fstsp-truck-drone-takeoff-time-2}为无人机发射点的有效时间约束，要求无人机在发射节点的有效时间等于卡车在该点的有效时间，共同实现了卡车和无人机在发射节点时间上的对齐。
         \item 无人机回收点时间戳约束：约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}为无人机回收点的有效时间约束，要求无人机在回收节点的有效时间等于卡车在该点的有效时间，共同实现了卡车和无人机在回收节点时间上的对齐。
         \item 卡车访问顾客节点时间戳约束：约束\ref{eq:fstsp-truck-time}要求卡车访问当前顾客点$k$时必须要先将需要起飞的无人机$s_L$发射或者需要降落的无人机$s_R$回收，并且要大于到达顾客点$h$的有效时间戳+路径$\langle h,k \rangle$所花费的时间$\tau_{hk}$。
+    \end{itemize}
+    \item 辅助决策变量：
+    \begin{itemize}
+        \item 卡车访问次序和无人机访问次序约束：约束\ref{eq:fstsp-drone-truck-aide-1}和\ref{eq:fstsp-drone-truck-aide-2}要求无人机访问次序和卡车访问次序的一致性。
+        \item 无人机访问顺序约束：约束\ref{eq:fstsp-drone-order}限制了无人机访问任意两个顾客点之间的次序，即不能同时访问不同的顾客点。
     \end{itemize}
 \end{itemize}
 
