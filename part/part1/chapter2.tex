@@ -1,29 +1,41 @@
 \chapter{Traveling Salesman Problem with Drone}
 
 \section{Flying Sidekick Traveling Salesman Problem}
-Flying Sidekick Traveling Salesman Problem (FSTSP) 由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。
+Flying Sidekick Traveling Salesman Problem (FSTSP) 由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。FSTSP描述：假定有$c$个顾客需要服务，这个服务可以由无人机或者卡车来提供，但是有些顾客由于某些限制（比如包裹重量超过无人机的载重限制）只能由卡车提供服务。卡车和无人机必须从单一仓库出发，并且返回该仓库一次，即不能重复访问该仓库，无人机和卡车可以同时或者分别离开（返回）仓库。在无人机起飞前需要卡车司机装载包裹和更换电池的时间$s_L$，降落时需要给无人机装卸货物和充电的时间$s_R$。每次无人机的一次服务称为一次sortie，一次sortie分为三个节点$\langle i,j,k \rangle$，起飞点$i$可以是仓库也可以是顾客点，中间节点$j$是需要服务的顾客节点，节点$k$可以是仓库也可以是卡车所在的顾客节点，无人机在整个运输过程中可以进行多次sortie服务多个顾客，但是一次sortie的时间必须在无人机的续航时间内。FSTSP的目标是最小化服务所有顾客并且返回仓库（无人机和卡车都返回）的时间。
 
-FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}。
+关键假设如下：
+\begin{itemize}
+    \item 无人机每次sortie的过程中只能服务一个顾客节点，但是在这期间卡车可以服务多个顾客节点。
+    \item 无人机被假定为匀速飞行，如果无人机比卡车提前到达汇合点则无人机不能在中途停下休息以节省电量。
+    \item 无人机可以在降落点重新发射，但是无人机不能返回上一次的发射点。
+    \item 无人机和卡车的汇合点必须在顾客节点，而不能在中间的任何位置汇合，并且卡车不会重新访问已经服务过的顾客节点来回收无人机。
+    \item 无人机和卡车都不能访问除了仓库以外的非顾客节点（即只考虑简化过后的实际情况），并且无人机和卡车都不能重新访问已经服务过的顾客节点。
+    \item 如果无人机返回仓库则不能再次进行服务，这是基于大多顾客节点都离仓库较远（大于无人机的续航里程）的假设，在无人机可以直接起飞服务顾客节点的假设下，PDSTSP会更加适合。
+\end{itemize}
+
+FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}所示。
 
 \begin{table}[!htbp]
     \centering
     \caption{FSTSP模型符号及含义}
     \label{tab:fstsp-sign-meaning}
     \begin{tabularx}{\textwidth}{lX}
+    % \begin{tabularx}{\textwidth}{l >{\raggedright\arraybackslash}X}
         \toprule[1pt] % 表头线宽1镑（point, pt）
         符号 & 含义 \\
         \midrule[0.75pt] % 表中间线宽0.75镑（point, pt）
         $0$ & 起点仓库 \\
-        $c + 1$ & 终点仓库 \\
-        $\mathbf{C}=\{1,2,\cdots,c\}$ & 全部客户集合 \\
-        $\mathbf{C}' \subseteq \mathbf{C}$ & 无人机可访问的客户集合 \\
+        $c + 1$ & 终点仓库（和起点仓库相同，只是为了建模方便的另一个记号） \\
+        $C=\{1,2,\cdots,c\}$ & 全部客户集合 \\
+        $C' \subseteq C$ & 无人机可访问的客户集合 \\
         $N_0 = \{0,1,2,\cdots,c\}$ & 流出节点集合 \\
         $N_+ = \{1,2,\cdots,c + 1\}$ & 流入节点集合 \\
         $N = \{0,1,2,\cdots,c,c + 1\}$ & 全部节点集合 \\
-        $\langle i,j,k\rangle \in P, i \in N_0, j \in \mathbf{C}', j \neq i, k \in N_+, k \neq i, k \neq j$ & 无人机飞行路径集合（符合模型约束的路径） \\
-        $\tau_{ij}'/\tau_{ij}$ & 弧$(i,j)$的飞行/行驶时间成本 \\
-        $S_L/S_R$ & 无人机发射/回收耗时 \\
-        $e$ & 无人机续航时长 \\
+        \makecell[l]{$\langle i,j,k\rangle \in P,i \in N_0, j \in\{ C': j \neq i\},$\\
+        $k \in\{ N_+: k \neq i, k \neq j,\tau_{ij}'+\tau_{jk}'\leq e\}$} & 无人机飞行路径集合（符合模型约束的路径） \\
+        $\tau_{ij}'/\tau_{ij}, i \in N_0, j \in N_+, i \neq j, \tau_{0, c+1}\equiv 0\footnotemark$ & 弧$\langle i,j\rangle$的飞行/行驶时间成本 \\
+        $s_L/s_R$ & 无人机发射/回收耗时 \\
+        $e$ & 无人机续航时长，以单位时间来衡量 \\
         $x_{ij} \in \{0,1\}$ & 卡车路由决策变量 \\
         $y_{ijk} \in \{0,1\}$ & 无人机路由决策变量 \\
         $1 \leq u_i \leq c + 2$ & 卡车破子圈辅助变量 \\
@@ -32,6 +44,7 @@ FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}。
         \bottomrule[1pt] % 表尾线宽1镑（point, pt）
     \end{tabularx}
 \end{table}
+\footnotetext{出于完备性的考虑，当只有一个顾客节点的时候，这个顾客将由无人机从仓库直接起飞进行服务。}
 
 FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 
@@ -167,15 +180,8 @@ PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}。
         $N_0 = \{0,1,2,\cdots,c\}$ & 流出节点集合 \\
         $N_+ = \{1,2,\cdots,c + 1\}$ & 流入节点集合 \\
         $N = \{0,1,2,\cdots,c,c + 1\}$ & 全部节点集合 \\
-        $\langle i,j,k\rangle \in P, i \in N_0, j \in \mathbf{C}', j \neq i, k \in N_+, k \neq i, k \neq j$ & 无人机飞行路径集合（符合模型约束的路径） \\
         $\tau_{i,j}'/\tau_{i,j}$ & 弧$(i,j)$的飞行/行驶时间成本 \\
-        $S_L/S_R$ & 无人机发射/回收耗时 \\
-        $e$ & 无人机续航时长 \\
-        $x_{ij} \in \{0,1\}$ & 卡车路由决策变量 \\
-        $y_{ijk} \in \{0,1\}$ & 无人机路由决策变量 \\
         $1 \leq \hat{u}_i \leq c + 2$ & 卡车破子圈辅助变量 \\
-        $t_i'/t_i$ & 无人机/卡车有效到达时间戳辅助变量 \\
-        $p_{ij} \in \{0,1\}$ & 无人机架次先后辅助变量 \\
         $\hat{y}_{i,v} \in \{0, 1\}$ & 无人机访问决策变量\\ 
         $\hat{x}_{i,j} \in \{0, 1\}$ & 卡车路由决策变量\\ 
         \bottomrule[1pt] % 表尾线宽1镑（point, pt）
@@ -193,9 +199,15 @@ PDSTSP数学模型可以表示为MILP \ref{model:model-pdstsp}。
     \text{s.t.} \quad & z \geq \sum_{\substack{i \in N_0}} \sum_{\substack{j \in N_{+}\\ j\neq i}}\tau_{i,j}\hat{x}_{i,j} \label{eq:pdstsp-truck-min-time}\\
     \quad & z \geq \sum_{i \in C''}(\tau_{0,i}' + \tau_{i, c+1}')\hat{y}_{i,v},\quad \forall v \in V\label{eq:pdstsp-drone-min-time}\\
     \quad & \sum_{\substack{i \in N_0\\ i\neq j}}\hat{x}_{i,j} + \sum_{\substack{v \in V\\ j \in C''}}\hat{y}_{j,v} = 1, \quad \forall j \in C\label{eq:pdstsp-customer}\\
-    \quad & \sum_{j \in N_{+}}\hat{x}_{0,j} = 1\label{eq:pdstsp-}
+    \quad & \sum_{j \in N_{+}}\hat{x}_{0,j} = 1\label{eq:pdstsp-truck-start}\\
+    \quad & \sum_{i \in N_0}\hat{x}_{i,c+1} = 1\label{eq:pdstsp-truck-end}\\
+    \quad & \sum_{\substack{i \in N_0\\i \neq j}}\hat{x}_{i,j} = \sum_{\substack{k \in N_{+}\\ k\neq j}}\hat{x}_{j,k}, \quad \forall j \in C\label{eq:pdstsp-truck-flow}\\
+    \quad & \hat{u}_i - \hat{u}_j + 1 \leq (c+2)(1 - \hat{x}_{i,j}), \quad \forall i \in C, j \in \{N_{+}:j \neq i\}\label{eq:pdstsp-mtz}\\
+    \quad & 1 \leq \hat{u}_i \leq c+2, \quad \forall i \in N_{+}\label{eq:pdstsp-u-bound}\\
+    \quad & \hat{x}_{i,j} \in \{0,1\},\quad \forall i \in N_0, j \in \{N_{+}: j\neq i\}\label{eq:pdstsp-x-bound}\\
+    \quad & \hat{y}_{i,v} \in \{0,1\},\quad \forall i \in C'', v \in V\label{eq:pdstsp-y-bound}
 \end{align}
 \end{model}
 }
 
-约束\ref{eq:pdstsp-obj}追求最小化完工时间$z$，即无人机和卡车最晚到达终点仓库的时间，通过约束\ref{eq:pdstsp-truck-min-time}和\ref{eq:pdstsp-drone-min-time}分别限制卡车和无人机最晚到达终点仓库的时间来实现；约束\ref{eq:pdstsp-customer}确保了每个顾客能且只能被服务一次，服务可以由无人机或者卡车提供；
+约束\ref{eq:pdstsp-obj}追求最小化完工时间$z$，即无人机和卡车最晚到达终点仓库的时间，通过约束\ref{eq:pdstsp-truck-min-time}和\ref{eq:pdstsp-drone-min-time}分别限制卡车和无人机最晚到达终点仓库的时间来实现；约束\ref{eq:pdstsp-customer}确保了每个顾客能且只能被服务一次，服务可以由无人机或者卡车提供；约束\ref{eq:pdstsp-truck-start}和\ref{eq:pdstsp-truck-end}要求卡车必须从起点仓库$0$出发并返回终点仓库$c+1$，约束\ref{eq:pdstsp-truck-flow}要求卡车在中间的顾客节点满足流入和流出相等的流约束；约束\ref{eq:pdstsp-mtz}是MTZ形式的破子圈约束；约束\ref{eq:pdstsp-u-bound}，\ref{eq:pdstsp-x-bound}和\ref{eq:pdstsp-y-bound}给出了决策变量和辅助决策变量的取值范围。

@@ -36,9 +36,10 @@
 \RequirePackage{libertine} % Linux Libertine 字体系列(衬线字体)
 \RequirePackage{tikz} % 绘图
 \RequirePackage{pdfpages} % 导入PDF
-% 表格线
+% 表格
 \RequirePackage{booktabs}
-\RequirePackage{tabularx}
+\RequirePackage{tabularx} % 表格自动换行，调整表格宽度 
+\RequirePackage{makecell} % 单元格内换行
 % 定理盒子
 \RequirePackage[most]{tcolorbox}
 \tcbuselibrary{theorems, skins, breakable}
