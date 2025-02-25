@@ -1,4 +1,7 @@
 %! TeX program = xelatex
+% 参考 https://blog.csdn.net/weixinhum/article/details/121056868, https://zhuanlan.zhihu.com/p/357926809, https://zhuanlan.zhihu.com/p/55043560, https://www.zhihu.com/question/264248150
+% TODO:最终版记得注释下面这一行代码
+\special{dvipdfmx:config z 0} %取消PDF压缩，加快速度，最终版本生成的时候最好把这句话注释掉
 \documentclass{note}
 
 \begin{document}
@@ -9,10 +12,10 @@
 % 参考https://tex.stackexchange.com/questions/57158/centered-title-page-in-twoside-report
 
 % Cover page
-\includepdf[pages=-, fitpaper]{cover/cover.pdf}
+% \includepdf[pages=-, fitpaper]{cover/cover.pdf}
 
 % Title page
-\input{title-page/title-page.tex}
+% \input{title-page/title-page.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           TABLE OF CONTENTS
@@ -27,9 +30,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            FRONTMATTER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\frontmatter
+% \frontmatter
 
-\input{part/frontmatter.tex}
+% \input{part/frontmatter.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            MAINMATTER
@@ -38,23 +41,19 @@
 
 % 每个部分就是一个.tex文件，方便后续的调试
 \input{part/part1/part1.tex}
-% \input{part/part2.tex}
-% \input{part/part3.tex}
-% \input{part/part4.tex}
-% \input{part/part5.tex}
-% \input{part/part6.tex}
+% \input{part/part2/part2.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            BACKMATTER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\backmatter
+% \backmatter
 
-\input{part/backmatter.tex}
+% \input{part/backmatter.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            APPENDIX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\input{part/appendix.tex}
+% \input{part/appendix.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                            REFERENCES
