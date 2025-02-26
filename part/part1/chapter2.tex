@@ -33,22 +33,23 @@ FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}所示。
         $N_+ = \{1,2,\cdots,c + 1\}$ & 流入节点集合 \\
         $N = \{0,1,2,\cdots,c,c + 1\}$ & 全部节点集合 \\
         \makecell[l]{$\langle i,j,k\rangle \in P,i \in N_0, j \in\{ C': j \neq i\},$\\
-        $k \in\{ N_+: k \neq i, k \neq j,\tau_{ij}'+\tau_{jk}'\leq e\}$} & 无人机飞行路径集合（符合模型约束的路径） \\
+        $k \in\{ N_+: k \neq i, k \neq j,\tau_{ij}'+\tau_{jk}'\leq e\}$} & 无人机飞行路径集合 \\
         $\tau_{ij}'/\tau_{ij}, i \in N_0, j \in N_+, i \neq j, \tau_{0, c+1}\equiv 0\hyperlink{tab:fstsp-item-1}{\tnote{a}}$ & 弧$\langle i,j\rangle$的飞行/行驶时间成本 \\
         $s_L/s_R$ & 无人机发射/回收耗时 \\
         $e$ & 无人机续航时长，以单位时间来衡量 \\
         $x_{ij} \in \{0,1\}, i \in N_0, j \in N_+, i\neq j$ & 卡车路由决策变量 \\
         $y_{ijk} \in \{0,1\}, i \in N_0, j \in C, k\in \{N_+: \langle i,j,k \rangle \in P\}$ & 无人机路由决策变量 \\
-        $1 \leq u_i \leq c + 2$ & 卡车破子圈辅助变量 \\
         $t_i'/t_i\geq 0, i\in N_+, t_0' = t_0 = 0$ & 无人机/卡车有效到达时间戳辅助变量 \\
-        $p_{ij} \in \{0,1\}\hyperlink{tab:fstsp-item-2}{\tnote{b}},p_{0j} = 1 \forall j \in C$ & 无人机架次先后辅助变量（为了确保无人机连续的sortie和卡车访问的顺序一致\hyperlink{tab:fstsp-item-3}{\tnote{c}}） \\
+        $p_{ij} \in \{0,1\}\hyperlink{tab:fstsp-item-2}{\tnote{b}},p_{0j} = 1 ,\forall j \in C$ & 卡车访问次序先后辅助变量（为了确保无人机连续的sortie和卡车访问的顺序一致\hyperlink{tab:fstsp-item-3}{\tnote{c}}） \\
+        $1 \leq u_i \leq c + 2, i \in N_+$ & 卡车破子圈辅助变量（和标准TSP的MTZ形式破子圈辅助变量类似\hyperlink{tab:fstsp-item-4}{\tnote{d}}） \\
         \bottomrule[1pt] % 表尾线宽1镑（point, pt）
     \end{tabularx}
     \begin{tablenotes}
         \footnotesize % 设置脚注内容字体大小为\footnotesize
         \item[a] \hypertarget{tab:fstsp-item-1}{}出于完备性的考虑，当只有一个顾客节点的时候，这个顾客将由无人机从仓库直接起飞进行服务。
-        \item[b] \hypertarget{tab:fstsp-item-2}{}当顾客节点$i \in C$在顾客节点$j \in\{C:j \neq i\}$被卡车访问的某个时间点前被卡车访问时，$p_{ij} = 1$。
+        \item[b] \hypertarget{tab:fstsp-item-2}{}当卡车访问顾客节点$j\in \{C:j\neq i\}$时，顾客节点$i \in C$已经在之前的某个时间点被卡车访问过了，则$p_{ij} = 1$。
         \item[c] \hypertarget{tab:fstsp-item-3}{}当顾客节点$i$或者$j$仅被无人机服务时，$p_{ij}$的取值就不重要。
+        \item[d] \hypertarget{tab:fstsp-item-4}{}$u_i$表示顾客点$i$在卡车访问的路径中的次序，比如$u_5 = 1$表示顾客点$i = 5$是卡车访问路径中的第1个节点，但是不同于TSP，在FSTSP中需要通过约束将无人机服务的顾客点$i$排除在外。
     \end{tablenotes}
     \end{threeparttable}
 \end{table}
@@ -129,7 +130,7 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 \end{model}
 }
 
-约束\ref{eq:fstsp-obj}追求最小化卡车到达终点仓库$c+1$的有效时间$t_{c+1}$，通过约束
+目标函数\ref{eq:fstsp-obj}追求最小化卡车到达终点仓库$c+1$的有效时间$t_{c+1}$，通过约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}来对齐无人机和卡车最晚到达终点仓库的时间，所以目标函数相当于$\min\{\max\{t_{c+1},t_{c+1}'\}\}$。
 
 约束条件可以分为四类\cite{zhihu-murray2015}：
 
@@ -137,15 +138,15 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
     \item \colorbox{shallow-green}{客户有关的约束：}约束\ref{eq:fstsp-customer-visit}要求对于任何一位顾客$j$，必须且只能被卡车（或无人机）服务一次。
     \item \colorbox{shallow-purple}{卡车有关的约束：}
     \begin{itemize}
-        \item 卡车流平衡约束：约束\ref{eq:fstsp-truck-start}要求卡车从起点仓库流出，约束\ref{eq:fstsp-truck-return}要求卡车从终点仓库流入，约束\ref{eq:fstsp-truck-continuity}要求卡车在中间节点满足流入和流出相等的流平衡约束。
+        \item 卡车流平衡约束：约束\ref{eq:fstsp-truck-start}要求卡车必须从起点仓库流出一次，约束\ref{eq:fstsp-truck-return}要求卡车必须从终点仓库流入一次，约束\ref{eq:fstsp-truck-continuity}要求卡车在中间节点满足流入和流出相等的流平衡约束。
         \item 卡车破子圈约束：约束\ref{eq:fstsp-truck-mtz}是MTZ形式的破子圈约束\cite{YunChouorWeiWoYouHuaQianTanLuXingShangWenTiTSPDeQiZhongZhengShuGuiHuaMoXing2022, YunChouorWeiWoYouHua|TSPZhongLiangZhongBuTongXiaoChuZiHuanLuDeFangFaJicallbackShiXianPythonDiaoYongGurobiQiuJie2020}，去除了子圈存在的可能，这里$M$取到了$u_i - u_j + 1$的上界$c+2$，$u_i$可以理解为点$i$的访问次序，比如$u_1 = 5$可以理解为点1是从出发点开始，第五个被访问到的点。
     \end{itemize}
     \item \colorbox{shallow-red}{无人机有关的约束：}
     \begin{itemize}
         \item 无人机发射、回收节点流约束：约束\ref{eq:fstsp-drone-land}表示无人机可以从非终点仓库流出，约束\ref{eq:fstsp-drone-takeoff}表示无人机可以从非起点仓库流入。
-        \item 无人机访问、回收节点时间戳约束：约束\ref{eq:fstsp-drone-time-fly}表示无人机访问顾客的时间戳应该符合时间逻辑，即不早于起飞时间戳$t_i'$+前往服务顾客点的飞行时长$\tau_{ij}'$，约束\ref{eq:fstsp-drone-time-fly-back}表示无人机回到卡车的时间戳应该符合时间逻辑，即不早于访问顾客点的$t_j'$+返回卡车的飞行时长$\tau_{jk}'$+回收无人机用时$s_R$。
-        \item 无人机电量续航约束：约束\ref{eq:fstsp-drone-endurance}表示无人机的飞行时间不能超过其续航时间，即到达汇合点$t_k'$的有效时间-无人机的起飞时间$t_j'-\tau_{ij}'$（不直接使用$t_i'$是因为$t_i'$不是起飞的时间戳而是无人机到达$i$点的时间戳）要在无人机的续航时间$e$之内。
-        \item 无人机飞行次序约束：约束\ref{eq:fstsp-drone-sortie-order}要求无人机对于任意两条路径$\langle i,j,k \rangle$和$\langle l,m,n \rangle$而言，如果无人机先访问顾客点$i$之后的某个时间才访问顾客点$l$（$p_{il}=1$），则无人机必须先完成上一次飞行才能继续下一次飞行（$t_l'\geq t_k'$），并且任意两条路径之间无交叉。
+        \item 无人机访问、回收节点时间戳约束：约束\ref{eq:fstsp-drone-time-fly}表示无人机访问顾客的时间戳应该符合时间逻辑，即不早于起飞时间戳$t_i'$+前往服务顾客点的飞行时长$\tau_{ij}'$\footnote{起飞时间$s_L$没有被包含进来的原因是，当无人机从顾客点$i$起飞时，约束\ref{eq:fstsp-truck-drone-takeoff-time-1}和\ref{eq:fstsp-truck-drone-takeoff-time-2}会使得$t_i' = t_i$，然后约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}会将起飞的时间$s_L$包含在飞行到顾客点$j$的时间内。}，约束\ref{eq:fstsp-drone-time-fly-back}表示无人机回到卡车的时间戳应该符合时间逻辑，即不早于访问顾客点的$t_j'$+返回卡车的飞行时长$\tau_{jk}'$+回收无人机用时$s_R$\footnote{这里降落的时间$s_R$必须被包含进来的原因是，卡车可能比无人机更快到达汇合点$k$（原文中举出了一个例子以助于理解\cite{murrayFlyingSidekickTraveling2015}）。}。
+        \item 无人机电量续航约束：约束\ref{eq:fstsp-drone-endurance}表示无人机的飞行时间不能超过其续航时间，即到达汇合点$t_k'$的有效时间$-$无人机从节点$i$的起飞时间$(t_j'-\tau_{ij}')$（不直接使用$t_i'$是因为$t_i'$不是起飞的时间戳而是无人机到达$i$点的时间戳）要在无人机的续航时间$e$之内。
+        \item 无人机飞行次序约束：约束\ref{eq:fstsp-drone-sortie-order}要求无人机对于任意两条路径$\langle i,j,k \rangle$和$\langle l,m,n \rangle$而言，如果无人机先从节点$i$起飞之后的某个时间才从节点$l$（$p_{il}=1$）起飞，则无人机必须先完成上一次飞行才能继续下一次飞行（$t_l'\geq t_k'$），并且任意两条路径之间无交叉。
     \end{itemize}
     \item \colorbox{shallow-yellow}{无人机和卡车同步有关的约束：}
     \begin{itemize}
@@ -153,16 +154,16 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
         \item 无人机访问顾客时卡车访问次序约束：约束\ref{eq:fstsp-truck-visit-order}要求卡车必须先访问无人机的起飞点再访问无人机的降落点。
         \item 无人机发射点时间戳约束：约束\ref{eq:fstsp-truck-drone-takeoff-time-1}和\ref{eq:fstsp-truck-drone-takeoff-time-2}为无人机发射点的有效时间约束，要求无人机在发射节点的有效时间等于卡车在该点的有效时间，共同实现了卡车和无人机在发射节点时间上的对齐。
         \item 无人机回收点时间戳约束：约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}为无人机回收点的有效时间约束，要求无人机在回收节点的有效时间等于卡车在该点的有效时间，共同实现了卡车和无人机在回收节点时间上的对齐。
-        \item 卡车访问顾客节点时间戳约束：约束\ref{eq:fstsp-truck-time}要求卡车访问当前顾客点$k$时必须要先将需要起飞的无人机$s_L$发射或者需要降落的无人机$s_R$回收，并且要大于到达顾客点$h$的有效时间戳+路径$\langle h,k \rangle$所花费的时间$\tau_{hk}$。
+        \item 卡车访问顾客节点时间戳约束：约束\ref{eq:fstsp-truck-time}要求卡车访问当前顾客点$k$时必须要先将需要起飞的无人机$s_L$发射或者需要降落的无人机$s_R$回收，并且要大于到达顾客点$h$的有效时间戳$t_h$+路径$\langle h,k \rangle$所花费的时间$\tau_{hk}$\footnote{这里假设卡车从$h \in N_0$行驶到$k \in N_+$。}。
     \end{itemize}
-    \item 辅助决策变量：
+    \item 辅助变量和决策变量：
     \begin{itemize}
-        \item 卡车访问次序和无人机访问次序约束：约束\ref{eq:fstsp-drone-truck-aide-1}和\ref{eq:fstsp-drone-truck-aide-2}要求无人机访问次序和卡车访问次序的一致性。
-        \item 无人机访问顺序约束：约束\ref{eq:fstsp-drone-order}限制了无人机访问任意两个顾客点之间的次序，即不能同时访问不同的顾客点。
-        \item 辅助变量初始值和取值范围：约束\ref{eq:fstsp-truck-start-time}和\ref{eq:fstsp-drone-start-time}给定了卡车和无人机有效时间的初始值，约束\ref{eq:fstsp-drone-start-order}规定了无人机的起点仓库的访问次序一定在其他所有顾客节点之前，约束\ref{eq:fstsp-x-bound}和\ref{eq:fstsp-y-bound}给定了决策变量的取值范围，约束\ref{eq:fstsp-u-bound}规定了卡车辅助变量的取值范围，约束\ref{eq:fstsp-truck-time-bound}和\ref{eq:fstsp-drone-time-bound}规定了卡车和无人机的有效时间必须是非负实数，约束\ref{eq:fstsp-drone-order-bound}给定了无人机次序辅助变量的取值范围。
+        \item 卡车访问次序约束：约束\ref{eq:fstsp-drone-truck-aide-1}，\ref{eq:fstsp-drone-truck-aide-2}和\ref{eq:fstsp-drone-order}决定了卡车访问次序$p_{ij}$取值的合理性，$u_i$和$p_{ij}$主要用于约束被卡车访问的节点之间的次序，对于被无人机服务的顾客点$i$或者$j$来说，$u_i$和$p_{ij}$的取值并不重要。
+        \item 辅助变量及决策变量的初始值和取值范围：约束\ref{eq:fstsp-truck-start-time}和\ref{eq:fstsp-drone-start-time}给定了卡车和无人机有效时间的初始值，约束\ref{eq:fstsp-drone-start-order}规定了起点仓库的访问次序一定在其他所有顾客节点之前，约束\ref{eq:fstsp-x-bound}和\ref{eq:fstsp-y-bound}给定了决策变量的取值范围，约束\ref{eq:fstsp-u-bound}规定了卡车破子圈辅助变量的取值范围，约束\ref{eq:fstsp-truck-time-bound}和\ref{eq:fstsp-drone-time-bound}规定了卡车和无人机的有效时间必须是非负实数，约束\ref{eq:fstsp-drone-order-bound}给定了卡车访问次序辅助变量的取值范围。
     \end{itemize}
 \end{itemize}
 
+在约束\cref{eq:fstsp-truck-drone-takeoff-time-1,eq:fstsp-truck-drone-takeoff-time-2,eq:fstsp-truck-drone-land-time-1,eq:fstsp-truck-drone-land-time-2,eq:fstsp-truck-time,eq:fstsp-drone-time-fly,eq:fstsp-drone-time-fly-back,eq:fstsp-drone-endurance}中，$M\geq \max\{t_{c+1}, t_{c+1}'\}$取一个非常大的数，需要大于等于最后到达终点仓库的卡车（无人机）的有效时间。由于无法事先确定最小可接受的$M$值，因此一种方法是用nearest neighbor heuristic来计算一个访问所有顾客节点并返回仓库的时间上限。算法的大致过程：初始化$M = 0$，然后从仓库开始构建卡车路径（$i=0$），找到最近的还未访问过的顾客节点$j$，让$M \gets M + \tau_{ij}$，更新$i = j$然后重复这个过程，即不断添加距离最近的未访问过的顾客节点直到所有的顾客都被访问一遍，最终让$M \gets M+\tau_{i,c+1}$，即让卡车返回仓库。
 
 \subsection{Flying Sidekick Traveling Salesman Problem with Multiple Drops}
 

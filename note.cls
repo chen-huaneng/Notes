@@ -19,13 +19,14 @@
 \RequirePackage{amsmath} % 用于加载数学公式
 \RequirePackage{mathtools}
 \RequirePackage{geometry} % 设置页面参数
-% 参考https://tex.stackexchange.com/questions/659036/option-selecting-named-colours-provided-by-the-xcolor-package
+% 参考 https://tex.stackexchange.com/questions/659036/option-selecting-named-colours-provided-by-the-xcolor-package
 \RequirePackage[dvipsnames, svgnames, x11names, table]{xcolor} % 用于支持输出颜色
 \RequirePackage{titlesec} % 修改Chapter和Section章节标题的格式
 \RequirePackage{tocloft} % 自定义目录样式
 \RequirePackage{fancyhdr} % 修改页眉页脚的格式
 \RequirePackage[sort&compress]{gbt7714} % 参考文献样式
 \RequirePackage{hyperref} % 超链接
+\RequirePackage[noabbrev]{cleveref} % 多公式引用，必须放在hyperref包的后面，参考 https://tex.stackexchange.com/questions/314217/how-i-can-refer-multiple-equation-in-latex
 \RequirePackage{bookmark} % 生成PDF书签
 \RequirePackage[nottoc]{tocbibind} % 为目录、参考文献和索引生成目录项，禁止为目录生成目录项
 \RequirePackage{epigraph} % 排版引用
