@@ -21,7 +21,6 @@ FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}所示。
     \caption{FSTSP模型符号及含义}
     \label{tab:fstsp-sign-meaning}
     \begin{tabularx}{\textwidth}{lX}
-    % \begin{tabularx}{\textwidth}{l >{\raggedright\arraybackslash}X}
         \toprule[1pt] % 表头线宽1镑（point, pt）
         符号 & 含义 \\
         \midrule[0.75pt] % 表中间线宽0.75镑（point, pt）
@@ -169,11 +168,12 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 
 \section{Parallel Drone Scheduling Traveling Salesman Problem}
 
-Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。
+Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行汇合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
 
-PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}。
+PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}，基本上沿用了FSTSP的符号。
 
 \begin{table}[!htbp]
+    \begin{threeparttable}
     \centering
     \caption{PDSTSP模型符号及含义}
     \label{tab:pdstsp-sign-meaning}
@@ -183,18 +183,28 @@ PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}。
         \midrule[0.75pt] % 表中间线宽0.75镑（point, pt）
         $0$ & 起点仓库 \\
         $c + 1$ & 终点仓库 \\
-        $\mathbf{C}=\{1,2,\cdots,c\}$ & 全部客户集合 \\
-        $\mathbf{C}' \subseteq \mathbf{C}$ & 无人机可访问的客户集合 \\
+        $C=\{1,2,\cdots,c\}$ & 全部客户集合 \\
+        $C' \subseteq C$ & 可以接受无人机访问的客户集合\hyperlink{tab:pdstsp-item-1}{\tnote{a}}\\
+        $C'' \subseteq C'$ & 在无人机的航行范围内可以接受无人机服务的顾客集合\hyperlink{tab:pdstsp-item-2}{\tnote{b}}\\ 
         $N_0 = \{0,1,2,\cdots,c\}$ & 流出节点集合 \\
         $N_+ = \{1,2,\cdots,c + 1\}$ & 流入节点集合 \\
         $N = \{0,1,2,\cdots,c,c + 1\}$ & 全部节点集合 \\
-        $\tau_{i,j}'/\tau_{i,j}$ & 弧$(i,j)$的飞行/行驶时间成本 \\
+        $v \in V$ & 无人机集合\\ 
+        $\tau_{i,j}'/\tau_{i,j}$ & 弧$\langle i,j\rangle$的飞行/行驶时间成本 \\
         $1 \leq \hat{u}_i \leq c + 2$ & 卡车破子圈辅助变量 \\
-        $\hat{y}_{i,v} \in \{0, 1\}$ & 无人机访问决策变量\\ 
-        $\hat{x}_{i,j} \in \{0, 1\}$ & 卡车路由决策变量\\ 
+        $\hat{y}_{i,v} \in \{0, 1\}, i \in C'', v\in V$ & 无人机访问决策变量\\ 
+        $\hat{x}_{i,j} \in \{0, 1\}, i \in N_0, j \in \{N_+:j\neq i\}$ & 卡车路由决策变量\\ 
         \bottomrule[1pt] % 表尾线宽1镑（point, pt）
     \end{tabularx}
+    \begin{tablenotes}
+        \footnotesize % 设置脚注内容字体大小为\footnotesize
+        \item[a] \hypertarget{tab:pdstsp-item-1}{}指包裹重量没有超过无人机的载重限制，不需要顾客签收，顾客的位置允许无人机起降等限制。
+        \item[b] \hypertarget{tab:pdstsp-item-2}{}当$\tau_{0,i}'+\tau_{i,c+1}'\leq e$时，顾客$i \in C'$属于集合$C''$。
+    \end{tablenotes}
+    \end{threeparttable}
 \end{table}
+\hyperlink{tab:fstsp-item-4}{\tnote{d}}
+
 
 PDSTSP数学模型可以表示为MILP \ref{model:model-pdstsp}。
 
@@ -218,4 +228,4 @@ PDSTSP数学模型可以表示为MILP \ref{model:model-pdstsp}。
 \end{model}
 }
 
-约束\ref{eq:pdstsp-obj}追求最小化完工时间$z$，即无人机和卡车最晚到达终点仓库的时间，通过约束\ref{eq:pdstsp-truck-min-time}和\ref{eq:pdstsp-drone-min-time}分别限制卡车和无人机最晚到达终点仓库的时间来实现；约束\ref{eq:pdstsp-customer}确保了每个顾客能且只能被服务一次，服务可以由无人机或者卡车提供；约束\ref{eq:pdstsp-truck-start}和\ref{eq:pdstsp-truck-end}要求卡车必须从起点仓库$0$出发并返回终点仓库$c+1$，约束\ref{eq:pdstsp-truck-flow}要求卡车在中间的顾客节点满足流入和流出相等的流约束；约束\ref{eq:pdstsp-mtz}是MTZ形式的破子圈约束；约束\ref{eq:pdstsp-u-bound}，\ref{eq:pdstsp-x-bound}和\ref{eq:pdstsp-y-bound}给出了决策变量和辅助决策变量的取值范围。
+目标函数\ref{eq:pdstsp-obj}追求最小化完工时间$z$，即无人机和卡车最晚到达终点仓库的时间，通过约束\ref{eq:pdstsp-truck-min-time}和\ref{eq:pdstsp-drone-min-time}分别限制卡车和无人机最晚到达终点仓库的时间来实现；约束\ref{eq:pdstsp-customer}确保了每个顾客能且只能被服务一次，服务可以由无人机或者卡车提供；约束\ref{eq:pdstsp-truck-start}和\ref{eq:pdstsp-truck-end}要求卡车必须从起点仓库$0$出发并返回终点仓库$c+1$一次，约束\ref{eq:pdstsp-truck-flow}要求卡车在中间的顾客节点满足流入和流出相等的流约束；约束\ref{eq:pdstsp-mtz}是MTZ形式的破子圈约束；约束\ref{eq:pdstsp-u-bound}，\ref{eq:pdstsp-x-bound}和\ref{eq:pdstsp-y-bound}给出了决策变量和辅助决策变量的取值范围。
