@@ -40,6 +40,7 @@
 \RequirePackage{booktabs}
 \RequirePackage{tabularx} % 表格自动换行，调整表格宽度 
 \RequirePackage{makecell} % 单元格内换行
+\RequirePackage{threeparttable} % 给表格添加脚注，参考 https://tex.stackexchange.com/questions/6090/clickable-table-footnote
 % 定理盒子
 \RequirePackage[most]{tcolorbox}
 \tcbuselibrary{theorems, skins, breakable}

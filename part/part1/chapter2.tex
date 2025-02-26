@@ -16,6 +16,7 @@ Flying Sidekick Traveling Salesman Problem (FSTSP) 由Murray(2015)等\cite{murra
 FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}所示。
 
 \begin{table}[!htbp]
+    \begin{threeparttable}
     \centering
     \caption{FSTSP模型符号及含义}
     \label{tab:fstsp-sign-meaning}
@@ -33,18 +34,24 @@ FSTSP数学模型的符号含义如表\ref{tab:fstsp-sign-meaning}所示。
         $N = \{0,1,2,\cdots,c,c + 1\}$ & 全部节点集合 \\
         \makecell[l]{$\langle i,j,k\rangle \in P,i \in N_0, j \in\{ C': j \neq i\},$\\
         $k \in\{ N_+: k \neq i, k \neq j,\tau_{ij}'+\tau_{jk}'\leq e\}$} & 无人机飞行路径集合（符合模型约束的路径） \\
-        $\tau_{ij}'/\tau_{ij}, i \in N_0, j \in N_+, i \neq j, \tau_{0, c+1}\equiv 0\footnotemark$ & 弧$\langle i,j\rangle$的飞行/行驶时间成本 \\
+        $\tau_{ij}'/\tau_{ij}, i \in N_0, j \in N_+, i \neq j, \tau_{0, c+1}\equiv 0\hyperlink{tab:fstsp-item-1}{\tnote{a}}$ & 弧$\langle i,j\rangle$的飞行/行驶时间成本 \\
         $s_L/s_R$ & 无人机发射/回收耗时 \\
         $e$ & 无人机续航时长，以单位时间来衡量 \\
-        $x_{ij} \in \{0,1\}$ & 卡车路由决策变量 \\
-        $y_{ijk} \in \{0,1\}$ & 无人机路由决策变量 \\
+        $x_{ij} \in \{0,1\}, i \in N_0, j \in N_+, i\neq j$ & 卡车路由决策变量 \\
+        $y_{ijk} \in \{0,1\}, i \in N_0, j \in C, k\in \{N_+: \langle i,j,k \rangle \in P\}$ & 无人机路由决策变量 \\
         $1 \leq u_i \leq c + 2$ & 卡车破子圈辅助变量 \\
-        $t_i'/t_i$ & 无人机/卡车有效到达时间戳辅助变量 \\
-        $p_{ij} \in \{0,1\}$ & 无人机架次先后辅助变量 \\
+        $t_i'/t_i\geq 0, i\in N_+, t_0' = t_0 = 0$ & 无人机/卡车有效到达时间戳辅助变量 \\
+        $p_{ij} \in \{0,1\}\hyperlink{tab:fstsp-item-2}{\tnote{b}},p_{0j} = 1 \forall j \in C$ & 无人机架次先后辅助变量（为了确保无人机连续的sortie和卡车访问的顺序一致\hyperlink{tab:fstsp-item-3}{\tnote{c}}） \\
         \bottomrule[1pt] % 表尾线宽1镑（point, pt）
     \end{tabularx}
+    \begin{tablenotes}
+        \footnotesize % 设置脚注内容字体大小为\footnotesize
+        \item[a] \hypertarget{tab:fstsp-item-1}{}出于完备性的考虑，当只有一个顾客节点的时候，这个顾客将由无人机从仓库直接起飞进行服务。
+        \item[b] \hypertarget{tab:fstsp-item-2}{}当顾客节点$i \in C$在顾客节点$j \in\{C:j \neq i\}$被卡车访问的某个时间点前被卡车访问时，$p_{ij} = 1$。
+        \item[c] \hypertarget{tab:fstsp-item-3}{}当顾客节点$i$或者$j$仅被无人机服务时，$p_{ij}$的取值就不重要。
+    \end{tablenotes}
+    \end{threeparttable}
 \end{table}
-\footnotetext{出于完备性的考虑，当只有一个顾客节点的时候，这个顾客将由无人机从仓库直接起飞进行服务。}
 
 FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 
