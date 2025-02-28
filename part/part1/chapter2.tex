@@ -6,9 +6,9 @@ Flying Sidekick Traveling Salesman Problem (FSTSP) 由Murray(2015)等\cite{murra
 关键假设如下：
 \begin{itemize}
     \item 无人机每次sortie的过程中只能服务一个顾客节点，但是在这期间卡车可以服务多个顾客节点。
-    \item 无人机被假定为匀速飞行，如果无人机比卡车提前到达汇合点则无人机不能在中途停下休息以节省电量。
+    \item 无人机被假定为匀速飞行，如果无人机比卡车提前到达会合点则无人机不能在中途停下休息以节省电量。
     \item 无人机可以在降落点重新发射，但是无人机不能返回上一次的发射点。
-    \item 无人机和卡车的汇合点必须在顾客节点，而不能在中间的任何位置汇合，并且卡车不会重新访问已经服务过的顾客节点来回收无人机。
+    \item 无人机和卡车的会合点必须在顾客节点，而不能在中间的任何位置会合，并且卡车不会重新访问已经服务过的顾客节点来回收无人机。
     \item 无人机和卡车都不能访问除了仓库以外的非顾客节点（即只考虑简化过后的实际情况），并且无人机和卡车都不能重新访问已经服务过的顾客节点。
     \item 如果无人机返回仓库则不能再次进行服务，这是基于大多顾客节点都离仓库较远（大于无人机的续航里程）的假设，在无人机可以直接起飞服务顾客节点的假设下，PDSTSP会更加适合。
 \end{itemize}
@@ -143,8 +143,8 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
     \item \colorbox{shallow-red}{无人机有关的约束：}
     \begin{itemize}
         \item 无人机发射、回收节点流约束：约束\ref{eq:fstsp-drone-land}表示无人机可以从非终点仓库流出，约束\ref{eq:fstsp-drone-takeoff}表示无人机可以从非起点仓库流入。
-        \item 无人机访问、回收节点时间戳约束：约束\ref{eq:fstsp-drone-time-fly}表示无人机访问顾客的时间戳应该符合时间逻辑，即不早于起飞时间戳$t_i'$+前往服务顾客点的飞行时长$\tau_{ij}'$\footnote{起飞时间$s_L$没有被包含进来的原因是，当无人机从顾客点$i$起飞时，约束\ref{eq:fstsp-truck-drone-takeoff-time-1}和\ref{eq:fstsp-truck-drone-takeoff-time-2}会使得$t_i' = t_i$，然后约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}会将起飞的时间$s_L$包含在飞行到顾客点$j$的时间内。}，约束\ref{eq:fstsp-drone-time-fly-back}表示无人机回到卡车的时间戳应该符合时间逻辑，即不早于访问顾客点的$t_j'$+返回卡车的飞行时长$\tau_{jk}'$+回收无人机用时$s_R$\footnote{这里降落的时间$s_R$必须被包含进来的原因是，卡车可能比无人机更快到达汇合点$k$（原文中举出了一个例子以助于理解\cite{murrayFlyingSidekickTraveling2015}）。}。
-        \item 无人机电量续航约束：约束\ref{eq:fstsp-drone-endurance}表示无人机的飞行时间不能超过其续航时间，即到达汇合点$t_k'$的有效时间$-$无人机从节点$i$的起飞时间$(t_j'-\tau_{ij}')$（不直接使用$t_i'$是因为$t_i'$不是起飞的时间戳而是无人机到达$i$点的时间戳）要在无人机的续航时间$e$之内。
+        \item 无人机访问、回收节点时间戳约束：约束\ref{eq:fstsp-drone-time-fly}表示无人机访问顾客的时间戳应该符合时间逻辑，即不早于起飞时间戳$t_i'$+前往服务顾客点的飞行时长$\tau_{ij}'$\footnote{起飞时间$s_L$没有被包含进来的原因是，当无人机从顾客点$i$起飞时，约束\ref{eq:fstsp-truck-drone-takeoff-time-1}和\ref{eq:fstsp-truck-drone-takeoff-time-2}会使得$t_i' = t_i$，然后约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}会将起飞的时间$s_L$包含在飞行到顾客点$j$的时间内。}，约束\ref{eq:fstsp-drone-time-fly-back}表示无人机回到卡车的时间戳应该符合时间逻辑，即不早于访问顾客点的$t_j'$+返回卡车的飞行时长$\tau_{jk}'$+回收无人机用时$s_R$\footnote{这里降落的时间$s_R$必须被包含进来的原因是，卡车可能比无人机更快到达会合点$k$（原文中举出了一个例子以助于理解\cite{murrayFlyingSidekickTraveling2015}）。}。
+        \item 无人机电量续航约束：约束\ref{eq:fstsp-drone-endurance}表示无人机的飞行时间不能超过其续航时间，即到达会合点$t_k'$的有效时间$-$无人机从节点$i$的起飞时间$(t_j'-\tau_{ij}')$（不直接使用$t_i'$是因为$t_i'$不是起飞的时间戳而是无人机到达$i$点的时间戳）要在无人机的续航时间$e$之内。
         \item 无人机飞行次序约束：约束\ref{eq:fstsp-drone-sortie-order}要求无人机对于任意两条路径$\langle i,j,k \rangle$和$\langle l,m,n \rangle$而言，如果无人机先从节点$i$起飞之后的某个时间才从节点$l$（$p_{il}=1$）起飞，则无人机必须先完成上一次飞行才能继续下一次飞行（$t_l'\geq t_k'$），并且任意两条路径之间无交叉。
     \end{itemize}
     \item \colorbox{shallow-yellow}{无人机和卡车同步有关的约束：}
@@ -165,10 +165,120 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 在约束\cref{eq:fstsp-truck-drone-takeoff-time-1,eq:fstsp-truck-drone-takeoff-time-2,eq:fstsp-truck-drone-land-time-1,eq:fstsp-truck-drone-land-time-2,eq:fstsp-truck-time,eq:fstsp-drone-time-fly,eq:fstsp-drone-time-fly-back,eq:fstsp-drone-endurance}中，$M\geq \max\{t_{c+1}, t_{c+1}'\}$取一个非常大的数，需要大于等于最后到达终点仓库的卡车（无人机）的有效时间。由于无法事先确定最小可接受的$M$值，因此一种方法是用nearest neighbor heuristic来计算一个访问所有顾客节点并返回仓库的时间上限。算法的大致过程：初始化$M = 0$，然后从仓库开始构建卡车路径（$i=0$），找到最近的还未访问过的顾客节点$j$，让$M \gets M + \tau_{ij}$，更新$i = j$然后重复这个过程，即不断添加距离最近的未访问过的顾客节点直到所有的顾客都被访问一遍，最终让$M \gets M+\tau_{i,c+1}$，即让卡车返回仓库。
 
 \subsection{Flying Sidekick Traveling Salesman Problem with Multiple Drops}
+Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}最早提出了类型为Flying Sidekick Traveling Salesman Problem with Multiple Drops (FSTSP-MD)的MILP数学模型，在文章中，作者称之为truck-drone team logistic (TDTL)。该问题聚焦于FSTSP问题的延伸，即考虑无人机可以在单次起飞降落的过程（在Murray等(2015)\cite{murrayFlyingSidekickTraveling2015}中被称为sortie）服务多个顾客节点的情况，但是不同于FSTSP，TDTL的起始节点和终止节点不是同一个节点。
+
+关键假设如下：
+\begin{itemize}
+    \item 不考虑卡车的最大航行里程，即卡车在整个运输过程中不需要补充燃料。
+    \item 无人机和卡车只能在顾客节点会合，而不能够在任意的中间路程中进行会合。无人机和卡车在会合点通过更换电池使无人机充满电。无人机和卡车在会合点需要进行时间对齐，即如果无人机先到达会合点则需要等待卡车到达，反之亦然。
+    \item 对于无人机更换电池的次数没有限制，无人机更换电池的服务时间相对于总体的时间而言可以忽略不计，因此不考虑更换电池的时间。由于无人机在每次和卡车会合时是通过更换电池来达到充电的目的，所以每次无人机在和卡车会合后起飞时，无人机的电池是满的。
+    \item 只要无人机有充足的电量，无人机就会在服务过程中访问多个顾客直到下一次和卡车在顾客节点会合。
+    \item 当无人机搭载在卡车上进行访问顾客节点时，无人机不消耗电量。
+    \item 节点之间的距离用欧几里得距离来衡量，无人机和卡车都以恒定的速度行驶。
+    \item 为了简化模型，假定无人机的电量消耗是线性的，即无人机的电量不会随着起飞降落或者携带的货物重量而进行非线性的变化。
+    \item 每个顾客必须被无人机或者卡车服务一次。
+\end{itemize}
+
+TDTL数学模型的符号含义如表\ref{tab:tdtl-sign-meaning}所示。
+
+\begin{table}[!htbp]
+    \centering
+    \caption{TDTL模型符号及含义}
+    \label{tab:tdtl-sign-meaning}
+    \begin{tabularx}{\textwidth}{lX}
+        \toprule[1pt]
+        符号 & 含义 \\
+        \midrule[0.75pt]
+        $G = \{N, A\}$ & 定义了要访问的节点集合和连接它们的有向链接集合的图。 \\
+        $N$ & 图 $G$ 的节点集合。 \\
+        $o \in N$ & 任务的起始节点。 \\
+        $e \in N$ & 任务的结束节点。 \\
+        $A$ & 图 $G$ 中的有向链接集合。 \\
+        $\delta^{+}(i)$ & 可以从节点 $i \in N$ 通过链接 $A$ 到达的节点集合。 \\
+        $\delta^{-}(i)$ & 可以通过链接 $A$ 到达节点 $i \in N$ 的节点集合。 \\
+        $Q$ & 无人机电池的最大充电水平（以时间单位表示），即电池更换时的电量。 \\
+        $t_{ij}^{T}$ & 链接 $(i, j) \in A$ 上卡车的行驶时间。 \\
+        $t_{ij}^{D}$ & 链接 $(i, j) \in A$ 上无人机的行驶时间。 \\
+        $M$ & 一个足够大的常数。 \\
+        $u_{ij}$ & 二元变量，如果链接 $(i, j) \in A$ 被卡车遍历，则等于1。 \\
+        $v_{ij}$ & 二元变量，如果链接 $(i, j) \in A$ 被无人机遍历，则等于1。 \\
+        $s_{i}$ & 连续变量，衡量节点 $i \in N$ 被卡车或无人机服务后的最早出发时间。 \\
+        $b_{i}^{-}$ & 连续变量，衡量无人机到达节点 $i \in N$ 时的电池电量。 \\
+        $b_{i}^{+}$ & 连续变量，衡量无人机离开节点 $i \in N$ 时的电池电量。 \\
+        $\pi_{t}$ & 资源类型向量，其元素 $\pi_{t}(i) = k$ 表示在节点序列向量 $\pi_{s}$ 中位置 $i$ 的节点由类型 $k$ 的资源访问，其中 $k=1$ 表示仅由无人机访问，$k=2$ 表示仅由卡车访问，$k=0$ 表示由卡车和无人机共同访问。 \\
+        $\pi_{s}$ & 节点序列向量，定义了访问顺序。 \\
+        \bottomrule[1pt]
+    \end{tabularx}
+\end{table}
+
+TDTL数学模型可以表示为MILP \ref{model:model-tdtl}。
+
+{
+\newcommand{\myYellowTag}[1]{\label{#1}\tag{\colorbox{shallow-yellow}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myRedTag}[1]{\label{#1}\tag{\colorbox{shallow-red}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myGreenTag}[1]{\label{#1}\tag{\colorbox{shallow-green}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myPurpleTag}[1]{\label{#1}\tag{\colorbox{shallow-purple}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myBlueTag}[1]{\label{#1}\tag{\colorbox{shallow-blue}{\theequation}}\addtocounter{equation}{1}}
+
+\begin{model}{TDTL MILP}{model-tdtl}
+\begin{align}
+    \min \quad & s_{e} \label{eq:tdtl-obj}\\
+    \text{s.t.} \quad & \sum_{j \in \delta^{-}(i)} u_{ji} \leq 1, \quad \forall i \in N \setminus \{o, e\} \myPurpleTag{eq:tdtl-truck-visit-limit}\\
+    & \sum_{j \in \delta^{+}(i)} u_{ij} - \sum_{j \in \delta^{-}(i)} u_{ji} = 0, \quad \forall i \in N \setminus \{o, e\} \myPurpleTag{eq:tdtl-truck-flow-balance}\\
+    & \sum_{j \in \delta^{+}(o)} u_{oj} = 1 \myPurpleTag{eq:tdtl-truck-start}\\
+    & \sum_{i \in \delta^{-}(e)} u_{ie} = 1 \myPurpleTag{eq:tdtl-truck-end}\\
+    & \sum_{j \in \delta^{-}(i)} v_{ji} \leq 1, \quad \forall i \in N \setminus \{o, e\} \myRedTag{eq:tdtl-drone-visit-limit}\\
+    & \sum_{j \in \delta^{+}(i)} v_{ij} - \sum_{j \in \delta^{-}(i)} v_{ji} = 0, \quad \forall i \in N \setminus \{o, e\} \myRedTag{eq:tdtl-drone-flow-balance}\\
+    & \sum_{j \in \delta^{+}(o)} v_{oj} = 1 \myRedTag{eq:tdtl-drone-start}\\
+    & \sum_{i \in \delta^{-}(e)} v_{ie} = 1 \myRedTag{eq:tdtl-drone-end}\\
+    & \sum_{i \in \delta^{-}(j)} u_{ij} + \sum_{i \in \delta^{-}(j)} v_{ij} \geq 1, \quad \forall j \in N \setminus \{o\} \myGreenTag{eq:tdtl-visit-either}\\
+    & s_{j} \geq s_{i} + t_{ij}^{T} \cdot u_{ij} - M \cdot (1 - u_{ij}), \quad \forall (i, j) \in A \myYellowTag{eq:tdtl-truck-time}\\
+    & s_{j} \geq s_{i} + t_{ij}^{D} \cdot v_{ij} - M \cdot (1 - v_{ij} + u_{ij}), \quad \forall (i, j) \in A \myYellowTag{eq:tdtl-drone-time}\\
+    & s_{o} = 0 \myYellowTag{eq:tdtl-start-time}\\
+    & b_{j}^{-} \leq Q + M \cdot (2 - v_{ij} - u_{ij}), \quad \forall (i, j) \in A \myBlueTag{eq:tdtl-battery-limit-a-1}\\
+    & b_{j}^{-} \geq Q - M \cdot (2 - v_{ij} - u_{ij}), \quad \forall (i, j) \in A \myBlueTag{eq:tdtl-battery-limit-a-2}\\
+    & b_{j}^{+} \leq Q + M \cdot (2 - v_{ij} - u_{ij}), \quad \forall (i, j) \in A \myBlueTag{eq:tdtl-battery-limit-a-3}\\
+    & b_{j}^{+} \geq Q - M \cdot (2 - v_{ij} - u_{ij}), \quad \forall (i, j) \in A \myBlueTag{eq:tdtl-battery-limit-a-4}\\
+    & b_{j}^{-} \leq b_{i}^{+} - t_{ij}^{D} + M \cdot \left(1 - v_{ij} + u_{ij} + \sum_{k \neq i} u_{kj}\right), \quad \forall (i, j) \in A \myBlueTag{eq:tdtl-battery-limit-b-1}\\
+    & b_{j}^{-} \geq b_{i}^{+} - t_{ij}^{D} - M \cdot \left(1 - v_{ij} + u_{ij} + \sum_{k \neq i} u_{kj}\right), \quad \forall (i, j) \in A \myBlueTag{eq:tdtl-battery-limit-b-2}\\
+    & b_j^+ \leq b_j^- + M \cdot \left(1 - v_{ij} + u_{ij} + \sum_{k \neq i}u_{kj}\right), \quad (i, j) \in A\myBlueTag{eq:tdtl-battery-limit-b-3}\\
+    & b_j^+ \geq b_j^- - M \cdot \left(1 - v_{ij} + u_{ij} + \sum_{k \neq i}u_{kj}\right), \quad (i, j) \in A\myBlueTag{eq:tdtl-battery-limit-b-4}\\
+    & b_j^- \leq b_j^+ -t_{ij}^D + M \cdot \left(1 - v_{ij} + u_{ij} + 1 - \sum_{k \neq i}u_{kj}\right), \quad (i, j) \in A\myBlueTag{eq:tdtl-battery-limit-c-1}\\
+    & b_j^- \geq b_j^+ -t_{ij}^D - M \cdot \left(1 - v_{ij} + u_{ij} + 1 - \sum_{k \neq i}u_{kj}\right), \quad (i, j) \in A\myBlueTag{eq:tdtl-battery-limit-c-2}\\
+    & b_j^+ \leq Q + M \cdot \left(1 - v_{ij} + u_{ij} + 1 - \sum_{k \neq i}u_{kj}\right), \quad (i, j) \in A\myBlueTag{eq:tdtl-battery-limit-c-3}\\
+    & b_j^+ \geq Q - M \cdot \left(1 - v_{ij} + u_{ij} + 1 - \sum_{k \neq i}u_{kj}\right), \quad (i, j) \in A\myBlueTag{eq:tdtl-battery-limit-c-4}\\
+    & b_0^+ = Q\myBlueTag{eq:tdtl-battery-limit-d}
+\end{align}
+\end{model}
+}
+
+目标函数\ref{eq:tdtl-obj}追求最小化服务完所有顾客并到达终止节点的时间$s_e$。
+
+\begin{itemize}
+    \item \colorbox{shallow-purple}{卡车相关的路径约束：}约束\ref{eq:tdtl-truck-visit-limit}限制每个顾客节点最多只能被卡车服务一次；约束\ref{eq:tdtl-truck-flow-balance}要求卡车在顾客节点满足流入和流出相等的流平衡；约束\ref{eq:tdtl-truck-start}和\ref{eq:tdtl-truck-end}分别要求卡车只能在起始节点流出一次，只能在终止节点流入一次。
+    \item \colorbox{shallow-red}{无人机相关的路径约束：}约束\ref{eq:tdtl-drone-visit-limit}限制每个顾客节点最多只能被无人机服务一次；约束\ref{eq:tdtl-drone-flow-balance} 要求无人机在顾客节点满足流入和流出相等的流平衡；约束\ref{eq:tdtl-drone-start}和\ref{eq:tdtl-drone-end}分别要求无人机只能在起始节点流出一次，只能在终止节点流入一次。
+    \item \colorbox{shallow-green}{节点访问约束：}约束\ref{eq:tdtl-visit-either}要求每个节点都必须被卡车或无人机（或者两者一起）访问过一次。
+    \item \colorbox{shallow-yellow}{同步相关的约束：}约束\ref{eq:tdtl-truck-time}和\ref{eq:tdtl-drone-time}计算了每个节点的离开时间；约束\ref{eq:tdtl-start-time}规定了离开起始节点的时间。
+    \item \colorbox{shallow-blue}{无人机电量相关约束：}约束\ref{eq:tdtl-battery-limit-d}表示无人机离开起始节点$o$时的电量为$Q$。与无人机电量相关的约束根据无人机的状态不同可以分为三种类型，如图\ref{fig:tdtl-drone-battery}所示。
+    \begin{itemize}
+        \item[a)] 卡车搭载无人机：约束\cref{eq:tdtl-battery-limit-a-1,eq:tdtl-battery-limit-a-2,eq:tdtl-battery-limit-a-3,eq:tdtl-battery-limit-a-4}表示当无人机和卡车同时访问节点$j$时，即卡车搭载无人机进行服务，无人机在到达节点$j$和离开节点$j$时的状态都是充满电的状态（$b_j^-=b_j^+=Q$），即卡车搭载无人机访问时无人机不消耗电量。
+        \item[b)] 无人机单独服务节点：约束\cref{eq:tdtl-battery-limit-b-1,eq:tdtl-battery-limit-b-2,eq:tdtl-battery-limit-b-3,eq:tdtl-battery-limit-b-4}表示当无人机单独访问节点$j$时，无人机在到达节点$j$的电量应该是无人机在离开节点$i$的电量减去路径$(i, j)$所消耗的电量（$b_j^-=b_i^+-T_{ij}^D$），当无人机离开节点$j$时的电量应该等于无人机到达节点$j$的电量（$b_j^+=b_j^-$），因为假设无人机在降落和起飞过程中不消耗电量。
+        \item[c)] 无人机与卡车会合：约束\cref{eq:tdtl-battery-limit-c-1,eq:tdtl-battery-limit-c-2,eq:tdtl-battery-limit-c-3,eq:tdtl-battery-limit-c-4}表示当无人机与卡车在节点$j$会合时，无人机到达节点$j$时的电量应该是$b_j^- = b_i^+ - T_{ij}^D$，当无人机与卡车会合时，无人机会在卡车上通过替换电池来将电量充满，因此当无人机离开节点$j$时的电量应该是$b_j^+ = Q$。
+    \end{itemize}
+
+\end{itemize}
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{images/tdtl.drawio.png}\\
+    \caption{TDTL模型无人机电量约束类型示意图}
+    \label{fig:tdtl-drone-battery}
+\end{figure}
+
 
 \section{Parallel Drone Scheduling Traveling Salesman Problem}
 
-Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行汇合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
+Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行会合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
 
 PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}，基本上沿用了FSTSP的符号。
 
