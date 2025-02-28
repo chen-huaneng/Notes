@@ -339,3 +339,5 @@ PDSTSP数学模型可以表示为MILP \ref{model:model-pdstsp}。
 }
 
 目标函数\ref{eq:pdstsp-obj}追求最小化完工时间$z$，即无人机和卡车最晚到达终点仓库的时间，通过约束\ref{eq:pdstsp-truck-min-time}和\ref{eq:pdstsp-drone-min-time}分别限制卡车和无人机最晚到达终点仓库的时间来实现；约束\ref{eq:pdstsp-customer}确保了每个顾客能且只能被服务一次，服务可以由无人机或者卡车提供；约束\ref{eq:pdstsp-truck-start}和\ref{eq:pdstsp-truck-end}要求卡车必须从起点仓库$0$出发并返回终点仓库$c+1$一次，约束\ref{eq:pdstsp-truck-flow}要求卡车在中间的顾客节点满足流入和流出相等的流约束；约束\ref{eq:pdstsp-mtz}是MTZ形式的破子圈约束；约束\ref{eq:pdstsp-u-bound}，\ref{eq:pdstsp-x-bound}和\ref{eq:pdstsp-y-bound}给出了决策变量和辅助决策变量的取值范围。
+
+Ham(2018)\cite{hamIntegratedSchedulingMtruck2018}在PDSTSP的基础上提出了multi-truck, multi-drone, and multi-depot scheduling problem constrained by time-window, drop-pickup synchronization, and multi-visit, with the objective to minimize the maximum completion time over all tasks ($\text{PDSTSP}^{\text{+DP}}$)，不同于PDSTSP，该问题考虑了无人机递送和收回货物的情况，即当无人机递送货物到顾客返回时，可以飞行到另一个需要退货的顾客节点进行回收货物以使无人机满载，从而满足退货的需求。另外，该问题还考虑了服务顾客的时间窗问题，即顾客需求有时间限制，并且可以在不同的时间段为同一个顾客服务。
