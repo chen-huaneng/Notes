@@ -205,8 +205,6 @@ TDTL数学模型的符号含义如表\ref{tab:tdtl-sign-meaning}所示。
         $s_{i}$ & 连续变量，衡量节点 $i \in N$ 被卡车或无人机服务后的最早出发时间。 \\
         $b_{i}^{-}$ & 连续变量，衡量无人机到达节点 $i \in N$ 时的电池电量。 \\
         $b_{i}^{+}$ & 连续变量，衡量无人机离开节点 $i \in N$ 时的电池电量。 \\
-        $\pi_{t}$ & 资源类型向量，其元素 $\pi_{t}(i) = k$ 表示在节点序列向量 $\pi_{s}$ 中位置 $i$ 的节点由类型 $k$ 的资源访问，其中 $k=1$ 表示仅由无人机访问，$k=2$ 表示仅由卡车访问，$k=0$ 表示由卡车和无人机共同访问。 \\
-        $\pi_{s}$ & 节点序列向量，定义了访问顺序。 \\
         \bottomrule[1pt]
     \end{tabularx}
 \end{table}
@@ -457,6 +455,77 @@ multi-drop FSTSP 数学模型可以表示为MILP \ref{model:model-multi-drop-fst
     \item \colorbox{shallow-red}{无人机相关的约束：}约束\ref{eq:multi-drop-fstsp-drone-battery-limit}要求无人机在一次sortie过程中消耗的电量不能超过其续航限制。
     \item 决策变量和辅助决策变量及初始值：约束\ref{eq:multi-drop-fstsp-start}通过确保仓库被作为起点访问使得仓库作为路径的起始点；约束\ref{eq:multi-drop-fstsp-x-limit}和\ref{eq:multi-drop-fstsp-y-limit}定义了决策变量 $x_k$ 和辅助决策变量 $Y_v$ 的取值范围。 
 \end{itemize}
+
+Windras Mara等(2022)\cite{windrasmaraAdaptiveLargeNeighborhood2022}用Adaptive Large Neighborhood Search (ALNS)来解决该问题，文章中使用到的ALNS算法符号及含义如\ref{tab:multi-drop-fstsp-alns-sign-meaning}所示。
+
+\begin{table}[!htbp]
+    \centering
+    \caption{ALNS算法使用到的符号及含义}
+    \label{tab:multi-drop-fstsp-alns-sign-meaning}
+    \begin{tabularx}{\textwidth}{lX}
+        \toprule[1pt]
+        符号 & 含义 \\
+        \midrule[0.75pt]
+        $s^*$ & 最佳可行解\\
+        $s^\prime$ & 新的可行解\\ 
+        $M$ & 目标函数值\\
+        $M^\prime$ & 新的目标函数值\\
+        $M^*$ & 最优目标函数值\\ 
+        $Q$ & destroy operators集合\\ 
+        $R$ & repair operators集合\\
+        $\omega^-$ & destroy operatpr权重\\
+        $\omega^+$ & repair operator权重\\
+        $\eta_I$ & destroy/repair operators在当前迭代$I$中的表现\\ 
+        $\Pr$ & 选择的概率，计算公式为\ref{eq:multi-drop-fstsp-ac}\\
+        $T_c$ & 当前的温度 \\
+        $T_1$ & 初始的温度 \\
+        $T_0$ & 最终的温度 \\ 
+        $\alpha$ & 冷却系数\\ 
+        $BZ$ & Boltzmann常数\\ 
+        $\Omega_1, \Omega_2, \Omega_3$ & 权重调整参数\\
+        $\lambda$ & 衰减参数\\
+        $f_1$ & 初始的destroy ratio\\
+        $f_0$ & 最终的destroy ratio\\
+        $I_T$ & 在某一温度下的迭代次数\\ 
+        $P$ & 概率\\
+        $f_c$ & 递减线性函数\\ 
+        $ND_c$ & 被 destroyed 的顾客节点数量，由\ref{eq:multi-drop-fstsp-destroy-schedule-1}和\ref{eq:multi-drop-fstsp-destroy-schedule-2}决定\\ 
+        $AR_s$ & 便于归档 repair的归档解\\ 
+        RD & Destroy operator - Random removal\\ 
+        WTD & Destroy operator - Worst truck distance removal\\
+        WDD & Destroy operator - Worst drone distance removal\\
+        BD & Destroy operator - Block destroy removal\\
+        RR & Repair operator - Random repair\\
+        AR & Repair operator - Archive repair\\
+        LDR-1 & Repair operator - Least distance repair $d_{i - 1 \to i}$\\
+        LDR-2 & Repair operator - Least distance repair $d_{i \to i + 1}$\\
+        HR & Repair operator - Hill climbing\\
+        \bottomrule[1pt]
+    \end{tabularx}
+\end{table}
+
+\begin{definition}{acceptance criterion}{definition-multi-drop-fstsp-ac}
+    \begin{align}
+        &\text{Pr} = 
+        \begin{cases}
+            \exp{\left(\frac{-(M^\prime - M)}{BZxT_c}\right)}, & \text{for } M^\prime - M > 0\\
+            1, & \text{for } M^\prime - M \leq 0
+        \end{cases} \label{eq:multi-drop-fstsp-ac}\\
+        &\text{Pr}(c^-) = \frac{\omega_c^-}{\displaystyle\sum_{q \in Q}\omega_q^-}, \quad \forall c \in Q\\
+        &\text{Pr}(c^+) = \frac{\omega_c^+}{\displaystyle\sum_{r \in R}\omega_r^+}, \quad \forall c \in R\\
+        &\omega_{i + 1}^- = \lambda(\omega_i^-) + (1 - \lambda)(\eta_i)\\
+        &\eta_i = 
+        \begin{cases}
+            \Omega_1, & \text{if } M_i \leq M^*\\
+            \Omega_2, & \text{if } M_i \leq M_{i - 1}\\
+            \Omega_3, & \text{if } M_i > M_{i - 1} \wedge U(0,1) < \text{Pr}\\
+            \Omega_4, & \text{if } M_i > M_{i - 1}
+        \end{cases}\\
+        &f_c = f_1 - (f_1 - f_0)\left(\frac{i_c}{I}\right), \quad \forall c \in \{1, \cdots, I\}\label{eq:multi-drop-fstsp-destroy-schedule-1}\\
+        &ND_c = n(f_c), \quad \forall c \in \{1,\cdots,I\}\label{eq:multi-drop-fstsp-destroy-schedule-2}\\
+    \end{align}
+\end{definition}
+
 
 \section{Parallel Drone Scheduling Traveling Salesman Problem}
 
