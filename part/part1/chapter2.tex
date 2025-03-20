@@ -276,9 +276,191 @@ TDTL数学模型可以表示为MILP \ref{model:model-tdtl}。
 \end{figure}
 
 
+Liu等(2021)\cite{liuTwoEchelonRoutingProblem2021}同样提出了类型为FSTSP-MD的MILP数学模型。在文章中作者称之为Two-Echelon Routing Problem for the Truck and Drone (2E-RP-T\&D)。但是不同于Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}提出的TDTL模型，该问题考虑了不同重量的包裹对于无人机飞行消耗能源的影响。和FSTSP及TDTL一样，同样假设一辆卡车搭载一架无人机进行包裹递送，卡车的载重和续航没有进行限制，即卡车能够运送所有的包裹。该问题同样假设无人机和卡车在顾客点（或仓库）会合，但是该问题要求卡车必须先于无人机到达会合点（出于安全考虑）。2E-RP-T\&D的目标是最小化无人机和卡车的总成本。
+
+% 关键假设如下：
+%
+% \begin{itemize}
+%     \item 不考虑服务时间和无人机在顾客点的成本。
+% \end{itemize}
+%
+% 2E-RP-T\&D数学模型的符号含义如表\ref{tab:2e-rp-td-sign-meaning}所示。
+%
+% \begin{table}[!htbp]
+%     \centering
+%     \caption{2E-RP-T\&D 模型符号及含义}
+%     \label{tab:2e-rp-td-sign-meaning}
+%     \begin{tabularx}{\textwidth}{lX}
+%         \toprule[1pt]
+%         符号 & 含义 \\
+%         \midrule[0.75pt]
+%         $G = (N, E)$ & 问题定义的无向图 \\
+%         $N = V_{0} \cup V$ & 图 $G$ 的节点集合，其中 $V_{0} = \{0\}$ 表示仓库，$V = \{1, 2, \ldots, n\}$ 表示客户节点集合 \\
+%         $E$ & 图 $G$ 中的链接集合，表示卡车或无人机可以行驶的路径 \\
+%         $R$ & 卡车可以行驶的所有可能的有向主路线集合 \\
+%         $E_r$ & 在有向主路线 $r$ 中的边集合，$r \in R$是卡车的一条有向主路线\\
+%         $S_{r}$ & 在主路线 $r$ 中包含的所有子路线集合 \\
+%         $l \in S_{r}$ & 主路线 $r$ 中的一条子路线 \\
+%         $R_{r l}$ & 当卡车行驶子路线 $l$ 时，无人机可以行驶的所有可能的有向伴随子路线集合 \\
+%         $m \in R_{r l}$ & 无人机的一条有向伴随子路线 \\
+%         $V_{r}$ & 当卡车沿主路线 $r$ 行驶时，卡车访问的客户节点集合 \\
+%         $V_{r}^{\prime}$ & 在主路线 $r$ 中需要由无人机服务的客户节点集合 \\
+%         $V_{r l m}$ & 在主路线 $r$ 的子路线 $l$ 对应的伴随子路线 $m$ 中，无人机访问的客户节点集合 \\
+%         $E_{r l m}$ & 在主路线 $r$ 的子路线 $l$ 对应的伴随子路线 $m$ 中包含的弧集合 \\
+%         $t_{i j}$ & 从客户 (或仓库) $i$ 到客户 (或仓库) $j$ $(i, j \in V_{0} \cup V)$ 的卡车行驶时间。 \\
+%         $t_{i j}^{D}$ & 从客户 (或仓库) $i$ 到客户 (或仓库) $j$ $(i, j \in V_{0} \cup V)$ 的无人机飞行时间。 \\
+%         $d_{i j}$ & 从客户 (或仓库) $i$ 到客户 (或仓库) $j$ $(i, j \in V_{0} \cup V)$ 的行驶距离。 \\
+%         $w_{i}$ & 需要交付给客户 $i$ 的包裹重量，其中 $i \in V$ \\
+%         $w_{d}$ & 无人机自身的重量 \\
+%         $W_{H}$ & 无人机的最大载重量 \\
+%         $P$ & 无人机电量容量的最大值 \\
+%         $TH$ & 无人机的最大续航时间。 \\
+%         $G_{i}$ & 无人机离开客户 (或仓库) $i$ 时的载重量，其中 $i \in V \cup V_{0}$ \\
+%         $v_{i j}$ & 无人机离开客户 (或仓库) $i$ 到客户 (或仓库) $j$ 时的飞行速度，其中 $i, j \in V_{0} \cup V$ \\
+%         $c_r$ & 卡车在主路线 $r \in R$ 上行驶所花费的成本 \\ 
+%         $c_{rlm}$ & 无人机在主路线 $r$ 的子路线 $l$ 对应的伴随子路线 $m$ 上行驶所花费的成本 \\  
+%         $F_{i j}$ & 从客户 $i$ 到客户 $j$ $(i, j \in V_{0} \cup V)$ 的无人机飞行能耗。 \\
+%         $p_{i}$ & 无人机到达节点 $i$ 时的电池电量。 \\
+%         $p_{i}^{+}$ & 无人机离开节点 $i$ 时的电池电量。 \\
+%         $x_{r}$ & 二元变量，如果卡车选择有向主路线 $r$ 行驶，则等于 1，否则为 0，其中 $r \in R$ \\
+%         $y_{r l m}$ & 二元变量，如果无人机选择伴随子路线 $m$ 行驶，则等于 1，否则为 0，其中 $m \in R_{r l}, l \in S_{r}, r \in R$ \\
+%         $a_{i j r l}$ & 二元参数，如果弧 $(i, j) \in E_{r l}$，则等于 1，否则为 0 \\
+%         $b_{i r l m}$ & 二元参数，如果 $i \in V_{r l m}$，则等于 1，否则为 0 \\
+%         \bottomrule[1pt]
+%     \end{tabularx}
+% \end{table}
+%
+% 2E-RP-T\&D数学模型可以表示为MILP \ref{model:model-2e-rp-td}。
+%
+% {
+% \newcommand{\myYellowTag}[1]{\label{#1}\tag{\colorbox{shallow-yellow}{\theequation}}\addtocounter{equation}{1}}
+% \newcommand{\myRedTag}[1]{\label{#1}\tag{\colorbox{shallow-red}{\theequation}}\addtocounter{equation}{1}}
+% \newcommand{\myGreenTag}[1]{\label{#1}\tag{\colorbox{shallow-green}{\theequation}}\addtocounter{equation}{1}}
+% \newcommand{\myPurpleTag}[1]{\label{#1}\tag{\colorbox{shallow-purple}{\theequation}}\addtocounter{equation}{1}}
+% \newcommand{\myBlueTag}[1]{\label{#1}\tag{\colorbox{shallow-blue}{\theequation}}\addtocounter{equation}{1}}
+%
+% \begin{model}{2E-RP-T\&D MILP}{model-2e-rp-td}
+% \begin{align}
+%     \text{s.t.} \quad & \sum_{(i,j) \in E_{rlm}}F_{ij} \leq P, \quad \forall m \in R_{rl} \myRedTag{eq:2e-rp-td-drone-battery-limit}\\
+%     \quad & \sum_{i \in V_{rlm}}w_i \leq W_H, \quad \forall m \in R_{rl} \myRedTag{eq:2e-rp-td-drone-payload-limit}\\
+% \end{align}
+% \end{model}
+% }
+%
+%
+% \begin{itemize}
+%     \item \colorbox{shallow-red}{无人机相关的约束：}约束\ref{eq:2e-rp-td-drone-battery-limit}要求无人机在伴随子路径 $m$ 行驶过程的能源总消耗不超过无人机的总电量，约束\ref{eq:2e-rp-td-drone-payload-limit}要求无人机在伴随路径 $m$ 行驶过程中的运输包裹总重量不超过无人机的最大载重量。 
+% \end{itemize}
+
+Windras Mara等(2022)\cite{windrasmaraAdaptiveLargeNeighborhood2022}在Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}的基础上提出了multi-drop FSTS，但是不同于Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}的假设，该模型考虑了起飞和降落的服务时间。
+
+multi-drop FSTSP数学模型的符号含义如表\ref{tab:multi-drop-fstsp-sign-meaning}所示。
+
+\begin{table}[!htbp]
+    \centering
+    \caption{multi-drop FSTSP 数学模型符号及含义}
+    \label{tab:multi-drop-fstsp-sign-meaning}
+    \begin{tabularx}{\textwidth}{lX}
+        \toprule[1pt]
+        符号 & 含义 \\
+        \midrule[0.75pt]
+        $n$ & 顾客的数量\\ 
+        $k$ &操作的索引\\ 
+        $G = (V, A)$ & 定义了要访问的节点集合 $V$ 和连接它们的弧集合 $A$ 的图 \\
+        $V$ & 图 $G$ 的节点集合，包括一个仓库节点 $\{0\}$ 和 $n$ 个客户节点 $N = \{1, 2, \dots, n\}$ \\
+        $A$ & 图 $G$ 中的弧集合，连接节点对 $(i, j)$，其中 $i, j \in V$ \\
+        $Vd \subseteq V$ & 可以由无人机服务的节点子集 \\
+        $N$ & 客户节点集合，即 $N = \{1, 2, \dots, n\}$ \\
+        $K = [OP_1, \cdots, OP_k]$ & 所有可行操作的集合 \\
+        $C$ & 卡车路径的非负节点数组 \\
+        $D$ & 无人机路径的非负节点数组 \\
+        $S \subseteq V$ & 节点的子集\\ 
+        $OP_{k} = \{\mathscr{T}_k,\mathscr{D}_k\}$ & 第$k$次递送的顺序，也被称为operation，其中 $\mathscr{T}_k$ 是卡车在 $OP_k$ 时必须访问的节点序列，$\mathscr{D}_k$ 是无人机在 $OP_k$ 时必须访问的节点序列 \\ 
+        $K(v)$ & 包含了节点 $v$ 的所有可行操作集合\\ 
+        $K^-(v)$ & 包含了以节点 $v$ 为起始点或发射点的所有可行操作集合\\ 
+        $K^+(v)$ & 包含了以节点 $v$ 为终止点或会合点的所有可行操作集合\\ 
+        $K^{\mathscr{T}}(v)$ & 包含了以卡车访问节点 $v$ 的所有可行操作集合\\ 
+        $K^{\mathscr{D}}(v)$ & 包含了以无人机访问节点 $v$ 的所有可行操作集合\\ 
+        $c_n$ & 顾客的需求\\ 
+        $d_{i\to j}^\mathscr{T}$ & 卡车从节点 $i$ 行驶到 $j$ 的距离 \\ 
+        $d_{i\to j}^\mathscr{D}$ & 无人机从节点 $i$ 行驶到 $j$ 的距离 \\ 
+        $\tau_{i\to j}^\mathscr{T}$ & 弧 $(i, j) \in A$ 上卡车的行驶时间 \\
+        $\tau_{i\to j}^\mathscr{D}$ & 弧 $(i, j) \in A$ 上无人机的行驶时间 \\
+        $s^L$ & 无人机的启动时间 \\
+        $s^R$ & 无人机的回收时间 \\
+        $\epsilon$ & 无人机的续航时间 \\
+        $w_r^{\mathscr{T}}$ & 卡车在节点 $j$ 的等待时间 \\
+        $w_r^{\mathscr{D}}$ & 无人机在节点 $j$ 的等待时间 \\
+        $t(\mathscr{T}_k)$ & 卡车在 $OP_k$ 中完成其对应任务所需的时间，计算公式为\ref{eq:multi-drop-fstsp-operation-time-2} \\
+        $t(\mathscr{D}_k)$ & 无人机在 $OP_k$ 中完成其对应任务所需的时间，计算公式为\ref{eq:multi-drop-fstsp-operation-time-3} \\
+        $t_k = t(OP_k)$ & $OP_k$ 的完成时间($OP_k$的成本函数)，计算公式为\ref{eq:multi-drop-fstsp-operation-time-1} \\
+        $x_k$ & 二元决策变量，如果选择操作$k$ ，则等于 1，否则等于 0 \\
+        $Y_v$ & 二元辅助决策变量，如果节点 $v$ 被选为至少一个操作的起始节点，则等于 1，否则等于 0 \\
+        \bottomrule[1pt]
+    \end{tabularx}
+\end{table}
+
+
+\begin{definition}{time for operations}{definition-multi-drop-fstsp}
+    \begin{align}
+        t(OP_k) &= 
+        \begin{cases}
+            \max\{t(\mathscr{T}_k), t(\mathscr{D}_k)\}, & \text{当} OP_k \text{包含至少一个无人机访问的节点时} \\
+            t(\mathscr{T}_k), & \text{其他}
+        \end{cases}\label{eq:multi-drop-fstsp-operation-time-1}\\
+        t(\mathscr{T}_k) &= 
+        \begin{cases}
+            s^L + \tau_{i \to C_1}^{\mathscr{T}} + \sum_{i=1}^{\lvert C\rvert - 1} \tau_{C_i \to C_{i+1}}^{\mathscr{T}} + \tau_{C_{\lvert C\rvert} \to j}^{\mathscr{T}} + s^R, & \text{当} D \neq \varnothing \text{且} \lvert C\rvert > 1 \\
+            s^L + \tau_{i \to C_1}^{\mathscr{T}} + \tau_{C_1 \to j}^{\mathscr{T}} + s^R, & \text{当} D \neq \varnothing \text{且} \lvert C\rvert = 1 \\
+            \tau_{i \to j}^{\mathscr{T}}, & \text{其他} 
+        \end{cases}\label{eq:multi-drop-fstsp-operation-time-2}\\
+        t(\mathscr{D}_k) &= 
+        \begin{cases}
+            s^L + \tau_{i \to D_1}^{\mathscr{D}} + \sum_{i=1}^{\lvert D\rvert -1} \tau_{D_i \to D_{i+1}}^{\mathscr{D}} + \tau_{D_{\lvert D\rvert} \to j}^{\mathscr{D}} + s^R, & \text{当} \lvert D\rvert > 1 \\
+            s^L + \tau_{i \to D_1}^{\mathscr{D}} + \tau_{D_1 \to j}^{\mathscr{D}} + s^R, & \text{其他} 
+        \end{cases}\label{eq:multi-drop-fstsp-operation-time-3}
+    \end{align}
+\end{definition}
+
+multi-drop FSTSP 数学模型可以表示为MILP \ref{model:model-multi-drop-fstsp}。
+
+{
+\newcommand{\myYellowTag}[1]{\label{#1}\tag{\colorbox{shallow-yellow}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myRedTag}[1]{\label{#1}\tag{\colorbox{shallow-red}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myGreenTag}[1]{\label{#1}\tag{\colorbox{shallow-green}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myPurpleTag}[1]{\label{#1}\tag{\colorbox{shallow-purple}{\theequation}}\addtocounter{equation}{1}}
+\newcommand{\myBlueTag}[1]{\label{#1}\tag{\colorbox{shallow-blue}{\theequation}}\addtocounter{equation}{1}}
+
+\begin{model}{multi-drop FSTSP MILP}{model-multi-drop-fstsp}
+\begin{align}
+    \min \quad & M = \sum_{k \in K}t_kx_k \label{eq:multi-drop-fstsp-obj}\\
+    \text{s.t.} \quad & \sum_{k \in K(v)}x_k \geq 1, \quad \forall v \in V \setminus \{0\}\myGreenTag{eq:multi-drop-fstsp-customer-visit}\\
+    \quad & \sum_{k \in K^{\mathscr{D}}(v)}x_k \leq 1, \quad \forall v \in Vd \setminus \{0\}\myGreenTag{eq:multi-drop-fstsp-customer-visit-drone}\\
+    \quad & \sum_{k \in K^{\mathscr{T}}(v)}x_k \leq 2\left( 1 - \sum_{k \in K^{\mathscr{D}}(v)}x_k \right), \quad \forall v \in Vd \setminus \{0\}\myGreenTag{eq:multi-drop-fstsp-customer-visit-limit}\\
+    \quad & \sum_{k \in K^+(v)}x_k \leq n Y_v, \quad \forall v \in V\myGreenTag{eq:multi-drop-fstsp-start-end-limit}\\
+    \quad & \sum_{k \in K^+(v)}x_k = \sum_{k \in K^-(v)}x_k, \quad \forall v \in V\myBlueTag{eq:multi-drop-fstsp-hamiltonian-1}\\
+    \quad & \sum_{k \in K^+(S)}x_k \geq Y_v, \quad \forall S \subset V \setminus \{0\}, v \in S\myBlueTag{eq:multi-drop-fstsp-hamiltonian-2}\\
+    \quad & \sum_{k \in K^+(0)}x_k \geq 1\myBlueTag{eq:multi-drop-fstsp-hamiltonian-3}\\
+    \quad & \tau_{i \to D_1}^{\mathscr{D}} + \sum_{i = 1}^{\lvert D\rvert -1}\tau_{D_i \to D_{i+ 1}}^{\mathscr{D}} + \tau_{\lvert D\rvert \to j}^{\mathscr{D}} + w_r^{\mathscr{D}} \leq \epsilon \myRedTag{eq:multi-drop-fstsp-drone-battery-limit}\\
+    \quad & Y_0 = 1\label{eq:multi-drop-fstsp-start}\\
+    \quad & x_k \in \{0,1\}, \quad \forall k \in K\label{eq:multi-drop-fstsp-x-limit}\\
+    \quad & Y_v \in \{0,1\}, \quad \forall v \in V\label{eq:multi-drop-fstsp-y-limit}
+\end{align}
+\end{model}
+}
+
+目标函数\ref{eq:multi-drop-fstsp-obj}旨在最小化总路径的完成时间。
+
+\begin{itemize}
+    \item \colorbox{shallow-green}{顾客相关的约束：}约束\ref{eq:multi-drop-fstsp-customer-visit}确保所有的节点都被至少访问过一次；约束\ref{eq:multi-drop-fstsp-customer-visit-drone}确保所有可以被无人机服务的顾客点最多被无人机服务一次；约束\ref{eq:multi-drop-fstsp-customer-visit-limit}确保被无人机服务过的节点不会被卡车服务，反之亦然，系数2是由于当无人机没有服务过节点 $v$ 时，节点 $v$ 可以作为卡车某个操作的终点及另一个操作的起点（即在节点$v$最多在两个操作中存在，一次作为操作的起点，一次作为操作的终点）；约束\ref{eq:multi-drop-fstsp-start-end-limit}表示如果节点 $v$ 是某个操作的终止节点，那么节点 $v$ 一定要是某个操作的起始节点。 
+    \item \colorbox{shallow-blue}{Hamilton 图\cite{HamiltonianPathWikiwand}约束：}约束\ref{eq:multi-drop-fstsp-hamiltonian-1}确保以节点 $v$ 为终止点的操作接下来的操作会以节点 $v$ 为起始点（流量平衡约束）；约束\ref{eq:multi-drop-fstsp-hamiltonian-2}确保任何非空的客户子集$S$必须至少有一个操作从外部进入，即如果节点 $v$ 被选为某个操作的起始节点($Y_v = 1$)，则必须存在至少一个操作进入包含$v$的子集$S$，避免子回路的产生（消除子回路约束）；约束\ref{eq:multi-drop-fstsp-hamiltonian-3}确保终止点为仓库的操作只有一次，这是因为如果终止点为仓库的操作大于1次，由于约束\ref{eq:multi-drop-fstsp-customer-visit-limit}限制了卡车和无人机服务节点的次数，并且约束\ref{eq:multi-drop-fstsp-customer-visit}确保每个节点都被访问过至少一次，而目标函数是最小化时间成本，如果多次以仓库为终止点的操作存在，则会增加成本，因此终止节点为仓库的操作大于1次的情况会被过滤掉。
+    \item \colorbox{shallow-red}{无人机相关的约束：}约束\ref{eq:multi-drop-fstsp-drone-battery-limit}要求无人机在一次sortie过程中消耗的电量不能超过其续航限制。
+    \item 决策变量和辅助决策变量及初始值：约束\ref{eq:multi-drop-fstsp-start}通过确保仓库被作为起点访问使得仓库作为路径的起始点；约束\ref{eq:multi-drop-fstsp-x-limit}和\ref{eq:multi-drop-fstsp-y-limit}定义了决策变量 $x_k$ 和辅助决策变量 $Y_v$ 的取值范围。 
+\end{itemize}
+
 \section{Parallel Drone Scheduling Traveling Salesman Problem}
 
-Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行会合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
+Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray等(2015)\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行会合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
 
 PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}，基本上沿用了FSTSP的符号。
 
