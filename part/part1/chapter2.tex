@@ -1,7 +1,7 @@
 \chapter{Traveling Salesman Problem with Drone}
 
 \section{Flying Sidekick Traveling Salesman Problem}
-Flying Sidekick Traveling Salesman Problem (FSTSP) 由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。FSTSP描述：假定有$c$个顾客需要服务，这个服务可以由无人机或者卡车来提供，但是有些顾客由于某些限制（比如包裹重量超过无人机的载重限制）只能由卡车提供服务。卡车和无人机必须从单一仓库出发，并且返回该仓库一次，即不能重复访问该仓库，无人机和卡车可以同时或者分别离开（返回）仓库。在无人机起飞前需要卡车司机装载包裹和更换电池的时间$s_L$，降落时需要给无人机装卸货物和充电的时间$s_R$。每次无人机的一次服务称为一次sortie，一次sortie分为三个节点$\langle i,j,k \rangle$，起飞点$i$可以是仓库也可以是顾客点，中间节点$j$是需要服务的顾客节点，节点$k$可以是仓库也可以是卡车所在的顾客节点，无人机在整个运输过程中可以进行多次sortie服务多个顾客，但是一次sortie的时间必须在无人机的续航时间内。FSTSP的目标是最小化服务所有顾客并且返回仓库（无人机和卡车都返回）的时间。
+Flying Sidekick Traveling Salesman Problem (FSTSP\index{FSTSP}) 由Murray(2015)等\cite{murrayFlyingSidekickTraveling2015}提出。FSTSP描述：假定有$c$个顾客需要服务，这个服务可以由无人机或者卡车来提供，但是有些顾客由于某些限制（比如包裹重量超过无人机的载重限制）只能由卡车提供服务。卡车和无人机必须从单一仓库出发，并且返回该仓库一次，即不能重复访问该仓库，无人机和卡车可以同时或者分别离开（返回）仓库。在无人机起飞前需要卡车司机装载包裹和更换电池的时间$s_L$，降落时需要给无人机装卸货物和充电的时间$s_R$。每次无人机的一次服务称为一次sortie，一次sortie分为三个节点$\langle i,j,k \rangle$，起飞点$i$可以是仓库也可以是顾客点，中间节点$j$是需要服务的顾客节点，节点$k$可以是仓库也可以是卡车所在的顾客节点，无人机在整个运输过程中可以进行多次sortie服务多个顾客，但是一次sortie的时间必须在无人机的续航时间内。FSTSP的目标是最小化服务所有顾客并且返回仓库（无人机和卡车都返回）的时间。
 
 关键假设如下：
 \begin{itemize}
@@ -165,7 +165,7 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 在约束\cref{eq:fstsp-truck-drone-takeoff-time-1,eq:fstsp-truck-drone-takeoff-time-2,eq:fstsp-truck-drone-land-time-1,eq:fstsp-truck-drone-land-time-2,eq:fstsp-truck-time,eq:fstsp-drone-time-fly,eq:fstsp-drone-time-fly-back,eq:fstsp-drone-endurance}中，$M\geq \max\{t_{c+1}, t_{c+1}'\}$取一个非常大的数，需要大于等于最后到达终点仓库的卡车（无人机）的有效时间。由于无法事先确定最小可接受的$M$值，因此一种方法是用nearest neighbor heuristic来计算一个访问所有顾客节点并返回仓库的时间上限。算法的大致过程：初始化$M = 0$，然后从仓库开始构建卡车路径（$i=0$），找到最近的还未访问过的顾客节点$j$，让$M \gets M + \tau_{ij}$，更新$i = j$然后重复这个过程，即不断添加距离最近的未访问过的顾客节点直到所有的顾客都被访问一遍，最终让$M \gets M+\tau_{i,c+1}$，即让卡车返回仓库。
 
 \subsection{Flying Sidekick Traveling Salesman Problem with Multiple Drops}
-Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}最早提出了类型为Flying Sidekick Traveling Salesman Problem with Multiple Drops (FSTSP-MD)的MILP数学模型，在文章中，作者称之为truck-drone team logistic (TDTL)。该问题聚焦于FSTSP问题的延伸，即考虑无人机可以在单次起飞降落的过程（在Murray等(2015)\cite{murrayFlyingSidekickTraveling2015}中被称为sortie）服务多个顾客节点的情况，但是不同于FSTSP，TDTL的起始节点和终止节点不是同一个节点。
+Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}最早提出了类型为Flying Sidekick Traveling Salesman Problem with Multiple Drops (FSTSP-MD\index{FSTSP-MD})的MILP数学模型，在文章中，作者称之为truck-drone team logistic (TDTL\index{TDTL})。该问题聚焦于FSTSP问题的延伸，即考虑无人机可以在单次起飞降落的过程（在Murray等(2015)\cite{murrayFlyingSidekickTraveling2015}中被称为sortie）服务多个顾客节点的情况，但是不同于FSTSP，TDTL的起始节点和终止节点不是同一个节点。
 
 关键假设如下：
 \begin{itemize}
@@ -274,7 +274,7 @@ TDTL数学模型可以表示为MILP \ref{model:model-tdtl}。
 \end{figure}
 
 
-Liu等(2021)\cite{liuTwoEchelonRoutingProblem2021}同样提出了类型为FSTSP-MD的MILP数学模型。在文章中作者称之为Two-Echelon Routing Problem for the Truck and Drone (2E-RP-T\&D)。但是不同于Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}提出的TDTL模型，该问题考虑了不同重量的包裹对于无人机飞行消耗能源的影响。和FSTSP及TDTL一样，同样假设一辆卡车搭载一架无人机进行包裹递送，卡车的载重和续航没有进行限制，即卡车能够运送所有的包裹。该问题同样假设无人机和卡车在顾客点（或仓库）会合，但是该问题要求卡车必须先于无人机到达会合点（出于安全考虑）。2E-RP-T\&D的目标是最小化无人机和卡车的总成本。
+Liu等(2021)\cite{liuTwoEchelonRoutingProblem2021}同样提出了类型为FSTSP-MD的MILP数学模型。在文章中作者称之为Two-Echelon Routing Problem for the Truck and Drone (2E-RP-T\&D\index{TwoEchelon@2E-RP-T\&D})。但是不同于Gonzalez-R等(2020)\cite{gonzalez-rTruckdroneTeamLogistics2020}提出的TDTL模型，该问题考虑了不同重量的包裹对于无人机飞行消耗能源的影响。和FSTSP及TDTL一样，同样假设一辆卡车搭载一架无人机进行包裹递送，卡车的载重和续航没有进行限制，即卡车能够运送所有的包裹。该问题同样假设无人机和卡车在顾客点（或仓库）会合，但是该问题要求卡车必须先于无人机到达会合点（出于安全考虑）。2E-RP-T\&D的目标是最小化无人机和卡车的总成本。
 
 % 关键假设如下：
 %
@@ -456,7 +456,7 @@ multi-drop FSTSP 数学模型可以表示为MILP \ref{model:model-multi-drop-fst
     \item 决策变量和辅助决策变量及初始值：约束\ref{eq:multi-drop-fstsp-start}通过确保仓库被作为起点访问使得仓库作为路径的起始点；约束\ref{eq:multi-drop-fstsp-x-limit}和\ref{eq:multi-drop-fstsp-y-limit}定义了决策变量 $x_k$ 和辅助决策变量 $Y_v$ 的取值范围。 
 \end{itemize}
 
-Windras Mara等(2022)\cite{windrasmaraAdaptiveLargeNeighborhood2022}用Adaptive Large Neighborhood Search (ALNS)来解决该问题，文章中使用到的ALNS算法符号及含义如\ref{tab:multi-drop-fstsp-alns-sign-meaning}所示。
+Windras Mara等(2022)\cite{windrasmaraAdaptiveLargeNeighborhood2022}用Adaptive Large Neighborhood Search (ALNS\index{ALNS})来解决该问题，文章中使用到的ALNS算法符号及含义如\ref{tab:multi-drop-fstsp-alns-sign-meaning}所示。
 
 \begin{table}[!htbp]
     \centering
@@ -529,7 +529,7 @@ Windras Mara等(2022)\cite{windrasmaraAdaptiveLargeNeighborhood2022}用Adaptive 
 
 \section{Parallel Drone Scheduling Traveling Salesman Problem}
 
-Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP) 同样由Murray等(2015)\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行会合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
+Parallel Drone Scheduling Traveling Salesman Problem (PDSTSP\index{PDSTSP}) 同样由Murray等(2015)\cite{murrayFlyingSidekickTraveling2015}提出。PDSTSP适用于大量的顾客节点在无人机直接从仓库起飞的续航里程范围内。PDSTSP描述：一辆卡车和一群（单个或者多个都可以）完全相同的无人机从单个仓库出发分别服务顾客，每个顾客只能被服务一次，卡车遵循TSP路径服务，无人机直接从仓库起飞服务顾客，不同于FSTSP，PDSTSP中的无人机不需要和卡车进行会合。PDSTSP的目标是最小化最终到达仓库的卡车（无人机）的时间。
 
 PDSTSP数学模型的符号含义如表\ref{tab:pdstsp-sign-meaning}，基本上沿用了FSTSP的符号。
 
@@ -591,4 +591,4 @@ PDSTSP数学模型可以表示为MILP \ref{model:model-pdstsp}。
 
 目标函数\ref{eq:pdstsp-obj}追求最小化完工时间$z$，即无人机和卡车最晚到达终点仓库的时间，通过约束\ref{eq:pdstsp-truck-min-time}和\ref{eq:pdstsp-drone-min-time}分别限制卡车和无人机最晚到达终点仓库的时间来实现；约束\ref{eq:pdstsp-customer}确保了每个顾客能且只能被服务一次，服务可以由无人机或者卡车提供；约束\ref{eq:pdstsp-truck-start}和\ref{eq:pdstsp-truck-end}要求卡车必须从起点仓库$0$出发并返回终点仓库$c+1$一次，约束\ref{eq:pdstsp-truck-flow}要求卡车在中间的顾客节点满足流入和流出相等的流约束；约束\ref{eq:pdstsp-mtz}是MTZ形式的破子圈约束；约束\ref{eq:pdstsp-u-bound}，\ref{eq:pdstsp-x-bound}和\ref{eq:pdstsp-y-bound}给出了决策变量和辅助决策变量的取值范围。
 
-Ham(2018)\cite{hamIntegratedSchedulingMtruck2018}在PDSTSP的基础上提出了multi-truck, multi-drone, and multi-depot scheduling problem constrained by time-window, drop-pickup synchronization, and multi-visit, with the objective to minimize the maximum completion time over all tasks ($\text{PDSTSP}^{\text{+DP}}$)，不同于PDSTSP，该问题考虑了无人机递送和收回货物的情况，即当无人机递送货物到顾客返回时，可以飞行到另一个需要退货的顾客节点进行回收货物以使无人机满载，从而满足退货的需求。另外，该问题还考虑了服务顾客的时间窗问题，即顾客需求有时间限制，并且可以在不同的时间段为同一个顾客服务。
+Ham(2018)\cite{hamIntegratedSchedulingMtruck2018}在PDSTSP的基础上提出了multi-truck, multi-drone, and multi-depot scheduling problem constrained by time-window, drop-pickup synchronization, and multi-visit, with the objective to minimize the maximum completion time over all tasks ($\text{PDSTSP}^{\text{+DP}}$\index{PDSTSP@$\text{PDSTSP}^{\text{+DP}}$})，不同于PDSTSP，该问题考虑了无人机递送和收回货物的情况，即当无人机递送货物到顾客返回时，可以飞行到另一个需要退货的顾客节点进行回收货物以使无人机满载，从而满足退货的需求。另外，该问题还考虑了服务顾客的时间窗问题，即顾客需求有时间限制，并且可以在不同的时间段为同一个顾客服务。
