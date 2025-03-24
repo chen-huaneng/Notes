@@ -26,10 +26,13 @@
 \RequirePackage{titlesec} % 修改Chapter和Section章节标题的格式
 \RequirePackage{tocloft} % 自定义目录样式
 \RequirePackage{fancyhdr} % 修改页眉页脚的格式
+% 引用、索引、超链接和参考文献
 \RequirePackage[sort&compress]{gbt7714} % 参考文献样式
 \RequirePackage{hyperref} % 超链接
+\RequirePackage{makeidx} % 索引
 \RequirePackage[noabbrev]{cleveref} % 多公式引用，必须放在hyperref包的后面，参考 https://tex.stackexchange.com/questions/314217/how-i-can-refer-multiple-equation-in-latex
 \RequirePackage{bookmark} % 生成PDF书签
+% 目录
 \RequirePackage[nottoc]{tocbibind} % 为目录、参考文献和索引生成目录项，禁止为目录生成目录项
 \RequirePackage{epigraph} % 排版引用
 % 字体
@@ -272,6 +275,7 @@
 %%%%%%%%%%%%%%%%封面设计%%%%%%%%%%%%%%%%%%%%
 % 参考https://tex.stackexchange.com/questions/85904/showcase-of-beautiful-title-page-done-in-tex
 
+\definecolor{titlepagetextcolor}{RGB}{3, 83, 40} % 标题页文字颜色
 
 % title page
 \usetikzlibrary{calc}
@@ -295,7 +299,7 @@
     {\large \@author}}              
 \makeatother
 \author{%
-    \href{chen-huaneng.github.io}{\textcolor{black}{Chen Huaneng (Abel)}} \\  %%%% Your Name
+    \href{chen-huaneng.github.io}{\bfseries\textcolor{titlepagetextcolor}{Chen Huaneng (Abel)}} \\  %%%% Your Name
     Xiamen University \\    %%%% Department Name
     \texttt{huanengchen@foxmail.com}\vspace{5pt} \\ %%% Your Email Address
     }
@@ -354,6 +358,9 @@
 % 参考https://tex.stackexchange.com/questions/192838/part-heading-style
 
 
+% \definecolor{partcolor}{red!65!black} % 设置part标题颜色
+\definecolor{partcolor}{RGB}{3, 83, 40} % 设置part标题颜色
+\definecolor{parttextcolor}{RGB}{0, 0, 0} % 设置part标题文字颜色
 \makeatletter
 \renewcommand\thepart{\arabic{part}}
 \def\@part[#1]#2{%
@@ -372,22 +379,22 @@
     \vbox{%
       \hsize=7mm%
       \begin{tabular}{@{}p{7mm}@{}}
-        \makebox[7mm]{\strut\large\partname}\\
-        \makebox[7mm]{\cellcolor{red!65!black}\Huge\color{white}\bfseries\strut\thepart\rule[-4cm]{0pt}{4cm}}%
+        \makebox[7mm]{\strut\large\textcolor{partcolor}{\partname}}\\
+        \makebox[7mm]{\cellcolor{partcolor}\Huge\color{white}\bfseries\strut\thepart\rule[-4cm]{0pt}{4cm}}%
       \end{tabular}%
-      \makebox(0,0){\color{red!65!black}\setlength{\fboxrule}{2pt}\put(-10,-100){\fbox{\phantom{\rule[-4cm]{7mm}{4cm}}}}}
+      \makebox(0,0){\color{partcolor}\setlength{\fboxrule}{2pt}\put(-10,-100){\fbox{\phantom{\rule[-4cm]{7mm}{4cm}}}}}
       }%
     \kern-2pt
     \vbox to 0pt{%
        \tabular[t]{@{}p{1cm}p{\dimexpr\hsize-2.1cm}@{}}\hlineforpart
-          & \Huge\itshape\bfseries\rule{0pt}{1.5\ht\strutbox}#1\endtabular}%
+          & \Huge\itshape\bfseries\rule{0pt}{1.5\ht\strutbox}\textcolor{parttextcolor}{#1}\endtabular}%
     }%
   \fussy % 恢复排版要求
   \cleardoublepage
  \vskip 100\p@
 }
 % Define a new command for the hline with specific color and thickness
-\newcommand{\hlineforpart}{\noalign {\ifnum 0=`}\fi \color{red!65!black}\hrule height 1pt depth 0pt \ifnum 0=`{\fi}}
+\newcommand{\hlineforpart}{\noalign {\ifnum 0=`}\fi \color{partcolor}\hrule height 1pt depth 0pt \ifnum 0=`{\fi}}
 \makeatother
 
 
@@ -399,27 +406,33 @@
 % 参考：https://stackoverflow.com/questions/78868366/chapter-title-style
 
 
+% 定义颜色
+\definecolor{chaptercolor}{RGB}{171, 217, 179} % 设置章节标题颜色
+\definecolor{chaptertextcolor}{RGB}{3, 83, 40} % 设置章节标题文字颜色
+
 % 设置章节编号的字体样式
 \newcommand{\chapnumfont}{%     % define font for chapter number
     \usefont{T1}{pnc}{b}{n}%      % choose New Chancery, bold, normal shape
     \fontsize{100}{25}%          % font size 100pt, baselineskip 25pt
     \selectfont%                  % activate font
 }
-\colorlet{chapnumcol}{red!75!black}  % color for chapter number
+\colorlet{chapnumcol}{chaptercolor}  % color for chapter number
 
 % 定义带编号的章节标题样式，具体设置参考titlesec宏包
 \titleformat{name=\chapter}[display]
 {\filleft\bfseries}
 {\filleft\chapnumfont\textcolor{chapnumcol}{\thechapter}}
 {0pt}
-{\Huge}
+{\Huge\textcolor{chaptertextcolor}} % 设置章节标题文字颜色
+[{\color{chaptertextcolor}\titlerule[1pt]}]
 
 % 定义不带编号的章节标题样式，具体设置参考titlesec宏包
 \titleformat{name=\chapter,numberless}[display]
 {\filright\bfseries}
 {\filright}
 {0pt}
-{\Huge}
+{\Huge\textcolor{chaptertextcolor}} % 设置章节标题文字颜色
+[{\color{chaptertextcolor}\titlerule[1pt]}]
 
 % 定义章节和正文等位置的距离，具体设置参考titlesec宏包
 \titlespacing{\chapter}{0pt}{0pt}{\baselineskip}
@@ -434,12 +447,15 @@
 % 有关颜色的部分参考xcolor宏包
 
 
+% 定义颜色
+\definecolor{sectioncolor}{RGB}{3, 83, 40} % 设置Section标题颜色
+
 % 定义带编号的Section样式，具体设置参考titlesec宏包
 \titleformat{name=\section}
     {\Large\bfseries}
-    {\thesection}
+    {\textcolor{sectioncolor}\thesection}
     {1em}
-    {}
+    {\textcolor{sectioncolor}}
     % [{\color{DeepPink4}\titlerule[1pt]}]
 
 % 定义带不编号的Section样式，具体设置参考titlesec宏包
@@ -447,23 +463,25 @@
     {\Large\bfseries}
     {}
     {1em}
-    {}
+    {\textcolor{sectioncolor}}
     % [{\color{DeepPink4}\titlerule[1pt]}]
 
 % 定义带编号的Subsection样式，具体设置参考titlesec宏包
 \titleformat{name=\subsection}
-    {\Large\bfseries}
-    {\thesubsection}
+    {\large\bfseries}
+    {\itshape\textcolor{sectioncolor}\thesubsection}
     {1em}
-    {}
+    % {\itshape}
+    {\itshape\textcolor{sectioncolor}}
     % [{\color{HotPink4}\titlerule[0.8pt]}]
 
 % 定义不带编号的Subsection样式，具体设置参考titlesec宏包
 \titleformat{name=\subsection, numberless}
-    {\Large\bfseries}
+    {\large\bfseries}
     {}
     {1em}
-    {}
+    % {\itshape}
+    {\itshape\textcolor{sectioncolor}}
     % [{\color{HotPink4}\titlerule[0.8pt]}]
 
 
@@ -504,7 +522,7 @@
 %%%%%%%%%%%%%%%参考文献设计%%%%%%%%%%%%%%%%%
 
 
-\renewcommand{\bibname}{References} % 修改参考文献标题
+\renewcommand{\bibname}{\bfseries References} % 修改参考文献标题
 \bibliographystyle{gbt7714-numerical} % 顺序编码制
 
 
@@ -519,6 +537,7 @@
     bookmarksopen=true, % 启用书签
     colorlinks=true, % 启用颜色
     linkcolor=red, % 内部链接的颜色
+    linktoc=all, % 设置目录中的页码和标题都能够跳转
     citecolor=orange, % 引用链接的颜色
     urlcolor=cyan, % 外部链接的颜色
 }
@@ -529,11 +548,12 @@
 
 
 %%%%%%%%%%%%%%%%%目录设计%%%%%%%%%%%%%%%%%%%
-% 参考https://coffeelize.top/posts/LaTeX-Catalog-Study-Notes.html
-% 参考https://tex.stackexchange.com/questions/461216/remove-indentation-in-table-of-contents
+% 参考 https://coffeelize.top/posts/LaTeX-Catalog-Study-Notes.html
+% 参考 https://tex.stackexchange.com/questions/461216/remove-indentation-in-table-of-contents
 
 
-\renewcommand{\contentsname}{Contents} % 修改目录标题
+\definecolor{TOCCOLOR}{RGB}{3, 83, 40} % 设置目录标题颜色
+\renewcommand{\contentsname}{\bfseries\textcolor{TOCCOLOR}{Contents}} % 修改目录标题
 \CTEXsetup[name={,},number={\arabic{chapter}}]{chapter} % 修改中文章节标识为数字标识
 \CTEXsetup[name={,},number={\Roman{part}}]{part} % 修改中文部分标识为大写罗马字母标识
 \renewcommand{\cftdot}{$\cdot$} % 设置导引符为垂直居中的小圆点
@@ -549,5 +569,18 @@
 \setlength{\cftsubsecindent}{15pt} % Indent for \subsection
 % \setlength{\cftsubsubsecindent}{0pt} % Remove indent for \subsubsection
 
+\renewcommand{\appendixname}{Appendix} % 修改附录标题
+
 
 %%%%%%%%%%%%%%%%%目录设计%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%索引设计%%%%%%%%%%%%%%%%%%%
+
+
+\renewcommand{\indexname}{Index} % 修改索引标题
+\makeindex % 开启索引的收集
+
+
+%%%%%%%%%%%%%%%%%索引设计%%%%%%%%%%%%%%%%%%%
