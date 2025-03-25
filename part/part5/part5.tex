@@ -21,10 +21,102 @@ Traveling Salesman Problem with Drones (TSP-D\index{TSP-D}) 是经典的TSP问�
 
 \section{TSPDroneLIB by Bogyrbayeva et al. (2023)}
 \href{https://github.com/chkwon/TSPDroneLIB}{TSPDroneLIB}仓库包含了用于TSP-D问题和FSTSP问题的数据集和相关的链接。该仓库提到了\ref{sec:tsp-d-instances-by-bouman-et-al-2018}的数据集，另外包括了Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}使用的数据集。相关的算法可以在\href{https://github.com/chkwon/TSPDrone.jl}{TSPDrone.jl}仓库中找到。有关数据集的字段说明可以在\href{https://github.com/chkwon/TSPDroneLIB/blob/main/data/Bogyrbayeva/description.md}{TSPDroneLIB/data/Bogyrbayeva/description.md}中找到。该数据集分类如下：
+
 \begin{itemize}
     \item \texttt{Random：}包含了三个不同节点数量大小的数据集，分别为 $n = 20, 50, 100$，每个数据集包含了$100$个算例，每行表示包含横纵坐标的一个算例，遵循格式 $x_1,y_1,x_2,y_2,\dots,x_n,y_n$，即每行的每两个数一组组成一个节点的横纵坐标，同时 $x_1,y_1$表示仓库节点的横纵坐标。该数据集的生成方法为：在$[1100]\times[1100]$的范围内，从均匀分布中随机抽取每个节点的横纵坐标，唯一的例外是仓库节点，其位置分布在$[0,1]\times[0,1]$范围内，这意味着仓库总是位于角落。这种数据集的生成方法和Agatz等(2018)\cite{agatzOptimizationApproachesTraveling2018}使用的数据集生成方法是一致的。
     \item \texttt{Amsterdam：}该数据集的数据格式和\texttt{Random}数据集相同，共有四种不同大小的算例，分别为 $n = 10, 20, 50, 100$。该数据集基于Haider等(2019)\cite{haiderOptimizingRelocationOperations2019}研究中使用的电动汽车(electric vehicle, EV)停车位置数据集。这些位置反映了潜在顾客的位置，因为电动汽车通常停放在城市街道的路边充电器旁。为了适应Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}的研究，该文章从整个\texttt{Amsterdam}数据集中随机选取仓库和客户节点来创建不同的问题算例。
 \end{itemize}
 
 \section{TSPLIB by Reinelt (1991)}
-\href{http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/}{TSPLIB}是一个用于和TSP问题相关的数据集，包含了Symmetric Traveling Salesman Problem (STSP)\index{STSP}、Asymmetric Traveling Salesman Problem (ATSP)\index{ATSP}、Hamiltonian Cycle Problem (HCP)\index{HCP}、Sequential Ordering Problem (SOP)\index{SOP}、Capacitated Vehicle Routing Problem (CVRP)\index{CVRP}的数据集。
+\href{http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/}{TSPLIB}是一个用于和TSP问题相关的数据集，包含了Symmetric Traveling Salesman Problem (STSP)\index{STSP}、Asymmetric Traveling Salesman Problem (ATSP)\index{ATSP}、Hamiltonian Cycle Problem (HCP)\index{HCP}、Sequential Ordering Problem (SOP)\index{SOP}、Capacitated Vehicle Routing Problem (CVRP)\index{CVRP}的数据集，可以在\href{http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp95.pdf}{tsp95.pdf}中查看有关数据集的完整说明文档。除了HCP以外，其他的问题都是定义在完全图上，且所有的距离都是以整数表示的。每个文件都包括说明部分和数据部分，说明部分包含了有关文件的格式和内容的信息。
+
+% 下面介绍和TSPLIB数据集有关的字段说明（符号\texttt{<}和\texttt{>}之间的字符表示数据的类型，比如\texttt{NAME <string>}表示字段\texttt{NAME}的数据类型是\texttt{string}）：
+
+% \begin{itemize}
+%     \item \texttt{NAME <string>：}数据文件的标识符。
+%     \item \texttt{TYPE <string>：}数据文件的类型，包括以下几种：
+%     \begin{itemize}
+%         \item \texttt{TSP}：Symmetric Traveling Salesman Problem
+%         \item \texttt{ATSP}：Asymmetric Traveling Salesman Problem
+%         \item \texttt{SOP}：Sequential Ordering Problem
+%         \item \texttt{HCP}：Hamiltonian Cycle Problem
+%         \item \texttt{CVRP}：Capacitated Vehicle Routing Problem
+%         \item \texttt{TOUR}：A collection of tours
+%     \end{itemize}
+%     \item \texttt{COMMENT <string>：}额外的说明，通常是贡献者或者作者的名字。
+%     \item \texttt{DIMENSION <integer>：}对TSP和ATSP来说，表示节点的数量；对于CVRP来说，表示顾客节点和仓库节点的总数；对于\texttt{TOUR}文件来说，表示问题的规模。
+%     \item \texttt{CAPACITY <integer>：}对于CVRP来说，表示车辆的容量。
+%     \item \texttt{EDGE\_WEIGHT\_TYPE <string>：}表示边的权重（距离）以何种方式给出，包括以下几种类型：
+%     \begin{itemize}
+%         \item \texttt{EXPLICIT}：边的权重以矩阵的形式给出。
+%     \end{itemize}
+% \end{itemize}
+
+部分STSP数据集如表\ref{tab:dataset-stsp-example}所示。
+
+\begin{tabularx}{\textwidth}{lccc}
+    \caption{Symmetric Traveling Salesman Problem Examples} \label{tab:dataset-stsp-example} \\
+    \toprule[1pt]
+    数据名称 & 城市数量 & 距离计算方式 & 最优值 \\ 
+    \midrule[0.75pt]
+    \endfirsthead
+    \multicolumn{2}{c}{\tablename\ \thetable (续)} \\ %续表的表头
+    \toprule[1pt]
+    数据名称 & 城市数量 & 距离计算方式 & 最优值 \\ 
+    \midrule[0.75pt]
+    \endhead
+    \bottomrule[1pt]
+    \endfoot
+    \bottomrule[1pt]
+    \endlastfoot
+    % 表格内容
+    a280 & 280 & EUC\_2D & 2579 \\
+    berlin52 & 52 & EUC\_2D & 7542 \\
+    bier127 & 127 & EUC\_2D & 118282 \\
+    ch130 & 130 & EUC\_2D & 6110 \\
+    ch150 & 150 & EUC\_2D & 6528 \\
+    d198 & 198 & EUC\_2D & 15780 \\
+    d493 & 493 & EUC\_2D & 35002 \\
+    d657 & 657 & EUC\_2D & 48912 \\
+    eil51 & 51 & EUC\_2D & 426 \\
+    eil76 & 76 & EUC\_2D & 538 \\
+    eil101 & 101 & EUC\_2D & 629 \\
+    fl417 & 417 & EUC\_2D & 11861 \\
+    gil262 & 262 & EUC\_2D & 2378 \\
+    kroA100 & 100 & EUC\_2D & 21282 \\
+    kroB100 & 100 & EUC\_2D & 22141 \\
+    kroC100 & 100 & EUC\_2D & 20749 \\
+    kroD100 & 100 & EUC\_2D & 21294 \\
+    kroE100 & 100 & EUC\_2D & 22068 \\
+    kroA150 & 150 & EUC\_2D & 26524 \\
+    kroB150 & 150 & EUC\_2D & 26130 \\
+    kroA200 & 200 & EUC\_2D & 29368 \\
+    kroB200 & 200 & EUC\_2D & 29437 \\
+    lin105 & 105 & EUC\_2D & 14379 \\
+    lin318 & 318 & EUC\_2D & 42029 \\
+    linhp318 & 318 & EUC\_2D & 41345 \\
+    p654 & 654 & EUC\_2D & 34643 \\
+    pcb442 & 442 & EUC\_2D & 50778 \\
+    pr76 & 76 & EUC\_2D & 108159 \\
+    pr107 & 107 & EUC\_2D & 44303 \\
+    pr124 & 124 & EUC\_2D & 59030 \\
+    pr136 & 136 & EUC\_2D & 96772 \\
+    pr144 & 144 & EUC\_2D & 58537 \\
+    pr152 & 152 & EUC\_2D & 73682 \\
+    pr226 & 226 & EUC\_2D & 80369 \\
+    pr264 & 264 & EUC\_2D & 49135 \\
+    pr299 & 299 & EUC\_2D & 48191 \\
+    pr439 & 439 & EUC\_2D & 107217 \\
+    rat99 & 99 & EUC\_2D & 1211 \\
+    rat195 & 195 & EUC\_2D & 2323 \\
+    rat575 & 575 & EUC\_2D & 6773 \\
+    rat783 & 783 & EUC\_2D & 8806 \\
+    rd100 & 100 & EUC\_2D & 7910 \\
+    rd400 & 400 & EUC\_2D & 15281 \\
+    st70 & 70 & EUC\_2D & 675 \\
+    ts225 & 225 & EUC\_2D & 126643 \\
+    tsp225 & 225 & EUC\_2D & 3919 \\
+    u159 & 159 & EUC\_2D & 42080 \\
+    u574 & 574 & EUC\_2D & 36905 \\
+    u724 & 724 & EUC\_2D & 41910 \\
+\end{tabularx}
