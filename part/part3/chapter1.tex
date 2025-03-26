@@ -131,14 +131,14 @@ FSTSP数学模型可以表示为MILP \ref{model:model-fstsp}。
 
 目标函数\ref{eq:fstsp-obj}追求最小化卡车到达终点仓库$c+1$的有效时间$t_{c+1}$，通过约束\ref{eq:fstsp-truck-drone-land-time-1}和\ref{eq:fstsp-truck-drone-land-time-2}来对齐无人机和卡车最晚到达终点仓库的时间，所以目标函数相当于$\min\{\max\{t_{c+1},t_{c+1}'\}\}$。
 
-约束条件可以分为四类\cite{zhihu-murray2015}：
+参考\href{https://zhuanlan.zhihu.com/p/3235861366}{知乎解读文章}，可以将约束条件可以分为四类：
 
 \begin{itemize}
     \item \colorbox{shallow-green}{客户有关的约束：}约束\ref{eq:fstsp-customer-visit}要求对于任何一位顾客$j$，必须且只能被卡车（或无人机）服务一次。
     \item \colorbox{shallow-purple}{卡车有关的约束：}
     \begin{itemize}
         \item 卡车流平衡约束：约束\ref{eq:fstsp-truck-start}要求卡车必须从起点仓库流出一次，约束\ref{eq:fstsp-truck-return}要求卡车必须从终点仓库流入一次，约束\ref{eq:fstsp-truck-continuity}要求卡车在中间节点满足流入和流出相等的流平衡约束。
-        \item 卡车破子圈约束：约束\ref{eq:fstsp-truck-mtz}是MTZ形式的破子圈约束\cite{YunChouorWeiWoYouHuaQianTanLuXingShangWenTiTSPDeQiZhongZhengShuGuiHuaMoXing2022, YunChouorWeiWoYouHua|TSPZhongLiangZhongBuTongXiaoChuZiHuanLuDeFangFaJicallbackShiXianPythonDiaoYongGurobiQiuJie2020}，去除了子圈存在的可能，这里$M$取到了$u_i - u_j + 1$的上界$c+2$，$u_i$可以理解为点$i$的访问次序，比如$u_1 = 5$可以理解为点1是从出发点开始，第五个被访问到的点。
+        \item 卡车破子圈约束：约束\ref{eq:fstsp-truck-mtz}是MTZ形式的破子圈约束\footnote{关于破子圈约束可以参考\href{https://mp.weixin.qq.com/s/i7I-o0LiC_JP3vVOQw2AIw}{TSP中两种不同消除子环路的方法}和\href{https://mp.weixin.qq.com/s/tDYOxlSQHKRJkf5EcaBJ1A}{浅谈旅行商问题（TSP）的七种整数规划模型}}，去除了子圈存在的可能，这里$M$取到了$u_i - u_j + 1$的上界$c+2$，$u_i$可以理解为点$i$的访问次序，比如$u_1 = 5$可以理解为点1是从出发点开始，第五个被访问到的点。
     \end{itemize}
     \item \colorbox{shallow-red}{无人机有关的约束：}
     \begin{itemize}
@@ -451,7 +451,7 @@ multi-drop FSTSP 数学模型可以表示为MILP \ref{model:model-multi-drop-fst
 
 \begin{itemize}
     \item \colorbox{shallow-green}{顾客相关的约束：}约束\ref{eq:multi-drop-fstsp-customer-visit}确保所有的节点都被至少访问过一次；约束\ref{eq:multi-drop-fstsp-customer-visit-drone}确保所有可以被无人机服务的顾客点最多被无人机服务一次；约束\ref{eq:multi-drop-fstsp-customer-visit-limit}确保被无人机服务过的节点不会被卡车服务，反之亦然，系数2是由于当无人机没有服务过节点 $v$ 时，节点 $v$ 可以作为卡车某个操作的终点及另一个操作的起点（即在节点$v$最多在两个操作中存在，一次作为操作的起点，一次作为操作的终点）；约束\ref{eq:multi-drop-fstsp-start-end-limit}表示如果节点 $v$ 是某个操作的终止节点，那么节点 $v$ 一定要是某个操作的起始节点。 
-    \item \colorbox{shallow-blue}{Hamilton 图\cite{HamiltonianPathWikiwand}约束：}约束\ref{eq:multi-drop-fstsp-hamiltonian-1}确保以节点 $v$ 为终止点的操作接下来的操作会以节点 $v$ 为起始点（流量平衡约束）；约束\ref{eq:multi-drop-fstsp-hamiltonian-2}确保任何非空的客户子集$S$必须至少有一个操作从外部进入，即如果节点 $v$ 被选为某个操作的起始节点($Y_v = 1$)，则必须存在至少一个操作进入包含$v$的子集$S$，避免子回路的产生（消除子回路约束）；约束\ref{eq:multi-drop-fstsp-hamiltonian-3}确保终止点为仓库的操作只有一次，这是因为如果终止点为仓库的操作大于1次，由于约束\ref{eq:multi-drop-fstsp-customer-visit-limit}限制了卡车和无人机服务节点的次数，并且约束\ref{eq:multi-drop-fstsp-customer-visit}确保每个节点都被访问过至少一次，而目标函数是最小化时间成本，如果多次以仓库为终止点的操作存在，则会增加成本，因此终止节点为仓库的操作大于1次的情况会被过滤掉。
+    \item \colorbox{shallow-blue}{\href{https://www.wikiwand.com/en/articles/Hamiltonian\%20path}{Hamilton Graph}约束：}约束\ref{eq:multi-drop-fstsp-hamiltonian-1}确保以节点 $v$ 为终止点的操作接下来的操作会以节点 $v$ 为起始点（流量平衡约束）；约束\ref{eq:multi-drop-fstsp-hamiltonian-2}确保任何非空的客户子集$S$必须至少有一个操作从外部进入，即如果节点 $v$ 被选为某个操作的起始节点($Y_v = 1$)，则必须存在至少一个操作进入包含$v$的子集$S$，避免子回路的产生（消除子回路约束）；约束\ref{eq:multi-drop-fstsp-hamiltonian-3}确保终止点为仓库的操作只有一次，这是因为如果终止点为仓库的操作大于1次，由于约束\ref{eq:multi-drop-fstsp-customer-visit-limit}限制了卡车和无人机服务节点的次数，并且约束\ref{eq:multi-drop-fstsp-customer-visit}确保每个节点都被访问过至少一次，而目标函数是最小化时间成本，如果多次以仓库为终止点的操作存在，则会增加成本，因此终止节点为仓库的操作大于1次的情况会被过滤掉。
     \item \colorbox{shallow-red}{无人机相关的约束：}约束\ref{eq:multi-drop-fstsp-drone-battery-limit}要求无人机在一次sortie过程中消耗的电量不能超过其续航限制。
     \item 决策变量和辅助决策变量及初始值：约束\ref{eq:multi-drop-fstsp-start}通过确保仓库被作为起点访问使得仓库作为路径的起始点；约束\ref{eq:multi-drop-fstsp-x-limit}和\ref{eq:multi-drop-fstsp-y-limit}定义了决策变量 $x_k$ 和辅助决策变量 $Y_v$ 的取值范围。 
 \end{itemize}

@@ -120,3 +120,7 @@ Traveling Salesman Problem with Drones (TSP-D\index{TSP-D}) 是经典的TSP问�
     u574 & 574 & EUC\_2D & 36905 \\
     u724 & 724 & EUC\_2D & 41910 \\
 \end{tabularx}
+
+\section{Amazon Delivery Dataset by Kaggle}
+\href{https://www.kaggle.com/datasets/sujalsuthar/amazon-delivery-dataset}{Amazon Delivery Dataset}是一个Amazon公司最后一公里物流运营情况的数据集，包含了超过 $43632$ 次配送的多城市数据，数据字段包括订单详情、配送人员、天气、交通情况、配送仓库和配送地点的经纬度等信息。要将数据集转换为可以用于TSP-D问题的数据集，需要将数据集中的经纬度转换为欧几里得距离，即两点之间的直线距离，当然在此之前需要对原始数据集进行一些数据的预处理工作，详细的代码在附录\ref{sec:amazon-delivery-data-preprocessing-code}中。
+

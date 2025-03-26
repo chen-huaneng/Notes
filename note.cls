@@ -54,6 +54,8 @@
 % 自定义环境
 \RequirePackage{environ}
 \RequirePackage{parskip} % 形成段落间的间距
+% 代码环境
+\RequirePackage{listings} % 代码环境
 
 
 %%%%%%%%%%%%%%%%导入宏包%%%%%%%%%%%%%%%%%%%%
@@ -214,9 +216,16 @@
     BoldFont=FZHTJW.TTF, % 设置粗体为方正黑体
     ItalicFont=FZKTJW.TTF, % 设置斜体为方正楷体
 ]
-\setCJKsansfont{FZHTJW.TTF}[Path=./fonts/] % 设置无衬线字体为方正黑体
-\setCJKmonofont{FZFSJW.TTF}[Path=./fonts/] % 设置等宽字体为方正仿宋
-
+\setCJKsansfont{FZHTJW.TTF}[ % 设置无衬线字体为方正黑体
+    Path=./fonts/,
+    AutoFakeSlant=0.2, % 生成斜体效果
+    AutoFakeBold=1.5,  % 生成粗体效果
+]
+\setCJKmonofont{FZFSJW.TTF}[ % 设置等宽字体为方正仿宋
+    Path=./fonts/,
+    AutoFakeSlant=0.2, % 生成斜体效果
+    AutoFakeBold=1.5,  % 生成粗体效果
+] 
 % 英文字体，具体设置参考fontspec宏包
 % \setmainfont{CaskaydiaCoveNerdFont}[ % 设置英文主字体为CaskaydiaCove Nerd Font
 %     Path=./fonts/, % 指定字体文件所在的目录
@@ -585,3 +594,44 @@
 
 
 %%%%%%%%%%%%%%%%%索引设计%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%代码环境%%%%%%%%%%%%%%%%%%%
+
+
+% 配色参考： https://www.designpieces.com/palette/github-color-palette-hex-and-rgb#:~:text=GitHub%20Color%20Palette%20%28Hex%20and%20RGB%29%201%20GitHub,245%208%20GitHub%20Mine%20Shaft%20Hex%3A%20%23333%20
+% 定义颜色
+\definecolor{codebackground}{RGB}{255, 255, 255} % 背景色
+\definecolor{commentcolor}{RGB}{59, 127, 49}    % 注释颜色
+\definecolor{keywordcolor}{RGB}{64, 120, 192}     % 关键字颜色
+\definecolor{stringcolor}{RGB}{189, 44, 0}      % 字符串颜色
+
+% 设置 listings 样式
+\lstset{
+    language=Python, % 设置编程语言
+    backgroundcolor=\color{codebackground}, % 背景色
+    basicstyle=\ttfamily\small, % 基本字体样式
+    keywordstyle=\color{keywordcolor}\bfseries, % 关键字样式
+    commentstyle=\ttfamily\color{commentcolor}\itshape, % 注释样式
+    stringstyle=\color{stringcolor}, % 字符串样式
+    numbers=left, % 显示行号
+    flexiblecolumns, % 列宽动态调整
+    numberstyle=\ttfamily\small\color{gray}, % 行号样式
+    stepnumber=1, % 行号步长
+    numbersep=5pt, % 行号与代码的距离
+    frame=single, % 代码框
+    breaklines=true, % 自动换行
+    showstringspaces=false, % 不显示字符串中的空格
+    showspaces=false, % 不显示空格
+    tabsize=4, % 设置制表符宽度
+    captionpos=t, % 标题位置
+    escapeinside={(*@}{@*)}, % 允许在代码中使用 LaTeX 命令
+}
+
+% 重定义默认的 listings 名称
+\renewcommand{\lstlistingname}{Source Code}
+\renewcommand{\lstlistlistingname}{\bfseries\textcolor{TOCCOLOR}{Source Code List}}
+
+
+%%%%%%%%%%%%%%%%%代码环境%%%%%%%%%%%%%%%%%%%
