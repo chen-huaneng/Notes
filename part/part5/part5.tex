@@ -27,6 +27,70 @@ Traveling Salesman Problem with Drones (TSP-D\index{TSP-D}) 是经典的TSP问�
     \item \texttt{Amsterdam：}该数据集的数据格式和\texttt{Random}数据集相同，共有四种不同大小的算例，分别为 $n = 10, 20, 50, 100$。该数据集基于Haider等(2019)\cite{haiderOptimizingRelocationOperations2019}研究中使用的电动汽车(electric vehicle, EV)停车位置数据集。这些位置反映了潜在顾客的位置，因为电动汽车通常停放在城市街道的路边充电器旁。为了适应Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}的研究，该文章从整个\texttt{Amsterdam}数据集中随机选取仓库和客户节点来创建不同的问题算例。
 \end{itemize}
 
+\subsection{DPS algorithm and DRL algorithm implemented in TSPDrone.jl}
+\href{https://github.com/chkwon/TSPDrone.jl}{TSPDrone.jl}仓库如前所述，解决了单车辆配备单架无人机的TSP-D问题，实现了Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}提出的Divide-Partition-and-Search (DPS\index{DPS})算法和Deep Reinforcement Learning (DRL\index{DRL})算法，其中DPS算法是基于Agatz等(2018)\cite{agatzOptimizationApproachesTraveling2018}的TSP-ep-all算法和Poikonen等(2019)\cite{poikonenBranchandBoundApproachTraveling2019}的divide-and-conquer启发式算法开发的。
+
+使用DPS算法的步骤如下：
+\begin{enumerate}
+    \item 安装\href{https://julialang.org/}{Julia}，在命令行中输入\mintinline{pwsh}{julia}进入\texttt{Julia}环境，输入命令安装必要的依赖：
+    \mint[bgcolor=Beige,]{julia}{] add https://github.com/chkwon/TSPDrone.jl}
+    \item 使用DPS算法需要提供顾客节点的$x$和$y$坐标，仓库的$(x, y)$坐标需要是第一个元素，参数\texttt{truck\_cost\_factor}和参数\texttt{drone\_cost\_factor}分别代表卡车和无人机的成本因子，会乘以从横纵坐标中计算出来的欧氏距离来得到卡车和无人机的行驶成本。
+
+\begin{code}{DPS algorithm usage example (a)}{dps-algorithm-usage-example-a}
+    \inputminted{julia}{code/DPS-usage-examples/dps-usage-example-a.jl}
+\end{code}
+    
+    如果正常运行，会输出如下结果（根据随机数生成的结果可能会有所不同），其中节点$11$作为终止节点表示仓库节点（即终止节点的代号会在总的节点数量上$+1$）：
+\begin{minted}{text}
+result.total_cost = 1.6022013835206805
+result.truck_route = [1, 4, 5, 2, 8, 6, 11]
+result.drone_route = [1, 9, 4, 10, 5, 7, 8, 3, 11]
+\end{minted}
+
+    \item 或者也可以直接提供卡车和无人机的成本矩阵（即原本根据欧氏距离矩阵乘以成本因子得到的矩阵），同样，仓库节点被标记为节点$1$：
+
+\begin{code}{DPS algorithm usage example (b)}{dps-algorithm-usage-example-b}
+    \inputminted{julia}{code/DPS-usage-examples/dps-usage-example-b.jl}
+\end{code}
+
+    \item 使用命令\mintinline{julia}{print_summary(result)}可以输出结果总结：
+\begin{minted}{text}
+julia> print_summary(result)
+Operation #1:
+  - Truck        = 0.17988883875173492 : [1, 3]
+  - Drone        = 0.11900891950265155 : [1, 4, 3]
+  - Length       = 0.17988883875173492
+Operation #2:
+  - Truck        = 0.4784476248243221 : [3, 9]
+  - Drone        = 0.27587675362585756 : [3, 7, 9]
+  - Length       = 0.4784476248243221
+Operation #3:
+  - Truck        = 0.445749847855226 : [9, 6]
+  - Drone        = 0.48831605249544785 : [9, 10, 6]
+  - Length       = 0.48831605249544785
+Operation #4:
+  - Truck        = 0.9269158918021541 : [6, 5, 8, 11]
+  - Drone        = 0.8714473929102112 : [6, 2, 11]
+  - Length       = 0.9269158918021541
+Total Cost = 2.073568407873659
+\end{minted}
+    
+    \item 函数\mintinline{julia}{solve_tspd}的可选参数包括：
+
+\begin{code}{DPS algorithm optional keyword arguments}{dps-algorithm-optional-keyword-arguments}
+    \inputminted{julia}{code/DPS-usage-examples/dps-optional-keyword-arguments.jl}
+\end{code}
+    \begin{itemize}
+        \item \texttt{n\_groups}：用于分治法的子组数量。例如，如果$n = 100$且\texttt{n\_groups = 4}，则每组将有$25$个节点，然后将方法\texttt{method}应用于每个组。
+        \item \texttt{method}：可以是以下的几种方法之一\cite{agatzOptimizationApproachesTraveling2018}：
+        \begin{itemize}
+            \item
+        \end{itemize}
+        \item \texttt{flying\_range}：无人机的飞行范围，默认值为\texttt{Inf}。飞行范围与无人机成本矩阵中的值进行比较，即\texttt{drone\_cost\_mtx}或欧氏距离乘以\texttt{drone\_cost\_factor}。
+        \item \texttt{time\_limit}：算法运行的总时间限制，以秒为单位。对于每个组，时间限制平均分配。例如，如果\texttt{time\_limit = 3600.0}且\texttt{n\_groups = 5}，则每组的时间限制为$3600/5=720$秒。
+    \end{itemize}
+\end{enumerate}
+
 \section{TSPLIB by Reinelt (1991)}
 \href{http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/}{TSPLIB}是一个用于和TSP问题相关的数据集，包含了Symmetric Traveling Salesman Problem (STSP)\index{STSP}、Asymmetric Traveling Salesman Problem (ATSP)\index{ATSP}、Hamiltonian Cycle Problem (HCP)\index{HCP}、Sequential Ordering Problem (SOP)\index{SOP}、Capacitated Vehicle Routing Problem (CVRP)\index{CVRP}的数据集，可以在\href{http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp95.pdf}{tsp95.pdf}中查看有关数据集的完整说明文档。除了HCP以外，其他的问题都是定义在完全图上，且所有的距离都是以整数表示的。每个文件都包括说明部分和数据部分，说明部分包含了有关文件的格式和内容的信息。
 
