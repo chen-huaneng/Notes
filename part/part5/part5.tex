@@ -30,7 +30,21 @@ Traveling Salesman Problem with Drones (TSP-D\index{TSP-D}) 是经典的TSP问�
 \subsection{DPS algorithm and DRL algorithm implemented in TSPDrone.jl}
 \href{https://github.com/chkwon/TSPDrone.jl}{TSPDrone.jl}仓库如前所述，解决了单车辆配备单架无人机的TSP-D问题，实现了Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}提出的Divide-Partition-and-Search (DPS\index{DPS})算法和Deep Reinforcement Learning (DRL\index{DRL})算法，其中DPS算法是基于Agatz等(2018)\cite{agatzOptimizationApproachesTraveling2018}的TSP-ep-all算法和Poikonen等(2019)\cite{poikonenBranchandBoundApproachTraveling2019}的divide-and-conquer启发式算法开发的。
 
-使用DPS算法的步骤如下：
+DPS算法是Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}提出的一种基于分治策略的启发式算法，用于解决TSP-D问题。其核心思想是将大规模问题分解为较小的子问题，并通过组合子问题的解来获得全局解。DPS算法的主要步骤如下：
+\begin{enumerate}
+    \item Divide：将全部节点划分为多个子组，每个子组包含固定数量（由参数$g$控制）的节点。例如，$g = 10$表示每个子组有$10$个节点。
+    \item Partition \& Search：在每个子组内，采用TSP-ep-all算法\cite{agatzOptimizationApproachesTraveling2018}进行分区。TSP-ep-all算法通过如下步骤优化子组内的路径：
+    \begin{enumerate}
+        \item 生成初始TSP路径：使用Concorde TSP Solver得到卡车单独服务的初始路径。
+        \item 动态规划分区：将路径中的节点划分为由卡车和无人机协同服务的子集，以最小化总时间。
+        \item 局部搜索优化：进一步调整分区以提升解的质量。
+    \end{enumerate}
+    \item 合并与全局优化：将所有子组的解合并为完整的路径，并进行全局优化（如调整子组边界或路径顺序）以消除局部最优的局限性。
+\end{enumerate}
+
+在DPS算法中，较大的子组$g$（如$g = 25$）会提升解的质量，但增加计算时间；较小的子组$g$（如$g = 10$）则相反。当$g = N\text{（总节点数）}$时，DPS退化为直接应用TSP-ep-all算法，不再划分子组。
+
+TSPDrone.jl用\texttt{Julia}实现，初始TSP路径由Concorde TSP Solver生成，分区过程基于动态规划和局部搜索，使用该仓库DPS算法的步骤如下：
 \begin{enumerate}
     \item 安装\href{https://julialang.org/}{Julia}，在命令行中输入\mintinline{pwsh}{julia}进入\texttt{Julia}环境，输入命令安装必要的依赖：
     \mint[bgcolor=Beige,]{julia}{] add https://github.com/chkwon/TSPDrone.jl}
@@ -82,9 +96,13 @@ Total Cost = 2.073568407873659
 \end{code}
     \begin{itemize}
         \item \texttt{n\_groups}：用于分治法的子组数量。例如，如果$n = 100$且\texttt{n\_groups = 4}，则每组将有$25$个节点，然后将方法\texttt{method}应用于每个组。
-        \item \texttt{method}：可以是以下的几种方法之一\cite{agatzOptimizationApproachesTraveling2018}：
+        \item \texttt{method}：可以是以下的几种方法之一，\texttt{TSP-ep}及其衍生方法（\texttt{TSP-ep-1p}、\texttt{TSP-ep-2p}、\texttt{TSP-ep-2opt}和\texttt{TSP-ep-all}）是基于route-first, cluster-second框架的启发式算法，由Agatz等(2018)\cite{agatzOptimizationApproachesTraveling2018}提出，用于解决TSP-D：
         \begin{itemize}
-            \item
+            \item \texttt{TSP-ep} (Exact Partition)：使用TSP求解器（如Concorde）生成最优TSP路径，然后以初始TSP路径为基础，通过精确划分算法（动态规划，时间复杂度为$O(n^3)$）将TSP路径分割为卡车和无人机的协同路径。
+            \item \texttt{TSP-ep-1p}：在\texttt{TSP-ep}的基础上，引入单点移动领域搜索(One-Point Move)，通过调整单个节点的位置优化路径。即先对初始路径进行Exact Partition，然后遍历每个节点，尝试将其移动到路径中的其他位置，计算目标函数改进，然后接受最大的移动，迭代直至无法进一步优化。
+            \item \texttt{TSP-ep-2p}：在\texttt{TSP-ep}的基础上，引入两点交换领域搜索(Two-Point Swap)，通过交换两个节点的位置优化路径。即先对初始路径进行Exact Partition，然后遍历所有节点对，尝试交换两者的位置，计算目标函数改进，然后接受最大的交换，迭代直至无法进一步优化。
+            \item \texttt{TSP-ep-2opt}：在\texttt{TSP-ep}的基础上，引入2-opt领域搜索，通过反转路径中的子段优化路径。即先对初始路径进行Exact Partition，然后遍历所有可能的路径子段，尝试反转子段并重新计算总时间，接受改进最大的反转操作，迭代直至无法进一步优化。
+            \item \texttt{TSP-ep-all}：在\texttt{TSP-ep}的基础上，综合应用所有领域搜索策略（\texttt{1p}、\texttt{2p}、\texttt{2opt}），通过多策略组合优化路径。即先对初始路径进行Exact Partition，然后在每轮迭代中，尝试所有领域操作（One-Point Move, Two-Point Swap, 2-opt），选择改进最大的操作，迭代直至无法进一步优化。（表现最佳，但运行时间较长$O(n^5)$）
         \end{itemize}
         \item \texttt{flying\_range}：无人机的飞行范围，默认值为\texttt{Inf}。飞行范围与无人机成本矩阵中的值进行比较，即\texttt{drone\_cost\_mtx}或欧氏距离乘以\texttt{drone\_cost\_factor}。
         \item \texttt{time\_limit}：算法运行的总时间限制，以秒为单位。对于每个组，时间限制平均分配。例如，如果\texttt{time\_limit = 3600.0}且\texttt{n\_groups = 5}，则每组的时间限制为$3600/5=720$秒。
