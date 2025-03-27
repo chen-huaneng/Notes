@@ -55,7 +55,7 @@
 \RequirePackage{environ}
 \RequirePackage{parskip} % 形成段落间的间距
 % 代码环境
-\RequirePackage{listings} % 代码环境
+\RequirePackage{minted} % 代码环境
 
 
 %%%%%%%%%%%%%%%%导入宏包%%%%%%%%%%%%%%%%%%%%
@@ -68,21 +68,29 @@
 % 定理盒子配色
 \colorlet{theorem-background-color}{Honeydew}
 \colorlet{theorem-front-color}{ForestGreen!60!black}
+
+% 引理盒子配色
 \colorlet{lemma-background-color}{LemonChiffon}
 \colorlet{lemma-front-color}{Goldenrod!70}
+
+% 定义盒子配色
 \colorlet{definition-background-color}{AliceBlue}
 \colorlet{definition-front-color}{SteelBlue!70}
 
+% 模型盒子配色
 \colorlet{model-background-color}{Lavender!8!white}
 \colorlet{model-front-color}{RoyalPurple!70!black}
 
+% 代码盒子配色
+\colorlet{code-background-color}{LavenderBlush}
+\colorlet{code-front-color}{DeepPink!50!black}
+
+
 % 配好颜色未使用的浅色系方案
-% \colorlet{name-1-background-color}{Coral!10!white}
-% \colorlet{name-1-front-color}{Coral!70}
-% \colorlet{name-2-background-color}{SkyBlue!8!white}
-% \colorlet{name-2-front-color}{DodgerBlue!70}
-% \colorlet{name-3-background-color}{LavenderBlush}
-% \colorlet{name-3-front-color}{DeepPink!50!black}
+% \colorlet{name-background-color}{SkyBlue!8!white}
+% \colorlet{name-front-color}{DodgerBlue!70}
+% \colorlet{name-background-color}{Coral!10!white}
+% \colorlet{name-front-color}{Coral!70}
 
 % 定理环境通用设置
 \tcbset{
@@ -91,7 +99,7 @@
         enhanced jigsaw, % 启用增强型分页效果
         before upper={\allowdisplaybreaks[4]},
         pad at break=1mm, % 分页处间距
-        title after break=continued, % 分页后的标题
+        title after break=\thetcbcounter\text{ (continued)}, % 分页后的标题
     }
 }
 
@@ -106,6 +114,7 @@
     drop fuzzy shadow,        % 阴影效果
     arc=1mm, % 圆角弧度大小
     boxrule=0pt, % 边框线宽度
+    title after break=\text{Theorem }\thetcbcounter\text{ (continued)}, % 分页后的标题
 }{thm} % 定义交叉引用的前缀，如\ref{thm:label}
 
 % 定义引理环境
@@ -119,6 +128,7 @@
     drop fuzzy shadow,
     arc=1mm, % 圆角弧度大小
     boxrule=0pt, % 边框线宽度
+    title after break=\text{Lemma }\thetcbcounter\text{ (continued)}, % 分页后的标题
 }{lem}
 
 % 定义定义环境
@@ -132,6 +142,7 @@
     drop fuzzy shadow,
     arc=1mm, % 圆角弧度大小
     boxrule=0pt, % 边框线宽度
+    title after break=\text{Definition }\thetcbcounter\text{ (continued)}, % 分页后的标题
 }{def}
 
 % 定义模型环境
@@ -146,7 +157,23 @@
     drop fuzzy shadow,
     arc=1mm, % 圆角弧度大小
     boxrule=0pt, % 边框线宽度
+    title after break=\text{Model }\thetcbcounter\text{ (continued)}, % 分页后的标题
 }{model}
+
+% 定义代码环境
+\newtcbtheorem[number within=chapter]{code}{Code}{
+    breakablestyle,
+    colback=code-background-color,
+    colframe=code-front-color,
+    fonttitle=\bfseries,
+    title={Code \thetcbcounter},
+    enhanced,
+    rounded corners,
+    drop fuzzy shadow,
+    arc=1mm, % 圆角弧度大小
+    boxrule=0pt, % 边框线宽度
+    title after break=\text{Code }\thetcbcounter\text{ (continued)}, % 分页后的标题
+}{code}
 
 
 %%%%%%%%%%%%%%%%定理盒子%%%%%%%%%%%%%%%%%%%%
@@ -598,40 +625,43 @@
 
 
 %%%%%%%%%%%%%%%%%代码环境%%%%%%%%%%%%%%%%%%%
+% 参考 minted 宏包文档
 
 
-% 配色参考： https://www.designpieces.com/palette/github-color-palette-hex-and-rgb#:~:text=GitHub%20Color%20Palette%20%28Hex%20and%20RGB%29%201%20GitHub,245%208%20GitHub%20Mine%20Shaft%20Hex%3A%20%23333%20
-% 定义颜色
-\definecolor{codebackground}{RGB}{255, 255, 255} % 背景色
-\definecolor{commentcolor}{RGB}{59, 127, 49}    % 注释颜色
-\definecolor{keywordcolor}{RGB}{64, 120, 192}     % 关键字颜色
-\definecolor{stringcolor}{RGB}{189, 44, 0}      % 字符串颜色
+% 重新设置代码行号样式
+\renewcommand{\theFancyVerbLine}{
+\sffamily
+\textcolor{gray}{
+\footnotesize\oldstylenums{
+\arabic{FancyVerbLine}}}}
 
-% 设置 listings 样式
-\lstset{
-    language=Python, % 设置编程语言
-    backgroundcolor=\color{codebackground}, % 背景色
-    basicstyle=\ttfamily\small, % 基本字体样式
-    keywordstyle=\color{keywordcolor}\bfseries, % 关键字样式
-    commentstyle=\ttfamily\color{commentcolor}\itshape, % 注释样式
-    stringstyle=\color{stringcolor}, % 字符串样式
+\renewcommand{\listoflistingscaption}{\bfseries\textcolor{TOCCOLOR}{List of Code}} % 修改代码列表标题
+\renewcommand{\listingscaption}{Code} % 修改代码标题
+
+% 设置代码环境
+\setminted{
+    % style=default, % 设置代码风格，可选的代码风格参考： https://pygments.org/styles/
     numbers=left, % 显示行号
-    flexiblecolumns, % 列宽动态调整
-    numberstyle=\ttfamily\small\color{gray}, % 行号样式
-    stepnumber=1, % 行号步长
-    numbersep=5pt, % 行号与代码的距离
-    frame=single, % 代码框
-    breaklines=true, % 自动换行
-    showstringspaces=false, % 不显示字符串中的空格
-    showspaces=false, % 不显示空格
-    tabsize=4, % 设置制表符宽度
-    captionpos=t, % 标题位置
-    escapeinside={(*@}{@*)}, % 允许在代码中使用 LaTeX 命令
+    numbersep=2pt, % 行号与代码的距离
+    mathescape, % 允许在代码注释中使用数学公式
+    % bgcolor=Beige, % 设置背景颜色
+    % breakanywhere, % 允许代码在任意位置断行，似乎会导致inline代码不显示内容
+    breaklines, % 允许代码自动断行 
+    fontsize=\footnotesize, % 设置代码字体大小
+    frame=leftline, % 设置代码框
+    framerule=0.5pt, % 设置代码框线宽
+    highlightcolor=Beige, % 设置代码行高亮颜色
+    resetmargins, % 重置代码边距
 }
 
-% 重定义默认的 listings 名称
-\renewcommand{\lstlistingname}{Source Code}
-\renewcommand{\lstlistlistingname}{\bfseries\textcolor{TOCCOLOR}{Source Code List}}
+% 设置行内代码环境
+\setmintedinline{
+    fontsize=\footnotesize, % 设置代码字体大小
+    bgcolor=Beige, % 设置背景颜色
+    bgcolorpadding=0.2em, % 设置背景颜色的内边距
+    breakanywhereinlinestretch=0.01em, % 允许行内代码在任意位置断行
+    breaklines, % 允许行内代码自动断行
+}
 
 
 %%%%%%%%%%%%%%%%%代码环境%%%%%%%%%%%%%%%%%%%

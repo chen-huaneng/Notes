@@ -1,16 +1,19 @@
 % \part{Appendix}
-\chapter{Appendix A}
+\chapter{Source Code}
 
 \section{Amazon delivery data preprocessing code}\label{sec:amazon-delivery-data-preprocessing-code}
-关于已知两点经纬度计算两点之间距离的方法，这里使用了\href{https://www.wikiwand.com/en/articles/Haversine_formula}{Haversine formula}\footnote{在代码中使用的不是$\arcsin$而是$\arctan$，这是因为当$\sin$值接近$1$时，直接使用$\arcsin$可能导致精度问题，而$\arctan$通过显式分离分子分母，可以使得计算更加稳定。$\arcsin$和$\arctan$之间的转换可以参考：\href{https://zhuanlan.zhihu.com/p/111197233}{实用反三角函数运算公式}。}，但是要注意这个公式只是一个近似值，即假设地球是一个球体，而实际上地球是一个椭球体，不过对于不是精确到亚米级别的应用来说，这个公式的精度是足够的，误差在 $0.5\%$ 以内。如果需要更精确的方法可以参考\href{https://www.wikiwand.com/en/articles/Vincenty%27s_formulae}{Vincenty's formulae}和\href{https://www.wikiwand.com/en/articles/Geographical_distance}{Geographical distance}。
+关于已知两点经纬度计算两点之间距离的方法，这里使用了\href{https://www.wikiwand.com/en/articles/Haversine_formula}{Haversine formula}\footnote{在代码中使用的不是$\arcsin$而是$\arctan$，这是因为当$\sin$值接近$1$时，直接使用$\arcsin$可能导致精度问题，而$\arctan$通过显式分离分子分母，可以使得计算更加稳定。$\arcsin$和$\arctan$之间的转换可以参考：\href{https://zhuanlan.zhihu.com/p/111197233}{实用反三角函数运算公式}。}，但是要注意这个公式只是一个近似值，即假设地球是一个球体，而实际上地球是一个椭球体，不过对于不是精确到亚米级别的应用来说，这个公式的精度是足够的，误差在 $0.5\%$ 以内。如果需要更精确的方法可以参考\href{https://www.wikiwand.com/en/articles/Vincenty%27s_formulae}{Vincenty's formulae}和\href{https://www.wikiwand.com/en/articles/Geographical_distance}{Geographical distance}。根据经纬度判断这个点是否在陆地的方法可以参考\texttt{Python}的库\href{https://pypi.org/project/global-land-mask/}{global-land-mask}。
 
-\lstinputlisting[
-    language=Python,
-    caption={Amazon delivery data preporcessing code to filter data}]{code/amazon_delivery/amazon_delivery_preprocessing_1.py}
+\begin{code}{Amazon delivery data preprocessing code to filter data}{amazon-delivery-preprocessing-1}
+    \inputminted[highlightlines={5-13,44-48,3}]{python}{code/amazon_delivery/amazon_delivery_preprocessing_1.py}
+\end{code}
 
 首先删除不需要的数据列。接着通过将前面得到的数据导入到\href{https://www.google.com/maps/d/}{Google Maps}中，可以看到仓库数据大致可以聚类成22个簇，因此聚类时设置聚类数量为22。然后将同一聚类的仓库节点和配送节点合并到同一个\texttt{Excel}文件中，因此总共会生成22个不同聚类的\texttt{Excel}文件。
-\lstinputlisting[
-    language=Python,
-    caption={Amazon delivery data preporcessing code to sort data}]{code/amazon_delivery/amazon_delivery_preprocessing_2.py}
+
+\begin{code}{Amazon delivery data preprocessing code to sort data}{amazon-delivery-preprocessing-2}
+\inputminted{python}{code/amazon_delivery/amazon_delivery_preprocessing_2.py}
+\end{code}
 
 \chapter{Appendix B}
+% \mintinline{py}{print("Hello!")}
+% \mint{julia}{] add https://github.com/chkwon/TSPDrone.jl}
