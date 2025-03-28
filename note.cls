@@ -56,6 +56,8 @@
 \RequirePackage{parskip} % 形成段落间的间距
 % 代码环境
 \RequirePackage{minted} % 代码环境
+% 算法、伪代码环境
+\RequirePackage[linesnumbered, ruled, longend, lined]{algorithm2e}
 
 
 %%%%%%%%%%%%%%%%导入宏包%%%%%%%%%%%%%%%%%%%%
@@ -665,3 +667,14 @@
 
 
 %%%%%%%%%%%%%%%%%代码环境%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%算法、伪代码环境%%%%%%%%%%%%%%%%%%%
+% 参考 algorithm2e 宏包文档
+
+
+\DontPrintSemicolon % 不打印分号
+
+
+%%%%%%%%%%%%%%%%%算法、伪代码环境%%%%%%%%%%%%%%%%%%%

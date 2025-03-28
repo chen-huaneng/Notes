@@ -44,7 +44,7 @@ DPS算法是Bogyrbayeva等(2023)\cite{bogyrbayevaDeepReinforcementLearning2023}�
 
 在DPS算法中，较大的子组$g$（如$g = 25$）会提升解的质量，但增加计算时间；较小的子组$g$（如$g = 10$）则相反。当$g = N\text{（总节点数）}$时，DPS退化为直接应用TSP-ep-all算法，不再划分子组。
 
-TSPDrone.jl用\texttt{Julia}实现，初始TSP路径由Concorde TSP Solver生成，分区过程基于动态规划和局部搜索，使用该仓库DPS算法的步骤如下：
+TSPDrone.jl用\texttt{\href{https://julialang.org/}{Julia\index{Julia}}}\footnote{学习\texttt{Julia}的课程参考MIT的\href{https://computationalthinking.mit.edu/}{Introduction to Computational Thinking}。}实现，初始TSP路径由Concorde TSP Solver生成，分区过程基于动态规划和局部搜索，使用该仓库DPS算法的步骤如下：
 \begin{enumerate}
     \item 安装\href{https://julialang.org/}{Julia}，在命令行中输入\mintinline{pwsh}{julia}进入\texttt{Julia}环境，输入命令安装必要的依赖：
     \mint[bgcolor=Beige,]{julia}{] add https://github.com/chkwon/TSPDrone.jl}
