@@ -1,5 +1,7 @@
 \part{Traveling Salesman Problem}
 \chapter{Symmetric Traveling Salesman Problem}
+
+\section{Problem Definition}
 旅行商问题（Traveling Salesman Problem, TSP\index{TSP}）是组合优化领域的经典问题之一，其核心目标是给定城市列表和每对城市之间的距离，求恰好访问每个城市一次并返回起始城市的最短可能路线。该问题于1930年正式提出，是优化中研究最深入的问题之一，被用作许多优化方法的基准。自从该问题被正式提出以来，一直是运筹学、计算机科学和物流管理等领域的研究热点，尽管该问题在计算上很困难，但许多启发式方法和精确算法是已知的\cite{2009A, 2012Models}。
 
 \begin{figure}[!htb]
@@ -22,3 +24,26 @@ TSP可以表述为整数线性规划模型\cite{papadimitriou1998combinatorial}�
 \end{model}
 
 目标函数\ref{eq:tsp-obj}表示最小化访问所有城市的成本（距离），约束\ref{eq:tsp-in}和\ref{eq:tsp-out}保证每个城市节点的入度和出度为1，即每个城市只进入一次和出去一次，保证了每个城市只访问一次，不会被重复访问，约束\ref{eq:tsp-subtour}消除子回路，约束\ref{eq:tsp-u_bound}和\ref{eq:tsp-x_bound}表示变量的取值范围。
+
+\section{Solution Methods}
+
+\subsection{Exact Methods}
+\href{https://www.math.uwaterloo.ca/tsp/concorde/index.html}{Concorde}是一个求解TSP的精确算法，由\href{https://www.wikiwand.com/en/articles/ANSI_C}{ANSI C}编写。在\href{https://www.math.uwaterloo.ca/tsp/concorde/downloads/downloads.htm}{Concorde Download}页面可以下载到最新版本的Concorde。下载后通过在命令行输入命令\ref{code:concorde-unzip}进行解压，解压后会得到一个名为\texttt{concorde}的文件夹，
+
+\begin{code}{Concorde unzip}{concorde-unzip}
+\begin{minted}{pwsh}
+gunzip co031219.tgz
+tar xvf co031219.tar
+\end{minted}
+\end{code}
+
+\subsection{Heuristic Methods}
+\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}是解决TSP的\href{https://www.wikiwand.com/en/articles/Lin%E2%80%93Kernighan_heuristic}{Lin-Kernighan}启发式算法的有效实现，基于ANSI C编写。在此之外，LKH还有一个改进的\href{http://akira.ruc.dk/~keld/research/LKH-3/}{LKH-3}版本，支持多种约束条件(Asymmetric capacitated vehicle routing problem, Multiple traveling salesmen problem, Sequential ordering problem$\dots$)的TSP求解。在\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}页面可以下载到最新版本的LKH实现代码。下载后通过在命令行输入命令\ref{code:lkh-unzip}进行解压，解压后会得到一个名为\texttt{LKH-2.0.10}的文件夹。
+
+\begin{code}{LKH unzip}{lkh-unzip}
+\begin{minted}{pwsh}
+tar xvfz LKH-2.0.10.tgz
+cd LKH-2.0.10
+make
+\end{minted}
+\end{code}
