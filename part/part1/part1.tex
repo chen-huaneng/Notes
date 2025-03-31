@@ -28,7 +28,7 @@ TSP可以表述为整数线性规划模型\cite{papadimitriou1998combinatorial}�
 \section{Solution Methods}
 
 \subsection{Exact Methods}
-\href{https://www.math.uwaterloo.ca/tsp/concorde/index.html}{Concorde}是一个求解TSP的精确算法，由\href{https://www.wikiwand.com/en/articles/ANSI_C}{ANSI C}编写。在\href{https://www.math.uwaterloo.ca/tsp/concorde/downloads/downloads.htm}{Concorde Download}页面可以下载到最新版本的Concorde。下载后通过在命令行输入命令\ref{code:concorde-unzip}进行解压，解压后会得到一个名为\texttt{concorde}的文件夹，
+\href{https://www.math.uwaterloo.ca/tsp/concorde/index.html}{Concorde}是一个求解TSP的精确算法，由\href{https://www.wikiwand.com/en/articles/ANSI_C}{ANSI C}编写。在\href{https://www.math.uwaterloo.ca/tsp/concorde/downloads/downloads.htm}{Concorde Download}页面可以下载到最新版本的Concorde。下载后通过在命令行输入命令\ref{code:concorde-unzip}进行解压，解压后会得到一个名为\texttt{concorde}的文件夹，编译的过程参考\href{https://www.freesion.com/article/5581560004/}{Ubuntu（Linux）安装concorde过程}。
 
 \begin{code}{Concorde unzip}{concorde-unzip}
 \begin{minted}{pwsh}
@@ -37,10 +37,34 @@ tar xvf co031219.tar
 \end{minted}
 \end{code}
 
-\subsection{Heuristic Methods}
-\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}是解决TSP的\href{https://www.wikiwand.com/en/articles/Lin%E2%80%93Kernighan_heuristic}{Lin-Kernighan}启发式算法的有效实现，基于ANSI C编写。在此之外，LKH还有一个改进的\href{http://akira.ruc.dk/~keld/research/LKH-3/}{LKH-3}版本，支持多种约束条件(Asymmetric capacitated vehicle routing problem, Multiple traveling salesmen problem, Sequential ordering problem$\dots$)的TSP求解。在\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}页面可以下载到最新版本的LKH实现代码。下载后通过在命令行输入命令\ref{code:lkh-unzip}进行解压，解压后会得到一个名为\texttt{LKH-2.0.10}的文件夹。
+Concorde需要linear programming solver，常用的有\href{https://www.math.uwaterloo.ca/~bico/qsopt/index.html}{QSOpt}和IBM的\href{https://www.ibm.com/products/ilog-cplex-optimization-studio/cplex-optimizer}{CPLEX}，由于Concorde自从2003年之后就没有更新过，因此当前CPLEX的版本已经不再合适，因此选用QSOpt。QSOpt的路径假设为\mintinline{bash}{path=/home/kaiyouhu/qsopt}，用命令\ref{code:qsopt-download}下载QSOpt的头文件，
 
-\begin{code}{LKH unzip}{lkh-unzip}
+\begin{code}{QSOpt download}{qsopt-download}
+\begin{minted}{bash}
+mkdir qsopt
+cd qsopt
+wget -O qsopt.a http://www.math.uwaterloo.ca/~bico/qsopt/beta/codes/PIC/qsopt.PIC.a # WSL上的Ubuntu测试有效
+wget http://www.math.uwaterloo.ca/~bico/qsopt/beta/codes/linux64/qsopt.h
+wget http://www.math.uwaterloo.ca/~bico/qsopt/beta/codes/linux64/qsopt
+\end{minted}
+\end{code}
+
+然后在\texttt{concorde}文件夹下使用命令\ref{code:concorde-make}编译Concorde，编译完成后会在当前目录下生成一个名为\texttt{TSP}的文件。
+
+\begin{code}{Concorde make}{concorde-make}
+\begin{minted}{bash}
+CFLAGS="-fPIC -O2 -g" ./configure --with-qsopt=/home/kaiyouhu/qsopt # 如果QSOpt的路径不同记得修改
+# continue
+make
+cd TSP
+./concorde -s 99 -k 100 # -s 99表示使用随机种子99，-k 100表示使用100个城市的TSP实例进行测试
+\end{minted}
+\end{code}
+
+\subsection{Heuristic Methods}
+\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}是解决TSP的\href{https://www.wikiwand.com/en/articles/Lin%E2%80%93Kernighan_heuristic}{Lin-Kernighan}启发式算法的有效实现，基于ANSI C编写。在此之外，LKH还有一个改进的\href{http://akira.ruc.dk/~keld/research/LKH-3/}{LKH-3}版本，支持多种约束条件(Asymmetric capacitated vehicle routing problem, Multiple traveling salesmen problem, Sequential ordering problem$\dots$)的TSP求解。在\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}页面可以下载到最新版本的LKH实现代码。下载后通过在命令行输入命令\ref{code:lkh-unzip}进行解压，解压后会得到一个名为\texttt{LKH-2.0.10}的文件夹，然后在\texttt{Linux}或者\texttt{WSL}下输入命令\mintinline{bash}{make}编译LKH代码，编译完成后会在当前目录下生成一个名为\texttt{LKH}的文件。
+
+\begin{code}{LKH unzip and make}{lkh-unzip}
 \begin{minted}{pwsh}
 tar xvfz LKH-2.0.10.tgz
 cd LKH-2.0.10
