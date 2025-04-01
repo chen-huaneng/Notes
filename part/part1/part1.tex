@@ -28,7 +28,7 @@ TSP可以表述为整数线性规划模型\cite{papadimitriou1998combinatorial}�
 \section{Solution Methods}
 
 \subsection{Exact Methods}
-\href{https://www.math.uwaterloo.ca/tsp/concorde/index.html}{Concorde}是一个求解TSP的精确算法，由\href{https://www.wikiwand.com/en/articles/ANSI_C}{ANSI C}编写。在\href{https://www.math.uwaterloo.ca/tsp/concorde/downloads/downloads.htm}{Concorde Download}页面可以下载到最新版本的Concorde。下载后通过在命令行输入命令\ref{code:concorde-unzip}进行解压，解压后会得到一个名为\texttt{concorde}的文件夹，编译的过程参考\href{https://www.freesion.com/article/5581560004/}{Ubuntu（Linux）安装concorde过程}。
+\href{https://www.math.uwaterloo.ca/tsp/concorde/index.html}{Concorde}是一个求解TSP的精确算法，由\href{https://www.wikiwand.com/en/articles/ANSI_C}{ANSI C}编写。在\href{https://www.math.uwaterloo.ca/tsp/concorde/downloads/downloads.htm}{Concorde Download}页面可以下载到最新版本的Concorde。下载后通过在命令行输入命令\ref{code:concorde-unzip}进行解压，解压后会得到一个名为\texttt{concorde}的文件夹，编译的过程参考\href{https://www.freesion.com/article/5581560004/}{Ubuntu（Linux）安装concorde过程}或者参考\href{https://github.com/perrygeo/pytsp/wiki/Installing-Solvers}{Installing Concorde}。
 
 \begin{code}{Concorde unzip}{concorde-unzip}
 \begin{minted}{pwsh}
@@ -61,6 +61,8 @@ cd TSP
 \end{minted}
 \end{code}
 
+在\texttt{Python}中使用\texttt{Concorde}可以参考\href{https://github.com/jvkersch/pyconcorde}{pyconcorde}，该项目是\texttt{Concorde}的\texttt{Python}接口，需要注意的是这个\texttt{Python}接口不支持\texttt{Windows}系统，但是支持\texttt{WSL}，具体的安装细节\href{https://github.com/jvkersch/pyconcorde}{参考文档说明}。
+
 \subsection{Heuristic Methods}
 \href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}是解决TSP的\href{https://www.wikiwand.com/en/articles/Lin%E2%80%93Kernighan_heuristic}{Lin-Kernighan}启发式算法的有效实现，基于ANSI C编写。在此之外，LKH还有一个改进的\href{http://akira.ruc.dk/~keld/research/LKH-3/}{LKH-3}版本，支持多种约束条件(Asymmetric capacitated vehicle routing problem, Multiple traveling salesmen problem, Sequential ordering problem$\dots$)的TSP求解。在\href{http://akira.ruc.dk/~keld/research/LKH/}{LKH}页面可以下载到最新版本的LKH实现代码。下载后通过在命令行输入命令\ref{code:lkh-unzip}进行解压，解压后会得到一个名为\texttt{LKH-2.0.10}的文件夹，然后在\texttt{Linux}或者\texttt{WSL}下输入命令\mintinline{bash}{make}编译LKH代码，编译完成后会在当前目录下生成一个名为\texttt{LKH}的文件。
 
@@ -71,3 +73,5 @@ cd LKH-2.0.10
 make
 \end{minted}
 \end{code}
+
+在\texttt{Python}中使用\texttt{LKH}可以参考\href{https://github.com/ntnu-arl/LKH_TSP}{LKH\_TSP}，该项目是\texttt{LKH}的\texttt{Python}接口，需要注意的是这个\texttt{Python}接口不支持\texttt{Windows}系统，但是可以在\texttt{WSL}中运行。
