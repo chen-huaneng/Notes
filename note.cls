@@ -589,6 +589,7 @@
 %%%%%%%%%%%%%%%%%目录设计%%%%%%%%%%%%%%%%%%%
 % 参考 https://coffeelize.top/posts/LaTeX-Catalog-Study-Notes.html
 % 参考 https://tex.stackexchange.com/questions/461216/remove-indentation-in-table-of-contents
+% 参考 https://tex.stackexchange.com/questions/3177/how-to-change-the-numbering-of-part-chapter-section-to-alphabetical-r
 
 
 \definecolor{TOCCOLOR}{RGB}{3, 83, 40} % 设置目录标题颜色
@@ -599,13 +600,14 @@
 \renewcommand{\cftdotsep}{1.5} % 设置点间距
 \renewcommand\cftpartdotsep{2} % 设置部分与页码间的导引符
 \renewcommand\cftchapdotsep{2} % 设置章节标题与页码间的导引符
+\renewcommand\thepart{\Roman{part}} % 设置\part编号格式为大写罗马字母
 \setlength{\cftbeforesecskip}{0pt} % 二级标题间隔
 \setcounter{secnumdepth}{3} % 设置目录深度至三级标题
 % \setlength{\cftbeforechapskip}{5pt} % 一级标题（章节标题）前间隔
 \renewcommand{\cftchapafterpnum}{\vspace{5pt}} % 一级标题（章节标题）后间隔
-\setlength{\cftchapindent}{0pt} % Remove indent for \section
+\setlength{\cftchapindent}{0pt} % Indent for \chapter
 \setlength{\cftsecindent}{15pt} % Indent for \section
-\setlength{\cftsubsecindent}{15pt} % Indent for \subsection
+\setlength{\cftsubsecindent}{20pt} % Indent for \subsection
 % \setlength{\cftsubsubsecindent}{0pt} % Remove indent for \subsubsection
 
 \renewcommand{\appendixname}{Appendix} % 修改附录标题
