@@ -1,1 +1,19 @@
-\part{Algorithm}
+\part{Algorithm and Data Structure}
+\chapter{Introduction to Algorithms}
+\section{What is Algorithm}
+算法（\href{https://en.wikipedia.org/wiki/Algorithm}{Algorithm}）是一个有限的、明确的、可计算的步骤序列，用于解决某类特定问题或执行特定计算任务\cite{cormenIntroductionAlgorithms2009}\marginpar{page 5}。算法通常由输入、输出和一系列操作组成。它们可以用自然语言、伪代码或编程语言来描述。
+
+\section{Analyzing Algorithms}
+分析算法通常指分析运行算法所需要耗费的资源，虽然有时候需要分析内存、通信带宽或者计算机硬件这类资源，但通常在算法分析中只考虑时间复杂度（\href{https://www.wikiwand.com/en/articles/Time_complexity}{Time Complexity}）和空间复杂度（\href{https://www.wikiwand.com/en/articles/Space_complexity}{Space Complexity}）。
+
+\subsection{Time Complexity}
+时间复杂度是一个定性描述算法运行时间的有关输入数据规模大小的函数，通常用基本操作数或步数来表示。基本操作是指在算法中执行的最小操作，例如加法、乘法、赋值等，通常假设每个基本操作的执行时间是相同且固定的（尽管在实际中执行加法和乘法的时间可能不同）。算法的时间复杂度可能因为相同大小的不同输入数据而不同，通常的做法是取最坏情况的时间复杂度来描述算法的性能。由于时间复杂度的函数通常难以精确计算，且对于小规模的输入数据来说，运行时间通常并不重要，因此通常关注当输入数据规模增大时算法的运行时间增长的趋势。因此，通常用渐近上界符号$O$（\href{https://www.wikiwand.com/en/articles/Big_O_notation}{Big $O$ Notation}）来表示算法的渐近时间复杂度（简称时间复杂度）\footnote{一般说快速排序的时间复杂度为$O(n\log n)$是指快速排序在一般情况下的时间复杂度，而不是最坏情况的时间复杂度，这是业内的一个默认规定。}，例如时间复杂度可以表示为$O(n)$、$O(n^2)$、$O(\log n)$等。同样，除了渐近上界符号$O$，还有渐近下界符号$\Omega$和渐近紧确界（asymptotically tight bound）符号$\Theta$等也可以用于描述时间复杂度\cite{cormenIntroductionAlgorithms2009}\marginpar{page 13-16, 25-28}。
+
+在选择算法时，时间复杂度并非越低越好，一方面是需要考虑其他的因素，例如空间复杂度、实现难度、可读性等，另一方面是时间复杂度低并非代表算法的运行时间就一定低（因为时间复杂度只考虑了最高阶的项，且忽略了常数项），例如$O(n^2)$的算法在$n=10$时运行时间可能比$O(n\log n)$的算法还要短，但当$n$增大时，$O(n^2)$的算法就会变得很慢。
+
+时间复杂度中的$O(\log n)$不一定是以2为底的对数，这是因为$O(\log_i n) = O(\log_i j) \cdot O(\log_j n)$，而$\log_i j$是一个常数，因此可以忽略不计。实际上，$O(\log n)$是忽略底数的表达方式。
+
+\subsection{Space Complexity}
+空间复杂度是一个定性描述算法运行所需要的有关输入数据规模大小的存储空间的函数，这里的存储空间包括存储输入数据所需要的空间（input space）和存储算法运行所需要的空间（auxiliary space）。和时间复杂度一样，空间复杂度也通常用渐近上界符号$O$来表示，例如空间复杂度可以表示为$O(n)$、$O(n^{\alpha})$、$O(n \log n)$、$O(2^n)$等。
+
+空间复杂度是考虑程序运行时占用内存的大小，而不是可执行文件（程序）的大小。
