@@ -1,0 +1,52 @@
+\part{C Plus Plus}
+\chapter{Input and Output}
+\section{Standard Input and Output Streams}
+常用的输入输出的库是\mintinline{cpp}{iostream}，流（stream）是C++中处理输入输出的基本概念，流是从输入输出设备中读取或写入数据的一连串字节，术语“流”源于字节是随着时间的推移而顺序流动产生或消耗的。
+
+写入数据到流中称为输出（output），从流中读取数据称为输入（input）。对于输出来说，操作符\mintinline{cpp}{<<}称为输出操作符（output operator），用于将数据写入流中；对于输入来说，操作符\mintinline{cpp}{>>}称为输入操作符（input operator），用于从流中读取数据。输出操作符的左边必须是一个输出流对象（\mintinline{cpp}{ostream} object），右边必须是一个要输出的值或表达式，输出操作符会将右边的值写入左边的输出流中，输出操作符的返回值是左边的输出流对象，这样可以实现连续的输出操作，输入操作符则类似。比如下面的代码片段中，输出操作符\mintinline{cpp}{<<}将字符串\mintinline{cpp}{"Hello world!"}写入到标准输出流\mintinline{cpp}{std::cout}中，并且返回了\mintinline{cpp}{std::cout}，这和第二行的代码是等价的，同样和第三行和第四行的代码也是等价的。
+
+\begin{minted}{cpp}
+    std::cout << "Hello world!" << std::endl;
+    (std::cout << "Hello world!") << std::endl;
+    std::cout << "Hello world!";
+    std::cout << std::endl;
+\end{minted}
+
+\mintinline{cpp}{endl}是一个叫做“流操纵符”（stream manipulator）的特殊值，它会终止当前行并刷新（flush）与当前输出设备相关的缓冲区（buffer）。刷新缓冲区的目的是确保所有输出都被写入到输出设备中，特别是在输出设备是终端或文件时。刷新缓冲区可以确保输出的内容立即可见或可用\footnote{输出经常在进行调试时使用，在这种情况下，刷新缓冲区是必要的，否则当程序出现错误时，输出仍旧停留在缓冲区中，导致调试信息出现在错误发生之后，导致调试信息指向了错误发生之后的代码。}。
+
+当使用\mintinline{cpp}{istream}或\mintinline{cpp}{ostream}作为条件时，效果是测试流的状态。如果流的状态是有效的（valid），也即流没有发生错误（例如，读取或写入失败）或到达流的末尾（end-of-file, EOF），则条件为真（true）。例如下面代码中的\mintinline{cpp}{std::cin >> value}会从标准输入流\mintinline{cpp}{std::cin}中读取一个整数值并将其存储在变量\mintinline{cpp}{value}中，如果读取成功，则\mintinline{cpp}{std::cin}的状态是有效的，因此条件为真，循环继续执行；如果读取失败（例如输入不是一个整数），则\mintinline{cpp}{std::cin}的状态变为无效，循环结束。
+
+\begin{minted}{cpp}
+#include <iostream>
+int main() {
+    int sum = 0, value = 0;
+    while (std::cin >> value) {
+        sum += value;
+    }
+    std::cout << "Sum is: " << sum << std::endl;
+    return 0;
+}
+\end{minted}
+
+\chapter{Variables and Types}
+\section{Signed and Unsigned Types}
+C++中有两种类型，有符号类型（signed type）和无符号类型（unsigned type），有符号类型可以表示正数、负数和零，而无符号类型只能表示大于或等于零的数。在决定使用有符号类型还是无符号类型时，以下的建议可以帮助你做出选择：
+
+\begin{itemize}
+    \item 如果你知道变量只会存储非负数（例如计数器、索引等），可以使用无符号类型，这样可以增加可表示的最大值。
+    \item 使用\mintinline{cpp}{int}来进行整数运算，因为\mintinline{cpp}{short}太小，并且在实际中，\mintinline{cpp}{long}经常和\mintinline{cpp}{int}的大小相同，如果数据的值超过了\mintinline{cpp}{int}规定的最小字节数，则可以使用\mintinline{cpp}{long long}。
+    \item 不要使用plain \mintinline{cpp}{char}类型或\mintinline{cpp}{bool}类型来进行数值运算，而是只在存储字符或布尔值的时候使用。使用\mintinline{cpp}{char}类型来进行计算的时候可能会导致意外的结果，这是因为\mintinline{cpp}{char}类型在某些机器上是signed的，而在其他机器上是unsigned的，这取决于编译器的实现。如果需要使用小整数（tiny integer），需要显式地使用\mintinline{cpp}{signed char}或者\mintinline{cpp}{unsigned char}。
+    \item 使用\mintinline{cpp}{double}来进行浮点数运算，因为\mintinline{cpp}{float}的精度通常不足以满足大多数应用的需求，并且相对于\mintinline{cpp}{float}来说，\mintinline{cpp}{double}的计算消耗可以忽略不计，实际上在某些机器中双精度浮点数的计算要快于单精度浮点数的计算。使用\mintinline{cpp}{long double}获得的更高精度通常是没有必要的，并且需要消耗大量的运行时（run-time）资源。
+\end{itemize}
+
+\section{Type Conversion}
+类型转换（type conversion）会自动发生在使用某种类型用于需要另一种类型的上下文中。具体的转换后的结果取决于类型允许的值的范围和类型的大小：
+
+\begin{itemize}
+    \item 当将一个非布尔值类型的算术类型赋值给布尔值类型时，非零值会转换为true，零值会转换为false。
+    \item 当将一个布尔值类型赋值给非布尔值类型时，true会转换为1，false会转换为0。
+    \item 当将一个浮点数类型赋值给整数类型时，会截断小数部分，保留整数部分。
+    \item 当将一个整数类型赋值给浮点数类型时，会将整数转换为浮点数，保留小数部分为0，如果整数的值超出了浮点数类型的表示范围，则会导致精度丢失。
+    \item 当将一个超出类型表示范围的值赋值给一个无符号类型时，赋予的值会取该无符号类型能表示的最大值的模（modulo）的余数。例如，如果将-1赋值给一个8-bit的\mintinline{cpp}{unsigned char}，则结果为255，因为8-bit的无符号整数类型的表示范围是0到255，即对256取模，-1对256取模的余数是255。
+    \item 当将一个超出类型表示范围的值赋值给一个有符号类型时，结果是未定义的（undefined），程序可能看起来正常运行、可能崩溃或者产生垃圾值。
+\end{itemize}
