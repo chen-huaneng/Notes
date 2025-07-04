@@ -29,7 +29,8 @@ int main() {
 \end{minted}
 
 \chapter{Variables and Types}
-\section{Signed and Unsigned Types}
+\section{Types}
+\subsection{Signed and Unsigned Types}
 C++中有两种类型，有符号类型（signed type）和无符号类型（unsigned type），有符号类型可以表示正数、负数和零，而无符号类型只能表示大于或等于零的数。在决定使用有符号类型还是无符号类型时，以下的建议可以帮助你做出选择：
 
 \begin{itemize}
@@ -39,7 +40,7 @@ C++中有两种类型，有符号类型（signed type）和无符号类型（uns
     \item 使用\mintinline{cpp}{double}来进行浮点数运算，因为\mintinline{cpp}{float}的精度通常不足以满足大多数应用的需求，并且相对于\mintinline{cpp}{float}来说，\mintinline{cpp}{double}的计算消耗可以忽略不计，实际上在某些机器中双精度浮点数的计算要快于单精度浮点数的计算。使用\mintinline{cpp}{long double}获得的更高精度通常是没有必要的，并且需要消耗大量的运行时（run-time）资源。
 \end{itemize}
 
-\section{Type Conversion}
+\subsection{Type Conversion}
 类型转换（type conversion）会自动发生在使用某种类型用于需要另一种类型的上下文中。具体的转换后的结果取决于类型允许的值的范围和类型的大小：
 
 \begin{itemize}
@@ -50,3 +51,141 @@ C++中有两种类型，有符号类型（signed type）和无符号类型（uns
     \item 当将一个超出类型表示范围的值赋值给一个无符号类型时，赋予的值会取该无符号类型能表示的最大值的模（modulo）的余数。例如，如果将-1赋值给一个8-bit的\mintinline{cpp}{unsigned char}，则结果为255，因为8-bit的无符号整数类型的表示范围是0到255，即对256取模，-1对256取模的余数是255。
     \item 当将一个超出类型表示范围的值赋值给一个有符号类型时，结果是未定义的（undefined），程序可能看起来正常运行、可能崩溃或者产生垃圾值。
 \end{itemize}
+
+当表达式中涉及无符号类型和有符号类型的运算时，C++会将有符号类型转换为无符号类型，这可能导致意外的结果。例如，如果将一个负数与一个无符号整数相加，结果可能是一个非常大的正数，因为负数被转换为无符号整数后，其值变成了一个很大的正数。
+
+\subsection{Literals}
+字面量（literal）是指在代码中直接写出的值，C++支持多种类型的字面量，包括整数、浮点数、字符、字符串等。由单引号括起来的字符是字符字面量，由双引号括起来的字符串是字符串字面量，字符串字面量是由一个字符数组表示的，字符数组的最后一个元素是空字符（\mintinline{cpp}{'\0'}），表示字符串的结束。相邻的两个字符串字面量（只被空格、制表符或换行符分隔）会被连接成一个字符串字面量。
+
+\begin{minted}{cpp}
+    std::cout << "a really, really long string literal "
+                 "that spans two lines." << std::endl;
+\end{minted}
+
+\section{Variables}
+变量（variable）是一个存储数据的命名位置，可以在程序中使用变量来存储和操作数据。变量的类型决定了它可以存储的数据类型和大小以及可以对变量进行的操作。C++中的变量必须先声明后使用，声明变量时需要指定变量的类型和名称。
+
+\subsection{Initialization and Assignment}
+变量的初始化（initialization）和赋值（assignment）是两个不同的概念。初始化是在变量声明时给变量赋予一个初始值，而赋值是在变量已经声明后，给变量重新赋值。
+
+列表初始化（list initialization）是C++11引入的一种初始化方式，它使用花括号（\mintinline{cpp}{{}}）来初始化变量。列表初始化可以用于所有类型的变量，包括内置类型和用户定义的类型。列表初始化的好处是可以防止窄化转换（narrowing conversion），即从一个较大的类型转换为一个较小的类型时可能导致数据丢失。
+
+\begin{minted}{cpp}
+    long double ld = 3.1415926536;
+    int a{ld}, b = {ld};
+    int c(ld), d = ld;
+\end{minted}
+
+在上面的代码中，变量\mintinline{cpp}{a}和\mintinline{cpp}{b}使用列表初始化，而变量\mintinline{cpp}{c}和\mintinline{cpp}{d}使用普通的初始化方式。由于\mintinline{cpp}{ld}是一个长双精度浮点数（long double），而\mintinline{cpp}{int}是一个整数类型，列表初始化会防止窄化转换，因此\mintinline{cpp}{a}和\mintinline{cpp}{b}初始化会发生错误，而\mintinline{cpp}{c}和\mintinline{cpp}{d}会被初始化为3。
+
+变量如果没有进行初始化，变量会进行默认初始化（default initialization），被赋予的值取决于变量的位置和类型。如果内置类型（built-in）的变量在任何函数体外声明，则会被初始化为0，如果在函数体内声明，则不会被初始化，变量的值是未定义的。因此为了避免使用未初始化的变量导致未定义行为，建议在声明内置类型的变量时总是进行初始化。
+
+\subsection{Declaration and Definition}
+在C++中，变量的声明（declaration）和定义（definition）是两个不同的概念\footnote{变量只能被定义一次，但是可以被声明多次。}。声明是告诉编译器变量的类型和名称，而定义是为变量分配内存空间并有可能初始化变量。为了获得一个声明但不定义变量，可以使用\mintinline{cpp}{extern}关键字，\mintinline{cpp}{extern}关键字用于声明一个变量在其他文件中定义，而不是在当前文件中定义。
+
+\begin{minted}{cpp}
+    extern int i; // declares but dose not define i
+    int j; // declares and defines j
+\end{minted}
+
+任何带有显式初始化的声明都是定义，同样可以给带有关键字\mintinline{cpp}{extern}的变量进行初始化，但是这样相当于覆盖了关键字\mintinline{cpp}{extern}的含义，实际上是定义了一个变量而不是声明一个变量。
+
+\begin{minted}{cpp}
+    extern double pi = 3.1416; // definition
+\end{minted}
+
+但是在函数内部如果给带有\mintinline{cpp}{extern}关键字的变量进行初始化，则会导致编译错误。
+
+声明和定义的设计是为了在多个文件中共享变量，通过在一个文件中定义变量并在其他文件中声明变量，可以实现跨文件的变量共享。这样可以避免在每个文件中都定义相同的变量，从而减少代码重复和内存浪费。
+
+\subsection{Identifiers}
+标识符（identifier）是C++中用于命名变量、函数、类等的名称。标识符由字母、数字和下划线组成，但不能以数字开头。标识符是区分大小写的，这意味着\mintinline{cpp}{myVariable}和\mintinline{cpp}{myvariable}是两个不同的标识符。
+
+标识符的命名可以遵循一些约定，以提高代码的可读性和可维护性。以下是一些常见的命名约定：
+
+\begin{itemize}
+    \item 标识符应该具有描述性，能够清楚地表达其含义。
+    \item 变量名通常使用小写字母。
+    \item 类名通常使用大写字母开头的驼峰命名法（CamelCase）。
+    \item 具有多个单词的标识符可以用下划线分隔（\mintinline{cpp}{my_variable}）或使用驼峰命名法（\mintinline{cpp}{myVariable}）。
+\end{itemize}
+
+\section{Compound Types}
+\subsection{References}
+引用（reference）定义了一个已经存在的对象的别名（alias）。当定义一个引用时，不是复制初始化的值，而是绑定（bind）到一个已经存在的对象上。引用一旦绑定到一个对象，就不能再绑定到其他对象，因此引用必须在声明时进行初始化。
+
+\begin{minted}{cpp}
+    int ival = 1024;
+    int &refVal = ival; // refVal refers to (is another name for) ival
+    int &refVal2; // error: a reference must be initialized
+    refVal = 2; // assigns 2 to the object to which refVal refers, i.e., ival
+    int ii = refVal; // same as ii = ival
+    int &refVal3 = refVal; // refVal3 is bound to the object to which refVal is bound, i.e., to ival
+\end{minted}
+
+当引用被创建之后，对引用的任何操作都等同于对原始对象的操作。由于引用不是一个独立的对象，而是原始对象的别名，它没有自己的存储空间，编译后通常是指针的语法糖\footnote{语法糖（syntactic sugar）是指计算机语言中添加的某种语法，这种语法对语言的功能并没有影响，但是更加方便使用。}，因此无法定义一个指向引用的引用（reference to a reference）。
+
+\begin{minted}{cpp}
+        int& &refVal4 = refVal; // error: a reference cannot be bound to another reference
+\end{minted}
+
+可以在单次定义中定义多个引用，每个引用的标识符是由前缀\mintinline{cpp}{&}分隔的。
+
+\begin{minted}{cpp}
+    int i = 1024, i2 = 2048; // i and i2 are both ints
+    int &r = i, r2 = i2; // r is a reference bound to i; r2 is an int
+    int i3 = 1024, &ri = i3; // i3 is an int; ri is a reference bound to i3
+    int &r3 = i3, &r4 = i2; // both r3 and r4 are references
+\end{minted}
+
+引用的类型和被引用的原始对象的类型必须完全相同，并且不能将引用绑定到字面量（literal）或更一般的表达式结果上。
+
+\begin{minted}{cpp}
+    int &refVal5 = 10; // error: initializer must be an object
+    double dval = 3.14;
+    int &refVal6 = dval; // error: initializer must be an int object
+\end{minted}
+
+\subsection{Pointers}
+指针（pointer）是一个对象，它存储了另一个对象的地址。指针和引用都是间接访问对象的方式。不同于其他的内置类型，定义在块作用域（block scope）中的指针变量不会被自动初始化，因此在使用指针之前必须先对其进行初始化，否则会导致未定义行为（undefined behavior）。
+
+\begin{minted}{cpp}
+    int *ip1, *ip2; //both ip1 and ip2 are pointers to int
+    double dp, *dp2; // dp2 is a pointer to double; dp is a double
+\end{minted}
+
+通过取地址操作符（address-of operator, \mintinline{cpp}{&}）可以获取一个对象的地址，并将其赋值给一个指针变量。
+
+\begin{minted}{cpp}
+    int ival = 42;
+    int *p = &ival; // p holds the address of ival; p is a pointer to ival
+\end{minted}
+
+由于引用不是对象，因此不能获取引用的地址，所以不能定义一个指向引用的指针。同样，指针的类型和被指向的对象的类型必须完全相同，这是因为指针的类型决定了指针解引用（dereference）时的行为，即如何访问指针所指向的对象。
+
+存储在指针中的地址可以是以下几种类型之一：
+
+\begin{enumerate}
+    \item 指向一个对象的地址。
+    \item 指向一个对象末尾之后的地址（past the end of an object），这通常用于表示一个数组的末尾。
+    \item 空指针（null pointer），表示指针不指向任何对象。
+    \item 非法的指针，除了以上三种情况之外的指针。
+\end{enumerate}
+
+虽然第二和第三种情况是合法的，但是它们不指向任何有效的对象，因此在解引用这些指针时会导致未定义行为。
+
+空指针（null pointer）是一个特殊的指针，它不指向任何对象。有以下几种方式可以定义一个空指针：
+
+\begin{minted}{cpp}
+    int *p1 = nullptr; // equivalent to int *p1 = 0;
+    int *p2 = 0; // directly initializes p2 from the literal constant 0
+    // must #include cstdlib
+    int *p3 = NULL; // NULL is defined in cstdlib, equivalent to 0
+    int zero = 0;
+    int *p4 = zero; // error: cannot assign an int to a pointer
+\end{minted}
+
+最推荐使用的初始化指针的方法是使用\mintinline{cpp}{nullptr}，这是C++11标准引入的，\mintinline{cpp}{nullptr}是一个可以被转换成任何其他指针类型的特殊类型的字面量。尽管指针可以通过赋值0来表示空指针，但是将整数变量赋值给指针是非法的，尽管这个整数变量的值恰好是0。最好在创建指针时指向需要被指针指向的对象，或者赋值为空指针，这样能避免一些不必要的运行时错误。
+
+和算术表达式可以用于条件判断类似，指针也可以用于条件判断，任何非零指针表示\mintinline{cpp}{true}。给定两个合法的同类型指针可以进行比较，当这两个指针指向同一个地址时则判断为这两个指针相等\marginpar{两个指针都为空指针、指向同一个对象或者都指向同一个对象之后的地址。}。由于这些操作都用到了指针的值，因此用于条件判断或者比较的指针必须是合法的指针，如果指针是非法的，则条件判断或比较的结果是未定义的。
+
