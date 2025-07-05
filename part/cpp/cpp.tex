@@ -126,7 +126,7 @@ C++中有两种类型，有符号类型（signed type）和无符号类型（uns
 当引用被创建之后，对引用的任何操作都等同于对原始对象的操作。由于引用不是一个独立的对象，而是原始对象的别名，它没有自己的存储空间，编译后通常是指针的语法糖\footnote{语法糖（syntactic sugar）是指计算机语言中添加的某种语法，这种语法对语言的功能并没有影响，但是更加方便使用。}，因此无法定义一个指向引用的引用（reference to a reference）。
 
 \begin{minted}{cpp}
-        int& &refVal4 = refVal; // error: a reference cannot be bound to another reference
+    int& &refVal4 = refVal; // error: a reference cannot be bound to another reference
 \end{minted}
 
 可以在单次定义中定义多个引用，每个引用的标识符是由前缀\mintinline{cpp}{&}分隔的。
@@ -188,4 +188,79 @@ C++中有两种类型，有符号类型（signed type）和无符号类型（uns
 最推荐使用的初始化指针的方法是使用\mintinline{cpp}{nullptr}，这是C++11标准引入的，\mintinline{cpp}{nullptr}是一个可以被转换成任何其他指针类型的特殊类型的字面量。尽管指针可以通过赋值0来表示空指针，但是将整数变量赋值给指针是非法的，尽管这个整数变量的值恰好是0。最好在创建指针时指向需要被指针指向的对象，或者赋值为空指针，这样能避免一些不必要的运行时错误。
 
 和算术表达式可以用于条件判断类似，指针也可以用于条件判断，任何非零指针表示\mintinline{cpp}{true}。给定两个合法的同类型指针可以进行比较，当这两个指针指向同一个地址时则判断为这两个指针相等\marginpar{两个指针都为空指针、指向同一个对象或者都指向同一个对象之后的地址。}。由于这些操作都用到了指针的值，因此用于条件判断或者比较的指针必须是合法的指针，如果指针是非法的，则条件判断或比较的结果是未定义的。
+
+\mintinline{cpp}{void*}是一个特殊的指针类型，它可以指向任何类型的对象，但是不能直接解引用（dereference）或进行算术运算。同其他类型的指针类似，\mintinline{cpp}{void*}指针也存储了一个地址，但是存储在该地址的对象的类型是未知的。
+
+\begin{minted}{cpp}
+    double obj = 3.14, *pd = &obj;
+    // ok: void* can hold the address value of any data pointer type
+    void *pv = &obj; // obj can be an object of any type
+    pv = pd; // pv can hold a pointer to any type
+\end{minted}
+
+但是对于\mintinline{cpp}{void*}指针只能进行有限的操作：将它和其他指针进行比较、将它传递给函数、将它作为函数的返回值以及将它赋值给另外一个\mintinline{cpp}{void*}指针。不能对\mintinline{cpp}{void*}指针进行解引用或算术运算，因为编译器不知道存储在该地址的对象的类型，而对象的类型决定了可以对该对象进行的操作。
+
+一般来说，我们将\mintinline{cpp}{void*}指针来将内存作为内存处理（deal with memory as memory），而不是用于访问存储在内存中的对象。
+
+\subsection{Compound Type Declarations}
+C++中的变量定义可以包含一个基类型（base type）和一系列的声明符号（declarators），声明符号可以是指针、引用或数组等。在同一个定义中可以将不同的声明符号与相应的变量以不同的方式和基类型关联起来。因此，在一个定义中可以定义多个不同类型的变量。
+
+\begin{minted}{cpp}
+    // i is an int; p is a pointer to int; r is a reference to int
+    int i = 1024, *p = &i, &r = i;
+    int* p1, p2; // p1 is a pointer to int; p2 is an int
+    int *p3, *p4; // both p3 and p4 are pointers to int
+\end{minted}
+
+由于存在\mintinline{cpp}{int* p;}这样的定义方式，因此容易混淆基类型和声明符号的关系，基类型是\mintinline{cpp}{int}，而声明符号\mintinline{cpp}{*}用于修饰变量\mintinline{cpp}{p}，表示\mintinline{cpp}{p}是一个指向整数的指针，而不是一个整数。因此推荐将声明符号紧贴变量名，以提高代码的可读性。
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.3\linewidth]{images/pointer2pointer.pdf}\\
+    \caption{指向指针的指针}\label{fig:cpp-pointer2pointer}
+\end{figure}
+
+声明符号的理解方式是从右到左的，即声明符号修饰的是它右边的变量名。比如指向指针的指针（pointers to pointers）是指一个指针变量存储了另一个指针的地址。如图\ref{fig:cpp-pointer2pointer}所示，\mintinline{cpp}{pi}是指向整数的指针，而\mintinline{cpp}{ppi}是指向指针的指针。
+
+\begin{minted}{cpp}
+    int ival = 1024;
+    int *pi = &ival; // pi points to an int
+    int **ppi = &pi; // ppi points to a pointer to an int
+\end{minted}
+
+由于引用不是一个对象，因此不能定义指向引用的指针，但是由于指针是一个对象，因此可以定义指向指针的引用。
+
+\begin{minted}{cpp}
+    int i = 42;
+    int *p; // p is a pointer to int
+    int *&r = p; // r is a reference to the pointer p
+    r = &i; // r refers to a pointer; assigning &i to r makes p point to i
+    *r = 0; // dereferencing r yields i, the object to which p points; changes i to 0
+\end{minted}
+
+同样理解指向指针的引用也是从右到左，即最接近变量名的声明符号\mintinline{cpp}{&}修饰变量名\mintinline{cpp}{r}，表示\mintinline{cpp}{r}是一个引用，剩余的声明符号说明了该引用指向的是一个指针类型，最后基类型说明该变量是一个指向指向整数类型的指针的引用（\mintinline{cpp}{r} is a reference to a pointer to an \mintinline{cpp}{int}）。
+
+\section{\texttt{const} Qualifier}
+可以通过\mintinline{cpp}{const}限定符（qualifier）来定义一个常量（constant），常量是一个在程序运行时不能被修改的值。使用\mintinline{cpp}{const}限定符可以防止意外修改变量的值，从而提高代码的安全性和可读性。由于创建常量之后不能进行修改，因此常量必须在声明时进行初始化，同样初始化器（initializer）可以是任意复杂的表达式。
+
+\begin{minted}{cpp}
+    const int bufSize = 512; // input buffer size
+    bufSize = 512; // error: attempt to write to const object
+    const int i = get_size(); // ok: initialized at run time
+    const int j = 42; // ok: initialized at compile time
+    const int k; // error: k is uninitialized const
+\end{minted}
+
+由于对象的类型决定了可以对对象进行的操作集合，因此带有\mintinline{cpp}{const}限定符的对象的类型和不带\mintinline{cpp}{const}限定符的对象的类型可以进行的操作是不同的。其中一个限制是不能对带有\mintinline{cpp}{const}限定符的对象进行修改操作。
+
+带有\mintinline{cpp}{const}限定符的对象在编译时经常会被优化为字面量（literal），即编译器会将变量名替换成其相应的值。为了替换变量名，编译器需要知道变量的初始化值，当一个程序被分为多个文件时，每个使用到\mintinline{cpp}{const}限定符修饰的变量的文件都需要知道该变量的初始化值，因此需要在每个文件中都进行定义。为了支持这种情况，并且防止多次定义同名变量，\mintinline{cpp}{const}限定符修饰的变量默认被定义为属于文件的（defined as local to the file），因此在多个不同的文件中使用同名的\mintinline{cpp}{const}限定符修饰的变量就像在不同文件中定义了不同的变量。
+
+如果需要在多个文件中共享同一个\mintinline{cpp}{const}限定符修饰的变量，即在一个文件中定义该变量并在其他文件中进行声明并使用该变量，则需要在定义该变量的文件中使用\mintinline{cpp}{extern}关键字进行定义，并在需要使用该变量的其他文件中声明时也使用\mintinline{cpp}{extern}关键字。
+
+\begin{minted}{cpp}
+    // file_1.cc defines and initializes a const that is accessible to other files
+    extern const int bufSize = fcn();
+    // file_1.h
+    extern const int bufSize; // same bufSize as defined in file_1.cc
+\end{minted}
 
