@@ -138,7 +138,7 @@ C++中有两种类型，有符号类型（signed type）和无符号类型（uns
     int &r3 = i3, &r4 = i2; // both r3 and r4 are references
 \end{minted}
 
-引用的类型和被引用的原始对象的类型必须完全相同，并且不能将引用绑定到字面量（literal）或更一般的表达式结果上。
+引用的类型和被引用的原始对象的类型必须完全相同，并且不能将引用绑定到字面量（literal）或更一般的表达式结果上\footnote{例外的情况参见\ref{sec:cpp-const-reference}}。
 
 \begin{minted}{cpp}
     int &refVal5 = 10; // error: initializer must be an object
@@ -161,7 +161,7 @@ C++中有两种类型，有符号类型（signed type）和无符号类型（uns
     int *p = &ival; // p holds the address of ival; p is a pointer to ival
 \end{minted}
 
-由于引用不是对象，因此不能获取引用的地址，所以不能定义一个指向引用的指针。同样，指针的类型和被指向的对象的类型必须完全相同，这是因为指针的类型决定了指针解引用（dereference）时的行为，即如何访问指针所指向的对象。
+由于引用不是对象，因此不能获取引用的地址，所以不能定义一个指向引用的指针。同样，指针的类型和被指向的对象的类型必须完全相同\footnote{例外的情况参见\ref{sec:cpp-const-pointer}}，这是因为指针的类型决定了指针解引用（dereference）时的行为，即如何访问指针所指向的对象。
 
 存储在指针中的地址可以是以下几种类型之一：
 
@@ -251,7 +251,7 @@ C++中的变量定义可以包含一个基类型（base type）和一系列的�
     const int k; // error: k is uninitialized const
 \end{minted}
 
-由于对象的类型决定了可以对对象进行的操作集合，因此带有\mintinline{cpp}{const}限定符的对象的类型和不带\mintinline{cpp}{const}限定符的对象的类型可以进行的操作是不同的。其中一个限制是不能对带有\mintinline{cpp}{const}限定符的对象进行修改操作。
+由于对象的类型决定了可以对对象进行的操作集合，因此带有\mintinline{cpp}{const}限定符的对象和不带\mintinline{cpp}{const}限定符的对象可以进行的操作是不同的。其中一个限制是不能对带有\mintinline{cpp}{const}限定符的对象进行修改操作。
 
 带有\mintinline{cpp}{const}限定符的对象在编译时经常会被优化为字面量（literal），即编译器会将变量名替换成其相应的值。为了替换变量名，编译器需要知道变量的初始化值，当一个程序被分为多个文件时，每个使用到\mintinline{cpp}{const}限定符修饰的变量的文件都需要知道该变量的初始化值，因此需要在每个文件中都进行定义。为了支持这种情况，并且防止多次定义同名变量，\mintinline{cpp}{const}限定符修饰的变量默认被定义为属于文件的（defined as local to the file），因此在多个不同的文件中使用同名的\mintinline{cpp}{const}限定符修饰的变量就像在不同文件中定义了不同的变量。
 
@@ -262,5 +262,101 @@ C++中的变量定义可以包含一个基类型（base type）和一系列的�
     extern const int bufSize = fcn();
     // file_1.h
     extern const int bufSize; // same bufSize as defined in file_1.cc
+\end{minted}
+
+\subsection{References to \texttt{const}}\label{sec:cpp-const-reference}
+对于指向\mintinline{cpp}{const}限定符修饰的对象的引用，不能对引用的对象进行修改\footnote{\mintinline{cpp}{const} reference is a reference to \mintinline{cpp}{const}：由于引用不是一个对象，因此不能用限定符\mintinline{cpp}{const}修饰引用，由于引用无法修改指向其他的对象，因此从某种程度来说引用本身就是\mintinline{cpp}{const}的。}。
+
+\begin{minted}{cpp}
+    const int ci = 1024;
+    const int &r1 = ci; // ok: both reference and underlying object are const
+    r1 = 42; // error: r1 is a reference to const
+    int &r2 = ci; // error: nonconst reference to a const object
+\end{minted}
+
+由于\mintinline{cpp}{ci}不能修改，因此同样也不能用引用来间接修改\mintinline{cpp}{ci}的值。由于\mintinline{cpp}{const}限定符修饰的对象不能被修改，因此不能将\mintinline{cpp}{const}限定符修饰的对象绑定到一个非\mintinline{cpp}{const}限定符修饰的引用上。
+
+在引用中，引用指向的对象的类型和引用本身的类型必须完全相同，而在\mintinline{cpp}{const}修饰的引用中是一个例外，即可以将任何可以经过类型转换变成引用的类型的表达式绑定到\mintinline{cpp}{const}限定符修饰的引用上（a reference to \mintinline{cpp}{const}）。特别是，可以将一个\mintinline{cpp}{const}限定符修饰的引用指向一个非\mintinline{cpp}{const}限定符修饰的对象、一个字面量或者更一般的表达式结果上。
+
+\begin{minted}{cpp}
+    int i = 42;
+    const int &r1 = i; // we can bind a const int& to a plain int object
+    const int &r2 = 42; // ok: r2 is a reference to a literal
+    const int &r3 = r1 * 2; // ok: r3 is a reference to an expression result
+    int &r4 = r1 * 2; // error: r4 is a plain, nonconst reference
+\end{minted}
+
+理解在初始化时，\mintinline{cpp}{const}限定符修饰的引用可以绑定到一个非\mintinline{cpp}{const}限定符修饰的对象、字面量或表达式结果上，是因为编译器会将这些对象经过类型转换后变成\mintinline{cpp}{const}限定符修饰的一个临时（temporary）对象\footnote{当需要存储计算表达式的值时，编译器就会创建一个无名对象（unnamed object），即临时对象。C++程序员通常将temporary object简称为temporary。}，然后将其绑定到\mintinline{cpp}{const}限定符修饰的引用上。这种类型转换是安全的，因为\mintinline{cpp}{const}限定符修饰的对象不能被修改，因此不会影响原始对象的值。
+
+\begin{minted}{cpp}
+    double dval = 3.14;
+    const int &ri = dval;
+\end{minted}
+
+在上面的代码中，\mintinline{cpp}{dval}是一个双精度浮点数，而\mintinline{cpp}{ri}是一个\mintinline{cpp}{const}限定符修饰的整数引用。编译器会将\mintinline{cpp}{dval}转换为一个临时的\mintinline{cpp}{const int}对象，然后将其绑定到\mintinline{cpp}{ri}上。由于\mintinline{cpp}{ri}是一个\mintinline{cpp}{const}限定符修饰的引用，因此不能对其进行修改。
+
+\begin{minted}{cpp}
+    const int temp = dval; // create a temporary const int from the double
+    const int &ri = temp; // bind ri to that temporary
+\end{minted}
+
+因此下面的代码输出的两次结果中\mintinline{cpp}{ri}都是3，因为\mintinline{cpp}{ri}绑定到的临时对象的值是3。同时也说明，尽管不能通过\mintinline{cpp}{const}限定符修饰的引用来修改原始对象的值，但是可以通过修改原始对象或通过其他方式来修改原始对象的值（如果原始对象是非\mintinline{cpp}{const}限定符修饰的对象）。
+
+\begin{minted}{cpp}
+    double dval = 3.14;
+    const int &ri = dval;
+    double &ri2 = dval; // ri2 is a reference to dval, not to the temporary
+    std::cout << "Value of ri: " << ri << std::endl;
+    std::cout << "Value of ri2: " << ri2 << std::endl;
+    dval = 1.71; // Changing dval
+    std::cout << "Updated value of ri: " << ri << std::endl; // ri remains unchanged
+    std::cout << "Value of ri2: " << ri2 << std::endl; // ri2 reflects the change in dval
+\end{minted}
+
+\subsection{Pointers and \texttt{const}}\label{sec:cpp-const-pointer}
+和引用一样，被\mintinline{cpp}{const}限定符修饰的指针不能修改指向的对象的值，但是能够指向非\mintinline{cpp}{const}限定符修饰的对象，即指针的类型和被指向的对象的类型可以不完全相同。
+
+\begin{minted}{cpp}
+    const double pi = 3.14; // pi is const; its value may not be changed
+    double *ptr = &pi; // error: ptr is a plain pointer
+    const double *cptr = &pi; // ok: cptr may point to a double that is const
+    *cptr = 42; // error: cannot assign to *cptr
+    double dval = 3.14; // dval is a double; its value can be changed
+    cptr = &dval; // ok: but can't change dval through cptr
+\end{minted}
+
+不同于引用，由于指针是一个对象，因此可以定义由\mintinline{cpp}{const}限定符修饰的指针，即指针本身是\mintinline{cpp}{const}的，不能修改指针的值，即不能修改指针指向的对象\footnote{至于能否修改指针指向的对象的值则取决于指针指向的对象是否有\mintinline{cpp}{const}修饰符修饰。}。和其他类型一样，\mintinline{cpp}{const}限定符修饰的指针必须在声明时进行初始化，并且在初始化之后该指针指向的对象不能被修改。通过在\mintinline{cpp}{*}后面添加\mintinline{cpp}{const}限定符来表明指针本身是\mintinline{cpp}{const}的，而不是指向的对象是\mintinline{cpp}{const}的。
+
+\begin{minted}{cpp}
+    int errNumb = 0;
+    int *const curErr = &errNumb; // curErr will always point to errNumb
+    const double pi = 3.14159;
+    const double *const pip = &pi; // pip is a const pointer to a const object
+\end{minted}
+
+\mintinline{cpp}{curErr}是一个\mintinline{cpp}{const}限定符修饰的指针，指向一个整数类型的对象\mintinline{cpp}{errNumb}，因此不能修改\mintinline{cpp}{curErr}指向的对象，但是可以修改\mintinline{cpp}{errNumb}的值。因为\mintinline{cpp}{pip}是一个\mintinline{cpp}{const}限定符修饰的指针且指向的对象是\mintinline{cpp}{const double}类型的，因此不能修改\mintinline{cpp}{pip}指向的对象，也不能通过指针\mintinline{cpp}{pip}修改\mintinline{cpp}{pi}的值。
+
+\subsection{Top-Level \texttt{const} and Low-Level \texttt{const}}
+一般地，将修饰对象本身的\mintinline{cpp}{const}限定符称为顶层\mintinline{cpp}{const}（top-level \mintinline{cpp}{const}），它可以出现在任何对象类型中，包括内置类型、类类型和指针类型等。而底层\mintinline{cpp}{const}（low-level \mintinline{cpp}{const}）则出现在像指针和引用的复合类型（compound types）的基类型中。指针不像其他类型，它可以同时有顶层\mintinline{cpp}{const}和底层\mintinline{cpp}{const}。
+
+\begin{minted}{cpp}
+    int i = 0;
+    int *const p1 = &i; // we can't change the value of p1; const is top-level
+    const int ci = 42; // we cannot change ci; const is top-level
+    const int *p2 = &ci; // we can change p2; const is low-level
+    const int *const p3 = p2; // right-most const is top-level; left-most const is low-level
+    const int &r = ci; // const in reference types is always top-level
+\end{minted}
+
+顶层\mintinline{cpp}{const}和底层\mintinline{cpp}{const}在复制对象时比较重要，当复制对象时，顶层\mintinline{cpp}{const}会被忽略，而底层\mintinline{cpp}{const}则永远不会被忽略。当复制对象时，两个对象必须有相同的底层\mintinline{cpp}{const}或者它们之间的底层\mintinline{cpp}{const}可以进行转换。一般而言，可以将非\mintinline{cpp}{const}限定符修饰的类型赋值给\mintinline{cpp}{const}限定符修饰的类型，但是不能将\mintinline{cpp}{const}限定符修饰的类型赋值给非\mintinline{cpp}{const}限定符修饰的类型。
+
+\begin{minted}{cpp}
+    i = ci; // ok: copying the value of ci; top-level const in ci is ignored
+    p2 = p3; // ok: pointed-to type matches; top-level const in p3 is ignored
+    int *p = p3; // error: p3 has a low-level const but p doesn't
+    p2 = p3; // ok: p2 has the same low-level const qualification as p3
+    p2 = &i; // ok: we can convert int* to const int*
+    int &r = ci; // error: can't bind an ordinary int& to a const int object
+    const int &r2 = i; //ok: can bind const int& to plain int
 \end{minted}
 
