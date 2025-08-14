@@ -1,0 +1,69 @@
+%! TeX program = xelatex
+\documentclass[fontset=none]{ctexart}
+\input{../note-setup-leftsidebox.tex}
+
+\title{Traveling Salesman Problem \& Vehicle Routing Problem}
+\author{Chen Huaneng}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\part{Traveling Salesman Problem}
+\section{Symmetric Traveling Salesman Problem}
+
+旅行商问题（Traveling Salesman Problem, TSP）是组合优化领域的经典问题之一，其核心目标是给定城市列表和每对城市之间的距离，求恰好访问每个城市一次并返回起始城市的最短可能路线。该问题于1930年正式提出，是优化中研究最深入的问题之一，被用作许多优化方法的基准。自从该问题被正式提出以来，一直是运筹学、计算机科学和物流管理等领域的研究热点，尽管该问题在计算上很困难，但许多启发式方法和精确算法是已知的\cite{2009A, 2012Models}。
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{images/TSP.pdf}\\
+    \caption{TSP示意图}
+\end{figure}
+
+TSP可以表述为整数线性规划模型\cite{papadimitriou1998combinatorial}：假设共有$N$个城市，每个城市的编号为$1,\cdots,N$，从城市$i$到城市$j$的旅行成本（距离）为$c_{ij}>0$。旅行商的目标是从任意一个城市出发访问完所有的城市，每个城市只能访问一次，最后回到最初的城市，目标是找到一条依次访问所有城市且访问城市不重复的最短路线。TSP中的决策变量为$x_{ij}=\begin{cases}1, & \text{存在从城市$i$到城市$j$的路径}\\0, & \text{其他} \end{cases}$，城市节点集合表示为$V(|V| = N)$。由于可能存在子回路，所以在构建TSP模型时需要消除会产生子回路的情况，这里采用Miller-Tucker-Zemlin (MTZ)约束进行子回路的消除\cite{1960Integer}，引入连续变量$u_i(\forall i \in V, u_i \geq 0)$，其取值可以为任何非负实数（实数集合表示为$R$）。这里用$u_i$表示编号为$i$的城市的访问次序，比如当$u_i = 5$时表示编号为1的城市是从出发点开始，第5个被访问到的点。因此，TSP的数学模型可以表示为MILP \crefrange{eq:tsp-obj}{eq:tsp-x_bound}。
+
+\begin{theorem}
+\begin{align}
+    \min \quad & \sum_{i \in V}\sum_{j \in V, i \neq j} c_{ij}x_{ij} & \label{eq:tsp-obj}\\
+    \text{s.t.} \quad & \sum_{i \in V} x_{ij} = 1, & \forall j \in V, i \neq j\label{eq:tsp-in}\\
+    \quad & \sum_{j \in V} x_{ij} = 1, & \forall i \in V, i \neq j \label{eq:tsp-out}\\
+    \quad & u_i - u_j + Nx_{ij} \leq N - 1, & \forall i, j \in V; i \neq j \label{eq:tsp-subtour}\\
+    \quad & u_i \geq 0, & u_i \in R \label{eq:tsp-u_bound}\\
+    \quad & x_{ij} \in \{0, 1\}, & i, j \in V; i \neq j\label{eq:tsp-x_bound}
+\end{align}
+
+目标函数\eqref{eq:tsp-obj}表示最小化访问所有城市的成本（距离），约束\eqref{eq:tsp-in}和\eqref{eq:tsp-out}保证每个城市节点的入度和出度为1，即每个城市只进入一次和出去一次，保证了每个城市只访问一次，不会被重复访问，约束\eqref{eq:tsp-subtour}消除子回路，约束\eqref{eq:tsp-u_bound}和\eqref{eq:tsp-x_bound}表示变量的取值范围。
+\end{theorem}
+
+\part{Vehicle Routing Problem}
+\section{Vehicle Routing Problem}
+
+车辆路径规划问题（Vehicle Routing Problem, VRP）是物流配送领域中的核心优化问题之一，由George Dantzig和John Ramser于1959年首次提出\cite{1959The}。其目的是为一组具有容量限制的车辆设计最优配送路线，使得所有客户需求被满足且总运输成本（如距离、时间或费用）最小化。当车辆容量足够大时，VRP退化为TSP，即当车辆容量足够时，所有货物都可以在一次行驶中全部配送，只需要经过一次配送中心。大多数情况下VRP的车辆容量总是小于需要配送的所有货物重量的总和，所以与旅行商问题（TSP）不同，VRP需要同时考虑多车辆协同、客户需求分配、车辆容量限制等复杂约束，因此更具现实意义和研究挑战性。
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{images/VRP.pdf}\\
+    \caption{VRP示意图}
+\end{figure}
+
+VRP可以表述为整数规划问题\cite{2014Vehicle}：假设存在一个配送中心（仓库）和若干顾客点，顾客点需求为$q_i(i = 1,2,\cdots,n)$，车辆载重上限为$Q$，每辆车从仓库出发并最终返回仓库。定义决策变量$x_{ijk} = \begin{cases}1, & \text{车辆$k$从$i$行驶到$j$}\\0, & \text{其他} \end{cases}$，节点集合$V = \{0, 1, 2, \cdots, n\}$，其中0表示配送中心，$S = \{1,2,\cdots,n\}$表示顾客节点，车辆集合$K = \{1,2,\cdots,m\}$，$c_{ij}$表示从点$i$到点$j$的行驶成本（距离或时间），同样在VRP中为了消除子回路，引入辅助变量$u_i$表示车辆访问顾客点$i$时的累计载重量。因此，VRP的数学模型可以表示为MILP \crefrange{eq:vrp-obj}{eq:vrp-x_bound}。
+
+\begin{theorem}
+\begin{align}
+    \min \quad & \sum_{k \in K}\sum_{i \in V}\sum_{j \in V, j \neq i} c_{ij}x_{ijk} & \label{eq:vrp-obj}\\
+    \text{s.t.} \quad & \sum_{j \in S} x_{0jk} = 1, & \forall k \in K\label{eq:vrp-in}\\
+    \quad & \sum_{i \in S} x_{i0k} = 1, & \forall k \in K\label{eq:vrp-out}\\
+    \quad & \sum_{k \in K}\sum_{i \in V, i \neq j} x_{ijk} = 1, & \forall j \in S\label{eq:vrp-customer}\\
+    \quad & \sum_{i \in V, i \neq j}x_{ijk} = \sum_{i \in V, i \neq j} x_{jik}, & \forall j \in V, k \in K\label{eq:vrp-flow}\\
+    \quad & u_j \geq u_i + q_j -Q(1 - x_{ijk}), & \forall i, j \in S, k \in K\label{eq:vrp-subtour}\\
+    \quad & q_j \leq u_j \leq Q, & \forall j \in S\label{eq:vrp-subtour2}\\
+    \quad & x_{ijk} \in \{0, 1\}, & \forall i, j \in V, k \in K\label{eq:vrp-x_bound}
+\end{align}
+
+目标函数\eqref{eq:vrp-obj}表示最小化所有车辆的总行驶成本，约束\eqref{eq:vrp-in}和\eqref{eq:vrp-out}确保每辆车从配送中心出发并最终返回，约束\eqref{eq:vrp-customer}保证每个顾客点只被访问一次，约束\eqref{eq:vrp-flow}保证了流量守恒，即保证了路径的连续性，约束\eqref{eq:vrp-subtour}和\eqref{eq:vrp-subtour2}通过MTZ方法消除子回路并满足车辆的容量限制，约束\eqref{eq:vrp-x_bound}对变量进行限制。
+\end{theorem}
+
+\bibliography{references}
+
+\end{document}
