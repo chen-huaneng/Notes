@@ -107,7 +107,7 @@ where $c^k_{\rho(i),\rho(i + 1)}$ is the $k$-th cost of traveling from city $\rh
 
 \subsubsection{Encoder}
 
-\textit{Encoder:} Encoder 的作用是将输入的城市特征 $X$ 编码为一个高维向量，方便 Decoder 使用。由于城市的位置是无序的，在输入结构中城市之间的顺序是没有任何意义的，因此文章中没有采用 RNN 作为 Encoder（比如 long short-term memory (LSTM)，因为 RNN 会引入不必要的“顺序偏见”），而且 1-D 卷积层参数是共享的，计算更快，且对城市数量的泛化性更强，因此使用了 a simple embedding layer (the 1-D convolution layer) 来将输入 $X$ 编码到一个高维向量（high-dimensional vector）空间中\cite{nazariReinforcementLearningSolving2018}（文章中的超参数 $d_h = 128$）。
+\textit{Encoder:} Encoder 的作用是将输入的城市特征 $X$ 编码为一个高维向量，方便 Decoder 使用。由于城市的位置是无序的，在输入结构中城市之间的顺序是没有任何意义的，因此文章中没有采用 RNN 作为 Encoder（比如 long short-term memory (LSTM)，因为 RNN 会引入不必要的“顺序偏见”），并且由于 1-D 卷积层参数是共享的，计算更快，且对城市数量的泛化性更强，因此使用了 a simple embedding layer (the 1-D convolution layer) 来将输入 $X$ 编码到一个高维向量（high-dimensional vector）空间中\cite{nazariReinforcementLearningSolving2018}（文章中的超参数 $d_h = 128$）。
 
 \subsubsection{Decoder}
 
@@ -127,7 +127,7 @@ where $c^k_{\rho(i),\rho(i + 1)}$ is the $k$-th cost of traveling from city $\rh
     P(\rho_{t + 1} \mid \rho_1, \ldots, \rho_t, X_t) = \text{softmax}(u^t)\label{eq:softmax}
 \end{equation}
 
-在选择下一个城市 $\rho_{t + 1}$ 时，文章采用贪心策略（greedy decoder）选择概率最大的城市作为下一个访问的城市。在训练过程中，文章采用采样策略（sampling），从概率分布中采样下一个城市 $\rho_{t + 1}$，以增加探索性。
+在选择下一个城市 $\rho_{t + 1}$ 时，文章采用贪心策略（greedy）选择概率最大的城市作为下一个访问的城市。在训练过程中，文章采用采样策略（sampling），从概率分布中采样下一个城市 $\rho_{t + 1}$，以增加探索性。
 
 \subsection{Training Method}
 
