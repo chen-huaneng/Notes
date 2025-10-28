@@ -1,0 +1,250 @@
+%! TeX program = xelatex
+\documentclass[fontset=none]{ctexart}
+\input{../note-setup-leftsidebox.tex}
+
+\title{Exact Methods for the Traveling Salesman Problem with Drone}
+\author{Chen Huaneng}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Scientific Contributions and Overveiw}
+In this work, we focus on the exact solution of several variants of the traveling salesman problem with drone (TSP-D), which aims at finding a route for a single truck hosting a single drone such that the total completion time needed to visit all customers (either by truck or drone) and return to the depot is minimized.
+
+这篇文章\cite{robertiExactMethodsTraveling2021}的主要贡献：
+\begin{itemize}
+    \item 基于最基本的 TSP-D 进行拓展，考虑了不同约束的模型：
+    \begin{itemize}
+        \item 无人机起飞和降落地点处于同一个顾客地点，即允许无人机有环（loops）
+        \item 部分顾客不能由无人机服务
+        \item 无人机续航受限，由总续航时间或者由包裹的重量决定
+        \item 无人机不能在会合点的地面等待卡车，即无人机在会合点等待卡车时需要消耗续航时间
+        \item 考虑起飞和降落无人机所需要的时间
+        \item 在无人机服务顾客的过程中，卡车所能服务的最大顾客限制
+    \end{itemize}
+    \item 提出了针对 TSP-D 的基于 Dynamic Programming (DP) 和 Branch-and-Price (BP) 的精确算法
+\end{itemize}
+
+模型的假设：
+\begin{itemize}
+    \item 所有顾客都可以被无人机服务，且不考虑无人机服务顾客的时间
+    \item 卡车不能重复访问已经服务过的顾客，卡车在无人机单独服务的过程中可以服务的顾客没有限制
+    \item 无人机没有续航的限制，但是每次飞行只能携带一个包裹，即每次飞行只能服务一个顾客
+    \item 无人机只能在仓库或者顾客节点起飞和降落，并且在单次的飞行中起飞和降落的节点不能相同，即不能有环
+    \item 不考虑无人机起飞和降落的准备时间
+    \item 无人机可以在地面等待卡车会合，即无人机不需要消耗续航时间来等待卡车（虽然不考虑续航的限制）
+\end{itemize}
+
+\section{Problem Description of the TSP-D}
+文章的符号及其说明如表\cref{tab:tspd-sign-meaning}所示。
+
+\begin{table}[!htbp]
+    \begin{threeparttable}
+    \centering
+    \caption{TSP-D 模型符号及含义}
+    \label{tab:tspd-sign-meaning}
+    \begin{tabularx}{\textwidth}{lX}
+        \toprule[1pt] % 表头线宽1镑（point, pt）
+        符号 & 含义 \\
+        \midrule[0.75pt] % 表中间线宽0.75镑（point, pt）
+        $\mathcal{G} = (V, \mathcal{A})$ & 定义顾客和仓库节点的有向完全图 \\ 
+        $V = \{0, 0'\} \cup N$ & 有向完全图的节点，其中 $0$ 和 $0'$ 都表示同一个仓库节点，$N$ 表示需要被服务的 $n$ 个顾客节点，$N_0 = N \cup \{0\}$，$N_0' = N \cup \{0'\}$ \\ 
+        \makecell[l]{$\mathcal{A} = \{(i, j) \mid i, j \in N: i \neq j\} \cup$\\
+        $\{(0,j) \mid j \in N \} \cup \{(i, 0')\mid i \in N\}$} & 有向完全图的弧 \\ 
+        $t_{ij}^T$ & 弧 $(i, j) \in \mathcal{A}$ 的卡车行驶时间成本 \\
+        $t_{ij}^D$ & 弧 $(i, j) \in \mathcal{A}$ 的无人机飞行时间成本\hyperlink{tab:tspd-item-1}{\tnote{a}} \\
+        $x_{ij}^T \in \{0, 1\}$ & 二元决策变量，当卡车经过弧 $(i, j) \in \mathcal{A}$ 时等于 $1$（无论无人机是在卡车上，还是在单独飞行过程中） \\ 
+        $x_{ij}^D \in \{0, 1\}$ & 二元决策变量，当无人机经过弧 $(i, j) \in \mathcal{A}$ 时等于 $1$（无论无人机是在卡车上，还是在单独飞行过程中） \\ 
+        $y_i^T \in \{0, 1\}$ & 二元辅助变量，当 $i \in N$ 是由卡车单独服务的节点时等于 $1$ \\  
+        $y_i^D \in \{0, 1\}$ & 二元辅助变量，当 $i \in N$ 是由无人机单独服务的节点时等于 $1$ \\  
+        $y_i^C \in \{0, 1\}$ & 二元辅助变量，当 $i \in N$ 是由无人机和卡车共同服务（即无人机在卡车上）时等于 $1$ \\ 
+        $a_i \in \mathbb{R}_+$ & 卡车（无人机或无人机和卡车共同）到达节点 $i \in V$ 的时间 \\ 
+        $z_{ij} \in \{0, 1\}$ & 二元辅助变量，当无人机服务顾客 $j \in N$ 的服务路径为 $i \dashrightarrow j \dashrightarrow i$ 且卡车在节点 $i \in N_0, i \neq j$ 等待无人机时为 $1$ \\ 
+        $N^D \subset N$ & 可以由无人机单独服务的顾客节点集合，$N \setminus N^D$ 是不能由无人机单独服务的顾客节点的集合 \\ 
+        $e$ & 无人机续航限制，即无人机最大飞行距离限制 \\ 
+        $\bar{b}$ & 无人机最大电池容量 \\
+        $en_{ij}(w)$ & 无人机在弧 $(i, j) \in \mathcal{A}$ 上携带重量为 $w$ 的包裹飞行时的电池能量消耗函数 \\ 
+        $b_{ij}^{\text{on}}$ & 无人机携带包裹在弧 $(i, j)$ 上飞行时的能量消耗 \\
+        $b_{ij}^{\text{off}}$ & 无人机不携带包裹（空载）时在弧 $(i, j)$ 上飞行时的能量消耗 \\ 
+        $lt$ & 无人机起飞的准备时间 \\
+        $l_i \in \{0, 1\}$ & 如果节点 $i \in N$ 是无人机单独服务的节点且该节点不是无人机直接从仓库起飞服务的顾客节点，则 $l_i = 1$ \\ 
+        $rt$ & 回收无人机的时间 \\
+        $\bar{n}$ & 卡车在无人机单独服务顾客时能够服务的最大顾客数量限制 \\ 
+        $v_i \in \mathbb{Z}_+$ & 从无人机起飞开始算起，卡车在节点 $i \in N$ （包含节点 $i$）已经单独服务过的顾客节点数 \\
+        \bottomrule[1pt] % 表尾线宽1镑（point, pt）
+    \end{tabularx}
+    \begin{tablenotes}
+        \footnotesize % 设置脚注内容字体大小为\footnotesize
+        \item[a] \hypertarget{tab:tspd-item-1}{}通常来说，无人机和卡车在相同弧上行驶时，无人机所花费的时间应该不大于卡车所花费的时间，即 $t_{ij}^D \leq t_{ij}^T, \forall (i, j) \in \mathcal{A}$，然而文章中的方法不需要这个假设。
+    \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+\section{Compact Formulation}
+
+\subsection{Compact Formulation for the TSP-D}
+基础的 TSP-D 数学模型可以表示为 MILP \crefrange{eq:conv-obj}{eq:conv-a-bound}。
+\begin{theorem}
+{
+\begin{align}
+    \min \quad & t^* = a_{0'} \tag{1a} \label{eq:conv-obj}\\
+    \text{s.t.} \quad & \sum_{(i,j)\in \mathcal{A}} x_{ij}^T = \sum_{(j,i)\in \mathcal{A}} x_{ji}^T, & \forall i \in N \tag{1b} \label{eq:conv-flow-T}\\
+    \quad & \sum_{(i,j)\in \mathcal{A}} x_{ij}^T = y_i^T + y_i^C, & \forall i \in N \tag{1c} \label{eq:conv-sum-T}\\
+    \quad & \sum_{(0,j)\in \mathcal{A}} x_{0j}^T = \sum_{(i,0')\in \mathcal{A}} x_{i0'}^T = 1 \tag{1d} \label{eq:conv-start-T}\\
+    \quad & \sum_{(i,j)\in \mathcal{A}} x_{ij}^D = \sum_{(j,i)\in \mathcal{A}} x_{ji}^D, & \forall i \in N \tag{1e} \label{eq:conv-flow-D}\\
+    \quad & \sum_{(i,j)\in \mathcal{A}} x_{ij}^D = y_i^D + y_i^C, & \forall i \in N \tag{1f} \label{eq:conv-sum-D}\\
+    \quad & \sum_{(0,j)\in \mathcal{A}} x_{0j}^D = \sum_{(i,0')\in \mathcal{A}} x_{i0'}^D = 1 \tag{1g} \label{eq:conv-start-D}\\
+    \quad & y_i^T + y_i^D + y_i^C = 1, & \forall i \in N \tag{1h} \label{eq:conv-y-sum}\\
+    \quad & a_i + t_{ij}^T \leq a_j + M(1 - x_{ij}^T), & \forall (i,j) \in \mathcal{A} \tag{1i} \label{eq:conv-time-T}\\
+    \quad & a_i + t_{ij}^D \leq a_j + M(1 - x_{ij}^D), & \forall (i,j) \in \mathcal{A} \tag{1j} \label{eq:conv-time-D}\\
+    \quad & x_{ij}^D + x_{ji}^D \leq y_i^C + y_j^C, & \forall i,j \in N: i < j \tag{1k} \label{eq:conv-D-C}\\
+    \quad & x_{0i}^D + x_{i0'}^D \leq 1, & \forall i \in N \tag{1l} \label{eq:conv-D-0}\\
+    \quad & x_{ij}^T, x_{ij}^D \in \{0, 1\}, & \forall (i,j) \in \mathcal{A} \tag{1m} \label{eq:conv-x-bound}\\
+    \quad & y_i^T, y_i^D, y_i^C \in \{0, 1\}, & \forall i \in N \tag{1n} \label{eq:conv-y-bound}\\
+    \quad & a_i \in \mathbb{R}_+, & \forall i \in V \tag{1o} \label{eq:conv-a-bound}
+\end{align}
+}
+\end{theorem}
+
+目标函数\cref{eq:conv-obj}最小化服务所有顾客的总时间 $a_{0'}$。
+
+\begin{itemize}
+    \item 卡车相关的约束：约束\cref{eq:conv-flow-T}是卡车在顾客节点的流平衡约束；约束\cref{eq:conv-sum-T}表示当卡车经过顾客节点 $i \in N$ 时，顾客节点被卡车单独服务或者被卡车和无人机共同服务；约束\cref{eq:conv-start-T}表示卡车离开和返回仓库一次。
+    \item 无人机相关的约束：约束\crefrange{eq:conv-flow-D}{eq:conv-start-D}类似于卡车相关的约束\crefrange{eq:conv-flow-T}{eq:conv-start-T}。
+    \item 顾客节点访问约束：约束\cref{eq:conv-y-sum}表示顾客节点被至少服务过一次，可以是卡车单独服务、无人机单独服务或者卡车和无人机共同服务。
+    \item 消除子回路约束：约束\crefrange{eq:conv-time-T}{eq:conv-time-D}通过限制每个节点最后到达的时间戳来消除子回路，即后面访问的节点的时间要大于前面访问的时间，且每个节点只有一个时间戳，因此不会产生子回路，并且约束还限制了卡车和无人机到达节点的时间；约束\cref{eq:conv-D-0}消除了无人机访问顺序为 $0 \dashrightarrow i \dashrightarrow 0'$ 的情况，即无人机在仓库节点有环的情况。 
+    \item 无人机访问顾客节点约束：约束\cref{eq:conv-D-C}表示当无人机经过弧 $(i, j)$ 时，节点 $i$ 或 $j$ 中至少有一个节点是会合节点，即保证了无人机每次飞行只能服务一个顾客节点\footnote{如果 $x_{ij}^D$ 和 $x_{ji}^D$ 都取 $1$，则 $y_i^C$ 和 $y_j^C$ 也都取 $1$，此时由于和约束\cref{eq:conv-time-D}冲突，即不能有子回路，所以不存在这种情况。}。 
+    \item 变量约束：约束\crefrange{eq:conv-x-bound}{eq:conv-a-bound}限制了决策变量的取值范围。
+\end{itemize}
+
+约束\cref{eq:conv-D-0}和\cref{eq:conv-start-D}使得 MILP \crefrange{eq:conv-obj}{eq:conv-a-bound}在只有一个顾客节点（即 $n = 1$）时没有可行解，由于只有一个顾客节点的解过于平凡，因此文章只考虑至少有两个顾客节点的情况（即 $n \geq 2$）。
+
+MILP \crefrange{eq:conv-obj}{eq:conv-a-bound}的计算时间可以通过添加\crefrange{eq:conv-add-T}{eq:conv-add-D}约束来减少，约束\crefrange{eq:conv-add-T}{eq:conv-add-D}表示服务所有顾客的总时间不能少于卡车服务顾客的时间之和，同样也不能少于无人机服务顾客的时间之和。
+
+\begin{corollary}
+    \begin{align}
+        \sum_{(i, j) \in \mathcal{A}} t_{ij}^Tx_{ij}^T \leq a_{0'} \tag{1p}\label{eq:conv-add-T}\\
+        \sum_{(i, j) \in \mathcal{A}} t_{ij}^Dx_{ij}^D \leq a_{0'} \tag{1q}\label{eq:conv-add-D}
+    \end{align}
+\end{corollary}
+
+\subsection{Compact Formulation for Commonly Used Side Constraints}
+文章通过考虑在 MILP \crefrange{eq:conv-obj}{eq:conv-a-bound}上添加约束来拓展基础的 TSP-D 以适应不同的情况。
+
+\subsubsection{Loops}
+允许无人机起飞和降落在同一个节点，即允许无人机的服务路径是环。为了在 MILP \crefrange{eq:conv-obj}{eq:conv-a-bound}中允许无人机服务的环的存在，目标函数 \cref{eq:conv-obj} 需要修改为目标函数\cref{eq:conv-obj-loops}，约束\cref{eq:conv-y-sum}需要修改为 \cref{eq:conv-y-sum-loops}
+
+\begin{lemma}
+    \begin{equation}
+        t^* = \min a_{0'} + \sum_{j \in N}\left(t_{0j}^D + t_{j0'}^D\right)z_{0j} + \sum_{i, j \in N: i\neq j}\left(t_{ij}^D + t_{ji}^D\right)z_{ij} \tag{2} \label{eq:conv-obj-loops}
+    \end{equation}
+    \begin{align}
+        & y_i^T + y_i^D + y_i^C + \sum_{j \in N_0} z_{ji} = 1, & i \in N \tag{3a}\label{eq:conv-y-sum-loops} \\
+        & z_{ij} \leq y_i^C, & i,j \in N: i \neq j \tag{3b}\label{eq:conv-z-y-loops}
+    \end{align} 
+\end{lemma}
+
+约束\cref{eq:conv-y-sum-loops}表示顾客可以被无人机可以被卡车单独服务、被无人机和卡车共同服务或者被无人机单独服务（可以包含环）；约束\cref{eq:conv-z-y-loops}表示仅当节点 $i$ 是卡车和无人机会合点时，无人机才能够在节点 $i$ 进行环 $i \dashrightarrow j \dashrightarrow i (i, j \in N: i \neq j)$ 的配送\footnote{$y_i^D$已经包含了$z_{ji}$的情况，实际上\crefrange{eq:conv-obj}{eq:conv-a-bound}剔除环的关键约束应该是\cref{eq:conv-time-D}，并且由于\cref{eq:conv-time-D}在新模型中没有被剔除，所以应该不可能存在无人机的子回路，况且还存在\cref{eq:conv-D-C}的约束，所以无人机子回路的新模型应该是存在问题的。}。 
+
+新模型通过约束\cref{eq:conv-sum-D}和\cref{eq:conv-z-y-loops}排除了所有顾客都由无人机配送的可能性（即有 $n$ 个环），这种解的总服务时间为 $\sum_{i \in N}\left(t_{0i}^D + t_{i0'}^D)\right)$，可以通过简单的对比来比较这种解是否优于新模型的可行解中的最优解，所以不需要额外添加约束来考虑这种情况。
+
+\subsubsection{Incompatible Customers}
+存在不能由无人机直接服务的顾客，即部分顾客节点只能由卡车进行服务。约束\crefrange{eq:conv-y-inc}{eq:conv-z-inc}需要被添加到 MILP \crefrange{eq:conv-obj}{eq:conv-a-bound}中。
+
+\begin{corollary}
+    \begin{align}
+        y_i^D = 0, & i \in N \setminus N^D \tag{4a} \label{eq:conv-y-inc} \\
+        z_{ji} = 0, & i \in N \setminus N^D, j \in N_0: i \neq j \tag{4b} \label{eq:conv-z-inc}
+    \end{align}
+\end{corollary}
+
+约束\cref{eq:conv-y-inc}表示不能由无人机单独服务的顾客；约束\cref{eq:conv-z-inc}排除了服务不能由无人机单独服务的顾客节点的环。
+
+\subsubsection{Drone Flying Range}\label{sec:drone-flying-range}
+考虑无人机最大续航 $e$ 的限制，即无人机单次飞行的总时间不能超过 $e$。需要添加的约束为\crefrange{eq:conv-D-T-range}{eq:conv-time-range}。
+
+\begin{corollary}
+    \begin{align}
+        & x_{ij}^D \leq x_{ij}^T, \quad (i, j) \in \mathcal{A}: t_{ij}^D > e \tag{5a}\label{eq:conv-D-T-range} \\
+        & z_{0j} = 0, \quad j \in N: t_{0j}^D + t_{j0'}^D > e \tag{5b}\label{eq:conv-z-range} \\
+        & z_{ij} = 0, \quad i,j \in N: i \neq j, t_{ij}^D + t_{ji}^D > e \tag{5c}\label{eq:conv-z-range-2} \\
+        & \sum_{(j, i) \in \mathcal{A}}t_{ji}^Dx_{ji}^D + \sum_{(i,j) \in \mathcal{A}}t_{ij}^Dx_{ij}^D + \left(t_{0i}^D + t_{i0'}^D\right)z_{0i} + \sum_{j \in N}\left(t_{ji}^D + t_{ij}^D\right)z_{ji} \leq e + M\left(1 - y_i^D\right), \quad i \in N \tag{5d}\label{eq:conv-time-range}
+    \end{align}
+\end{corollary}
+
+约束\cref{eq:conv-D-T-range}确保如果无人机经过的弧 $(i, j) \in \mathcal{A}$ 超出了无人机的续航，则无人机由卡车搭载进行服务；约束\crefrange{eq:conv-z-range}{eq:conv-z-range-2}确保无人机进行配送的环不会超出其最大续航；约束\cref{eq:conv-time-range}表示当无人机单独服务顾客 $i \in N$（此时 $y_i^D = 1$ 时，无人机总的服务时间不会超过其最大续航时间，添加和 $z$ 相关的约束不是必要的，但是可以增强约束（adding the $z$ variables to the left-hand side is not necessary but allows to strengthen the constraint）。 
+
+\subsubsection{Weight-Dependent Drone Flying Range}
+考虑无人机续航 $\bar{b}$ 由携带的包裹的重量和弧决定，即无人机的能量消耗是是一个关于弧 $(i, j) \in \mathcal{A}$ 和包裹重量 $w$ 的函数 $en_{ij}(w)$。由于无人机每次飞行只能够携带一个包裹，因此可以预先计算出当无人机携带包裹在弧 $(i, j)$ 上飞行时的能量消耗 $b_{ij}^{\text{on}}$ 和不携带包裹（即空载）飞行时的能量消耗 $b_{ij}^{\text{off}}$。通过修改\cref{sec:drone-flying-range}节的新增约束为\crefrange{eq:conv-D-T-weight}{eq:conv-time-weight}约束可以得到相应的新模型。约束\crefrange{eq:conv-D-T-weight}{eq:conv-time-weight}和约束\crefrange{eq:conv-D-T-range}{eq:conv-time-range}的含义类似，只是把无人机的飞行时间改为能量消耗值，把无人机飞行距离改成电池容量。
+
+\begin{corollary}
+    \begin{align}
+        & x_{ij}^D \leq x_{ij}^T, \quad (i, j) \in \mathcal{A}: b_{ij}^{\text{off}} > \bar{b} \tag{6a}\label{eq:conv-D-T-weight} \\
+        & z_{0j} = 0, \quad j \in N: b_{0j}^{\text{on}} + b_{j0'}^{\text{off}} > \bar{b} \tag{6b}\label{eq:conv-z-weight} \\
+        & z_{ij} = 0, \quad i,j \in N: i \neq j, b_{ij}^{\text{on}} + b_{ji}^{\text{off}} > \bar{b} \tag{6c}\label{eq:conv-z-weight-2} \\
+        & \sum_{(j, i) \in \mathcal{A}}b_{ji}^{\text{on}} x_{ji}^D + \sum_{(i,j) \in \mathcal{A}}b_{ij}^{\text{off}} x_{ij}^D + \left(b_{0i}^{\text{on}} + b_{i0'}^{\text{off}}\right)z_{0i} + \sum_{j \in N}\left(b_{ji}^{\text{on}} + b_{ij}^{\text{off}}\right)z_{ji} \leq \bar{b} + M\left(1 - y_i^D\right), \quad i \in N \tag{6d}\label{eq:conv-time-weight}
+    \end{align}
+\end{corollary}
+
+\subsubsection{Drone Cannot Land and Wait}
+考虑无人机在会合点不能够在地面等待卡车的情况，即无人机在会合点等待卡车时需要消耗续航，因此需要添加约束\cref{eq:conv-time-land}，表示如果无人机的配送路径为 $j \dashrightarrow i \dashrightarrow k$，则到达节点 $k$ 的时间减去到达节点 $j$ 的时间不能超过无人机的续航时间。这个约束只在无人机有续航约束的时候有意义。 
+
+\begin{corollary}
+    \begin{equation}
+        a_k - a_j \leq e + M\left(2 - x_{ji}^D - x_{ik}^D\right) + M\left(1 - y_i^D\right), \quad j \in N_0, i \in N, k \in N_0': i \neq j \neq k, t_{ji}^D + t_{ik}^D \leq e \tag{7a}\label{eq:conv-time-land}
+    \end{equation}
+\end{corollary}
+
+\subsubsection{Launch and Rendezvous Times}
+考虑无人机起飞的准备时间 $lt$，在 Murray 和 Chu (2015)\cite{murrayFlyingSidekickTraveling2015}的文章中假设，无人机起飞的准备时间 $lt$ 只在非仓库节点需要考虑。在本文章中假设在无人机起飞的准备时间内，无人机和卡车都不能移动。修改目标函数\cref{eq:conv-obj-loops}为目标函数\cref{eq:conv-obj-launch}并增加约束\cref{eq:conv-lt-launch}即可获得相应的新模型\footnote{实际上约束\cref{eq:conv-lt-launch}应该是$l_i \leq y_i^D - x_{0i}^D, \quad i \in N$。}。约束\cref{eq:conv-obj-launch}在非仓库的环中考虑了无人机起飞的准备时间（第三项），在无人机单独服务且起飞节点非仓库的路径中考虑了无人机起飞的准备时间（最后一项）。约束\cref{eq:conv-lt-launch}确保了 $l_i = 1$ 当且仅当顾客节点 $i$ 是由无人机单独服务（即 $y_i^D = 1$）且起飞节点不是仓库（即 $x_{0i}^D = 0$）。 
+
+\begin{corollary}
+    \begin{equation}
+        t^* = \min a_{0'} + \sum_{j \in N}\left(t_{0j}^D + t_{j0'}^D)\right)z_{0j} + \sum_{i,j \in N: i\neq j}\left(t_{ij}^D + t_{ji}^D + lt\right)z_{ij} + \sum_{i \in N}lt l_i \tag{8}\label{eq:conv-obj-launch}
+    \end{equation}
+    \begin{equation}
+        l_i \geq y_i^D - x_{0i}^D, \quad i \in N \tag{9}\label{eq:conv-lt-launch}
+    \end{equation}
+\end{corollary}
+
+同样地，类似于无人机起飞的准备时间，考虑无人机的会合时间 $rt$（或者说无人机的回收时间），在本文章中假设在无人机回收时，无人机和卡车都不能移动。修改，目标函数\cref{eq:conv-obj-loops}为目标函数\cref{eq:conv-obj-ren}增加无人机在环的总服务时间（第二项和第三项）和增加无人机单独服务顾客的非环的总服务时间（最后一项），即可获得新模型。
+
+\begin{corollary}
+    \begin{equation}
+        t^* = \min a_{0'} + \sum_{j \in N}\left(t_{0j}^D + t_{j0'}^D + rt)\right)z_{0j} + \sum_{i,j \in N: i\neq j}\left(t_{ij}^D + t_{ji}^D + rt\right)z_{ij} + \sum_{i \in N}rt y_i^D \tag{9b}\label{eq:conv-obj-ren}
+    \end{equation}
+\end{corollary}
+
+\subsubsection{Maximum Number of Customers per Truck Leg}
+考虑卡车在无人机单独服务时可以服务的最大顾客数量 $\bar{n}$。需要新增的约束可以通过将其分为三种情况进行讨论分析：
+
+\begin{enumerate}
+    \item 当 $\bar{n} = 0$ 时，增加约束：
+    \begin{corollary}
+        \begin{equation*}
+            y_i^T = 0, \quad i \in N
+        \end{equation*}
+    \end{corollary}
+    \item 当 $\bar{n} = 1$ 时，增加类似于\cref{eq:conv-D-C}约束的约束\cref{eq:conv-D-C-max}来确保对于任意的顾客节点对 $i, j \in N: i < j$ 而言，如果弧 $(i, j), (j, i) \in \mathcal{A}$ 中的一条弧被卡车经过，那么顾客节点 $i$ 或 $j$（或都）是被卡车和无人机同时服务的节点。
+    \begin{corollary}
+        \begin{equation}
+            x_{ij}^T + x_{ji}^T \leq y_i^C + y_j^C, \quad i,j \in N: i <j \tag{10}\label{eq:conv-D-C-max}
+        \end{equation}
+    \end{corollary}
+    \item 当 $\bar{n} \geq 2$ 时，添加约束\crefrange{eq:conv-y-limit-max}{eq:conv-v-max}，约束\cref{eq:conv-y-limit-max}确保对于任意一个由卡车单独服务的节点 $i \in N$，当卡车服务到节点 $i$ 时，$v_i$ 的取值不超过最大能单独服务的顾客节点数 $\bar{n}$；约束\cref{eq:conv-v-max}在卡车经过弧 $(i ,j) \in \mathcal{A}$ 且 $j$ 是由卡车单独服务的顾客节点时递增 $v_j = v_i + 1$。 
+    \begin{corollary}
+        \begin{align}
+            & y_i^T \leq v_i \leq \bar{n}y_i^T, & i \in N \tag{11a} \label{eq:conv-y-limit-max} \\
+            & v_i + 1 \leq v_j + (\bar{n} - 1)\left(2 - x_{ij}^T - y_j^T\right), & i,j \in N: i \neq j \tag{11b}\label{eq:conv-v-max}
+        \end{align}
+    \end{corollary}
+\end{enumerate}
+
+\section{Dynamic Programming Recursions}
+
+\bibliography{references}
+
+\end{document}
+
