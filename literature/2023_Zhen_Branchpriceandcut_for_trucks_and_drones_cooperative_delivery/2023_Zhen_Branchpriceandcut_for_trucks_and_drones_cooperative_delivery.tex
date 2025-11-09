@@ -1,0 +1,155 @@
+%! TeX program = xelatex
+\documentclass[fontset=none]{ctexart}
+\input{../note-setup-leftsidebox.tex}
+
+\title{Branch-price-and-cut for trucks and drones cooperative delivery}
+\author{Chen Huaneng}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Assumption and Problem Description}
+
+这篇文章\cite{zhenBranchpriceandcutTrucksDrones2023b}考虑的问题是通过多个卡车组（truck group）\footnote{一个卡车组包含一辆卡车和一架无人机，并且该无人机归属于相应的卡车，即该无人机只能够和相应的卡车协同配送，且起降落只能在该卡车上，并且起降落只能发生在顾客节点或者仓库。}进行顾客包裹的配送，顾客可以被一架无人机或者一辆卡车服务，目标是最小化配送的总成本（总成本包括每个卡车组的固定成本、无人机和卡车的配送成本以及卡车等待无人机会合的成本）。
+
+该研究的假设如下：
+
+\begin{enumerate}
+    \item 每个卡车组的无人机都只能依赖于该卡车组的卡车，即该无人机不能在其他卡车组的卡车上降落或起飞，每个卡车组包含一架无人机和一辆卡车\footnote{文章中提出可以通过两个卡车组的卡车代表同一辆卡车，即引入“虚拟卡车”来实现一辆卡车携带多个无人机的情况。}
+    \item 单次无人机飞行只能够服务一个顾客节点\footnote{在附录中，该研究放松了这个假设，考虑了无人机单次飞行服务多个顾客的情况。}，且无人机和卡车的会合只能够发生在顾客节点或仓库
+    \item 无人机通过更换电池而不是充电来保证续航里程，且卡车携带的无人机电池足够多，且不考虑无人机换电池的时间
+    \item 不考虑无人机起飞的准备时间
+    \item 每个顾客节点都有充足的空间供无人机起飞和降落，且无人机在会合点需要等待卡车时会降落在地面等待，因此不需要考虑无人机等待卡车的成本\footnote{文章中说无人机在空中悬停时需要消耗的电量大于启动无人机所需要的电量，因此让无人机在地面等待，但在实际应用中让无人机在地面等待会有无人机丢失的风险。}
+    \item 无人机的最大续航里程受到其携带的包裹重量的影响
+    \item 卡车配送的路径上的包裹重量总和不超过卡车的载重限制
+    \item 卡车组的数量足够多以至于所有顾客都能被服务到
+\end{enumerate}
+
+\section{Notation and Mathematical Formulation}
+
+该研究所用到的符号及其含义如表\cref{tab:mvrpd-sign-meaning}所示。
+
+% 使用tabularray宏包的longtblr环境创建跨页长表格
+\begin{longtblr}[
+    caption = {mVRP-D 模型符号及含义},  % 表格标题
+    label = {tab:mvrpd-sign-meaning},   % 表格标签，用于后续交叉引用（\ref{}）
+    % 定义表注：标识为[a]，内容包含交叉引用锚点
+    note{a} = {\footnotesize\hypertarget{tab:mvrpd-item-1}{}文章中假设无人机的最大续航里程与无人机的自重和运载的顾客包裹的重量之和成反比。},
+]{
+    width = \textwidth,       % 表格总宽度等于文本宽度
+    colspec = {@{} Q[l, mode=math] X[l] @{} },  % 列格式设置
+    % 解释colspec：
+    % @{} 移除表格左右两侧的默认空白（使表格边缘更紧凑）
+    % Q[l, mode=math] 第一列：左对齐（l），默认进入数学模式（无需手动加$...$）
+    % X[l] 第二列：自适应宽度（填充剩余空间），左对齐（l）
+    row{1} = {font=\bfseries, mode=text},  % 表头行（第1行）样式：文字加粗（\bfseries），强制文本模式（覆盖数学模式）
+    rowhead = 1,              % 设置第1行为表头，表格跨页时每页顶部自动重复显示表头
+}
+    \toprule[1pt] % 表头线宽1pt
+    符号 & 含义 \\
+    \midrule[0.75pt] % 中间线宽0.75pt
+    G = (N, E) & 定义顾客和仓库节点的图 \\ 
+    N = \{0, 1, 2, \dots, n, n + 1\} & 图的节点，包括顾客节点 $i, j \in N_c = \{1, 2, \dots, n\}$ 以及仓库节点（其中一个是虚拟仓库） $\{0, n + 1\}$ \\ 
+    N_c = N \setminus \{0, n + 1\} & 顾客节点集合 $\{1, 2, \dots, n\}$ \\
+    N_0 = N \setminus \{n + 1\} & 无人机或卡车可能的出发节点集合 $\{0, 1, \dots, n\}$ \\ 
+    N_+ = N \setminus \{0\} & 无人机或卡车可能的到达节点集合 $\{1, 2, \dots, n, n + 1\}$ \\
+    E & 图的弧，可能的配送路径 \\
+    q_i & 顾客 $i$ 的需求（包裹重量） \\ 
+    K & 卡车组的集合，卡车组的数量为 $\mid K \mid$，卡车组的索引为 $k$ \\ 
+    f & 无人机空载时的自重 \\ 
+    m_k^K & 卡车最大载重限制 \\
+    m_k^D & 卡车 $k$ 上的无人机的最大载重限制 \\ 
+    e_k^D & 卡车组 $k$ 的无人机空载时的最大续航里程 \\ 
+    e_{ki}^D & 卡车 $k$ 上的无人机载重顾客 $i$ 的需求时的续航里程，当 $q_i \leq m_k^D$ 时，$e_{ki}^D = e_k^D \frac{f}{f + q_i}$，否则 $e_{ki}^D = 0$\hyperlink{tab:mvrpd-item-1}{\TblrNote{a}} \\ 
+    t_{ijk}^K & 卡车 $k$ 从节点 $i$ 到节点 $j$ 所需的行驶时间 \\ 
+    t_{ijk}^D & 卡车 $k$ 上的无人机从节点 $i$ 到节点 $j$ 所需的飞行时间 \\ 
+    \langle i, j , h\rangle & 无人机的运输路径，从 $i$ 节点起飞，配送顾客节点 $j$，最终和卡车在节点 $h$ 会合 \\ 
+    F & 所有可能的无人机的运输路径，即无人机搭载顾客节点 $j$ 的包裹时的最大续航里程不小于从 $i$ 节点到 $j$ 顾客节点和从 $j$ 顾客节点到卡车所在节点 $h$ 的飞行时间之和 $(i, j, h) \in F, i \in N_0, j \in \{N_c: j \neq i\}, h \in \{N_+: h \neq j, h \neq i, t_{ijk}^D + t_{jhk}^D \leq e_{kj}^D\}$ \\
+    s^K & 单辆卡车的单位时间内的单位运输成本 \\ 
+    s^D & 单架无人机单位时间内的单位运输成本 \\
+    s^W & 单辆卡车的单位时间内的单位等待时间成本 \\
+    s^G & 单个卡车组的固定使用成本 \\ 
+    M & 足够大的正数 \\ 
+    \alpha_{ijk} & 二元决策变量，当卡车 $k$ 从节点 $i \in N_0$ 行驶到节点 $j \in N_+$ 时等于 $1$，否则为 $0$ \\
+    \beta_{ijhk} & 二元决策变量，当卡车 $k$ 上的无人机从节点 $i \in N_0$ 起飞，服务顾客节点 $j \in N_c$，最终和卡车 $k$ 在节点 $h \in N_+$ 会合时等于 $1$，否则等于 $0$ \\ 
+    \mu_{ik} & 整数，表示卡车 $k$ 的路径中节点 $i$ 的次序 \\
+    \gamma_{ijk} & 二元决策变量，当卡车 $k$ 服务节点 $i$ 的次序在服务节点 $j$ 的次序之前时等于 $1$，否则等于 $0$ \\
+    \tau_{ik}^K & 非负连续变量，卡车 $k$ 到达节点 $i$ 的时间 \\ 
+    \tau_{ik}^D & 非负连续变量，卡车 $k$ 上的无人机到达节点 $i$ 的时间 \\ 
+    \rho_{ik} & 非负连续变量，卡车组 $k$ 到达节点 $i$ 的时间（即卡车或无人机最后一个到达节点 $i$ 的时间） \\
+    \varepsilon_k & 二元变量，当卡车组 $k$ 被选中时等于 $1$（即卡车组 $k$ 参与了配送） ，否则等于 $0$ \\ 
+    \bottomrule[1pt] % 表尾线宽1pt
+\end{longtblr}
+
+数学模型 MIP 可以表示为\crefrange{eq:mip-obj}{eq:mip-epsilon-bound}。
+
+\begin{theorem}
+{    
+\begin{align}
+    \min \quad &
+    \begin{aligned}
+        \sum_{k \in K} s^{K} \sum_{i \in N_{0}} \sum_{j \in N_{+}} t_{ijk}^{K} \alpha_{ijk} + \sum_{k \in K} s^{D} \sum_{i \in N_{0}} \sum_{j \in N_{c}} \sum_{h \in N_{+}} (t_{ijk}^{D} + t_{jhk}^{D}) \beta_{ijhk} \\
+        + \sum_{k \in K} s^{G} \varepsilon_{k} + \sum_{k \in K} s^{W} \left( \rho_{n+1,k} - \sum_{i \in N_{0}} \sum_{j \in N_{+}} t_{ijk}^{K} \alpha_{ijk} \right)
+    \end{aligned} \tag{4-1} \label{eq:mip-obj}\\
+    \text{s.t.} \quad & \sum_{j \in N_{+}} \alpha_{0jk} = 1, \quad \forall k \in K \tag{4-2} \label{eq:mip-truck-depart}\\
+    & \sum_{i \in N_{0}} \alpha_{i, n+1, k} = 1, \quad \forall k \in K \tag{4-3} \label{eq:mip-truck-return}\\
+    & \sum_{\substack{i \in N_{0} \\ i \neq j}} \alpha_{i j k} = \sum_{\substack{h \in N_{+} \\ h \neq j}} \alpha_{j h k} \leq 1, \quad \forall j \in N_{c}, k \in K \tag{4-4} \label{eq:mip-truck-flow}\\
+    & \sum_{k \in K} \sum_{\substack{i \in N_{0} \\ i \neq j}} \sum_{\substack{h \in N_{+} \\ (i,j,h) \in F}} \beta_{i j h k} \leq 1, \quad \forall j \in N_{c} \tag{4-5} \label{eq:mip-drone-customer-single}\\
+    & \sum_{k \in K} \sum_{\substack{j \in N_{c} \\ j \neq i}} \sum_{\substack{h \in N_{+} \\ (i,j,h) \in F}} \beta_{i j h k} \leq 1, \quad \forall i \in N_{0} \tag{4-6} \label{eq:mip-drone-launch-single}\\
+    & \sum_{k \in K} \sum_{\substack{i \in N_{0} \\ i \neq h}} \sum_{\substack{j \in N_{c} \\ (i,j,h) \in F}} \beta_{i j h k} \leq 1, \quad \forall h \in N_{+} \tag{4-7} \label{eq:mip-drone-return-single}\\
+    & \sum_{k \in K} \sum_{\substack{i \in N_{0} \\ i \neq j}} \alpha_{i j k} + \sum_{k \in K} \sum_{\substack{i \in N_{0} \\ i \neq j}} \sum_{\substack{h \in N_{+} \\ (i,j,h) \in F}} \beta_{i j h k} = 1, \quad \forall j \in N_{c} \tag{4-8} \label{eq:mip-customer-cover}\\
+    & 2\beta_{i j h k} \leq \sum_{\substack{j_1 \in N_{0} \\ j_1 \neq i}} \alpha_{j_1 i k} + \sum_{\substack{i_1 \in N_{c} \\ i_1 \neq h}} \alpha_{i_1 h k}, \quad \forall i \in N_{c}, j \in \{N_{c}: i \neq j\}, k \in K, h \in \{N_{+}: (i,j,h) \in F\} \tag{4-9} \label{eq:mip-drone-truck-node-i}\\
+    & \beta_{0 j h k} \leq \sum_{\substack{i \in N_{0} \\ i \neq h}} \alpha_{i h k}, \quad \forall j \in N_{c}, k \in K, h \in \{N_{+}: (0,j,h) \in F\} \tag{4-10} \label{eq:mip-drone-depot-launch}\\
+    & \tau_{j k}^{K} \geq \rho_{i k} + t_{i j k}^{K} - M(1 - \alpha_{i j k}), \quad \forall i \in N_{0}, k \in K, j \in \{N_{+}: j \neq i\} \tag{4-11} \label{eq:mip-truck-arrival-time}\\
+    & \tau_{j k}^{D} \geq \rho_{i k} + t_{i j k}^{D} - M\left(1 - \sum_{\substack{h \in N_{+} \\ (i,j,h) \in F}} \beta_{i j h k}\right), \quad \forall j \in N_{c}, k \in K, i \in \{N_{0}: i \neq j\} \tag{4-12} \label{eq:mip-drone-arrival-j}\\
+    & \tau_{h k}^{D} \geq \rho_{j k} + t_{j h k}^{D} - M\left(1 - \sum_{\substack{i \in N_{0} \\ (i,j,h) \in F}} \beta_{i j h k}\right), \quad \forall j \in N_{c}, k \in K, h \in \{N_{+}: h \neq j\} \tag{4-13} \label{eq:mip-drone-arrival-h}\\
+    & \mu_{h k} - \mu_{i k} \geq 1 - (n+2)\left(1 - \sum_{\substack{j \in N_{c} \\ (i,j,h) \in F}} \beta_{i j h k}\right), \quad \forall i \in N_{c}, k \in K, h \in \{N_{+}: h \neq i\} \tag{4-14} \label{eq:mip-drone-node-order}\\
+    & \mu_{i k} - \mu_{j k} + 1 \leq (n+2)(1 - \alpha_{i j k}), \quad \forall i \in N_{0}, k \in K, j \in \{N_{+}: j \neq i\} \tag{4-15} \label{eq:mip-truck-subtour-1}\\
+    & \mu_{j k} \leq (n+2)\sum_{i \in N_{0}} \alpha_{i j k}, \quad \forall k \in K, j \in \{N_{+}: j \neq i\} \tag{4-16} \label{eq:mip-truck-subtour-2}\\
+    & \mu_{i k} \geq \mu_{j k} - (n+2)\gamma_{i j k}, \quad \forall i \in N_{c}, k \in K, j \in \{N_{c}: j \neq i\} \tag{4-17} \label{eq:mip-gamma-order-1}\\
+    & \mu_{i k} - \mu_{j k} \leq -1 + (n+2)(1 - \gamma_{i j k}), \quad \forall i \in N_{c}, k \in K, j \in \{N_{c}: j \neq i\} \tag{4-18} \label{eq:mip-gamma-order-2}\\
+    & \gamma_{0 j k} = \sum_{i \in N_{0}} \alpha_{i j k}, \quad \forall j \in N_{+}, k \in K \tag{4-19} \label{eq:mip-gamma-depot}\\
+    & 
+    \begin{aligned}
+        \rho_{i_2k} \geq \tau_{h_1k}^D - M \left(3 - \sum_{\substack{j_1 \in N_c \\ j_1 \neq i_2 \\ (i_1,j_1,h_1) \in F}}\beta_{i_1j_1h_1k} - \sum_{\substack{j_2 \in N_c \\ j_2 \neq i_1 \\ j_2 \neq h_1 \\ j_2 \neq i_2}} \sum_{\substack{h_2 \in N_+ \\ (i_2, j_2, h_2) \in F\\ h_2 \neq i_1 \\ h_2 \neq h_1}}\beta_{i_2 j_2 h_2 k} - \gamma_{i_1 i_2 k}\right), \\
+        \forall i_1 \in N_0, h_1 \in \{N_+: h_1 \neq i_1\}, i_2 \in \{N_c: i_2 \neq i_1, i_2 \neq h_1\}, k \in K 
+    \end{aligned}\tag{4-20} \label{eq:mip-drone-launch-later}\\
+    & \tau_{h k}^{D} - \rho_{j k} + t_{i j}^{D} \leq e_{k j}^{D} + M(1 - \beta_{i j h k}), \quad \forall h \in N_{+}, j \in N_{c}: j \neq h, k \in K, i \in N_{0}: (i,j,h) \in F \tag{4-21} \label{eq:mip-drone-flight-time-1}\\
+    & \beta_{i j h k}\left(t_{i j}^{D} + t_{j h}^{D}\right) \leq e_{k j}^{D}, \quad \forall h \in N_{+}, j \in \{N_{c}: j \neq h\}, k \in K, i \in \{N_{0}: (i,j,h) \in F\} \tag{4-22} \label{eq:mip-drone-flight-time-2}\\
+    & \rho_{h k} - \rho_{i k} \leq e_{k j}^{D} + M(1 - \beta_{i j h k}), \quad \forall h \in N_{+}, j \in N_{c}, k \in K, i \in \{N_{0}: (i,j,h) \in F\} \tag{4-23} \label{eq:mip-drone-flight-time-3}\\
+    & \sum_{i \in N_{c}} \sum_{j \in N_{0}} q_{i} \alpha_{j i k} + \sum_{i \in N_{c}} \sum_{j \in N_{0}} \sum_{\substack{h \in N_{+} \\ (j,i,h) \in F}} q_{i} \beta_{j i h k} \leq m_{k}^{K}, \quad \forall k \in K \tag{4-24} \label{eq:mip-truck-capacity}\\
+    & q_{i} \sum_{j \in N_{0}} \sum_{\substack{h \in N_{+} \\ (j,i,h) \in F}} \beta_{j i h k} \leq m_{k}^{D}, \quad \forall i \in N_{c}, k \in K \tag{4-25} \label{eq:mip-drone-capacity}\\
+    & \varepsilon_{k} \geq \alpha_{i j k}, \quad \forall i \in N_{0}, k \in K, j \in \{N_{c}: j \neq i\} \tag{4-26} \label{eq:mip-truck-use}\\
+    & \varepsilon_{k} \geq \beta_{i j k h}, \quad \forall h \in N_{+}, j \in \{N_c: j \neq h\}, k \in K, i \in \{N_{0}: (i, j, h) \in F\} \tag{4-27} \label{eq:mip-drone-use}\\
+    & \tau_{0 k}^{K} = 0, \quad \forall k \in K \tag{4-28} \label{eq:mip-truck-depart-time}\\
+    & \tau_{0 k}^{D} = 0, \quad \forall k \in K \tag{4-29} \label{eq:mip-drone-depart-time}\\
+    & \rho_{i k} = \max\left\{ \tau_{i k}^{D}, \tau_{i k}^{K} \right\}, \quad \forall i \in N, k \in K \tag{4-30} \label{eq:mip-group-arrival-time}\\
+    & \tau_{i k}^{K} \geq 0, \quad \forall i \in N, k \in K \tag{4-31} \label{eq:mip-truck-time-bound}\\
+    & \tau_{i k}^{D} \geq 0, \quad \forall i \in N, k \in K \tag{4-32} \label{eq:mip-drone-time-bound}\\
+    & \rho_{i k} \geq 0, \quad \forall i \in N, k \in K \tag{4-33} \label{eq:mip-group-time-bound}\\
+    & 1 \leq \mu_{i k} \leq n+2, \quad \mu_{i k} \in \mathbb{Z}^{+}, \forall i \in N, k \in K \tag{4-34} \label{eq:mip-mu-bound}\\
+    & \alpha_{i j k} \in \{0,1\}, \quad \forall i \in N_{0}, j \in N_{+}, k \in K \tag{4-35} \label{eq:mip-alpha-bound}\\
+    & \beta_{i j h k} \in \{0,1\}, \quad \forall i \in N_{0}, j \in N_{c}, k \in K, h \in N_{+} \tag{4-36} \label{eq:mip-beta-bound}\\
+    & \gamma_{i j k} \in \{0,1\}, \quad \forall i \in N, k \in K, j \in N \tag{4-37} \label{eq:mip-gamma-bound}\\
+    & \varepsilon_{k} \in \{0,1\}, \quad \forall k \in K \tag{4-38} \label{eq:mip-epsilon-bound}
+\end{align}
+}
+\end{theorem}
+
+目标函数\cref{eq:mip-obj}最小化总成本，包括卡车和无人机的总运输成本，卡车组的固定使用成本和卡车等待无人机的成本。VRP的变体通常使用与时间相关联的成本来最小化成本，最小化固定成本是为了使得最终方案使用的卡车组尽可能少，从而减少使用的无人机和卡车的数量，最小化卡车等待无人机的成本是为了提高无人机和卡车的协同效率。
+
+\begin{itemize}
+    \item 卡车相关的约束：约束\crefrange{eq:mip-truck-depart}{eq:mip-truck-return}确保卡车 $k$ 从仓库出发并返回仓库；约束\cref{eq:mip-truck-flow}确保卡车的流平衡以及每个顾客最多只能被卡车 $k$ 服务一次；约束\cref{eq:mip-truck-arrival-time}确保卡车到达节点 $j$ 的时间；约束\crefrange{eq:mip-gamma-order-1}{eq:mip-gamma-depot}决定了 $\gamma$ 的值；约束\cref{eq:mip-truck-capacity}确保了对于卡车 $k$ 来说，经过的路径上所有服务的顾客（包括无人机服务的顾客）的包裹的总重量不超过卡车的载重限制；约束\cref{eq:mip-truck-depart-time}表示卡车离开仓库的时间为 $0$。
+    \item 无人机相关的约束：约束\cref{eq:mip-drone-customer-single}确保每个顾客节点最多被一架无人机服务一次；约束\cref{eq:mip-drone-launch-single}确保对于任意一个起飞节点 $i$ 来说，最多只能有一架无人机起飞，且最多起飞一次；约束\cref{eq:mip-drone-return-single}确保对于任意一个会合节点 $h$ 来说，最多只能有一架无人机降落，且最多降落一次；约束\crefrange{eq:mip-drone-arrival-j}{eq:mip-drone-arrival-h}限制了无人机到达节点 $j$ 和 $h$ 的时间；约束\cref{eq:mip-drone-launch-later}确保了卡车 $k$ 上的无人机在两次飞行 $(i_1, j_1, h_1)$ 和 $(i_2, j_2, h_2)$ 的过程中，无人机第二次从节点 $i_2$ 起飞的时间要晚于上一次降落在节点 $h_1$ 的时间；约束\crefrange{eq:mip-drone-flight-time-1}{eq:mip-drone-flight-time-3}限制了无人机单次飞行的总时间不能超过无人机的续航时间；约束\cref{eq:mip-drone-capacity}确保无人机配送的顾客包裹的重量不超过无人机的最大载重限制；约束\cref{eq:mip-drone-depart-time}表示无人机离开仓库的时间为 $0$。
+    \item 顾客节点访问约束：约束\cref{eq:mip-customer-cover}确保每个顾客都只被服务一次。
+    \item 无人机和卡车协同约束：约束\cref{eq:mip-drone-truck-node-i}确保卡车经过无人机的起飞节点和降落节点；约束\cref{eq:mip-drone-depot-launch}确保当无人机从仓库起飞时，卡车经过无人机的降落节点；约束\cref{eq:mip-drone-node-order}确保当卡车 $k$ 上的无人机从节点 $i$ 起飞并降落在节点 $h$ 时，卡车 $k$ 访问节点 $i$ 在访问节点 $h$ 之前。
+    \item 消除子回路约束：约束\crefrange{eq:mip-truck-subtour-1}{eq:mip-truck-subtour-2}通过卡车访问节点的次序来消除子回路。
+    \item 卡车组相关约束：约束\crefrange{eq:mip-truck-use}{eq:mip-drone-use}限制了 $\varepsilon$ 的取值，即卡车组的使用和无人机、卡车相关联；约束\cref{eq:mip-group-arrival-time}确保卡车组 $k$ 到达节点 $i$ 的时间为卡车和相应的无人机最晚到达节点 $i$ 的时间。
+    \item 变量约束：约束\crefrange{eq:mip-truck-time-bound}{eq:mip-epsilon-bound}限制了变量和决策变量的取值范围。
+\end{itemize}
+
+\bibliography{references}
+
+\end{document}
