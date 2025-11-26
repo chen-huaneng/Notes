@@ -1,0 +1,94 @@
+%! TeX program = xelatex
+\documentclass[fontset=none]{ctexart}
+\input{../note-setup-leftsidebox.tex}
+\usepackage{pdfpages} % 在 LaTeX 中插入外部 PDF 文件
+
+\title{Dynamic programming approaches for the traveling salesman problem with drone}
+\author{Chen Huaneng}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Description}
+
+该研究\cite{boumanDynamicProgrammingApproaches2018}针对的问题是 Traveling Salesman Problem with Drone (TSP-D)，目标函数是求卡车和无人机返回仓库的最短时间，单次无人机飞行只能够服务一个顾客，允许无人机的配送路径是个环（即卡车在某个顾客节点等待无人机服务后返回），且卡车和无人机会合的节点只能够是顾客节点或者仓库。该研究用到的符号及其含义如表\cref{tab:tspd-sign-meaning}所示。
+
+% 使用tabularray宏包的longtblr环境创建跨页长表格
+\begin{longtblr}[
+    caption = {TSP-D 用到的符号及含义},  % 表格标题
+    label = {tab:tspd-sign-meaning},   % 表格标签，用于后续交叉引用（\ref{}）
+]{
+    width = \textwidth,       % 表格总宽度等于文本宽度
+    colspec = {@{} Q[l, mode=math] X[l] @{} },  % 列格式设置
+    % 解释colspec：
+    % @{} 移除表格左右两侧的默认空白（使表格边缘更紧凑）
+    % Q[l, mode=math] 第一列：左对齐（l），默认进入数学模式（无需手动加$...$）
+    % X[l] 第二列：自适应宽度（填充剩余空间），左对齐（l）
+    row{1} = {font=\bfseries, mode=text},  % 表头行（第1行）样式：文字加粗（\bfseries），强制文本模式（覆盖数学模式）
+    rowhead = 1,              % 设置第1行为表头，表格跨页时每页顶部自动重复显示表头
+}
+    \toprule[1pt] % 表头线宽1pt
+    符号 & 含义 \\
+    \midrule[0.75pt] % 中间线宽0.75pt
+    V & 位置节点集合，包含仓库$v_0$和$n-1$个顾客位置，即$V = \{v_0, v_1, ..., v_{n-1}\}$ \\
+    n & 位置节点总数（包含仓库$v_0$） \\
+    c(v, w) & 卡车从位置$v$到位置$w$的行驶时间（或距离），$v, w \in V$ \\
+    c^d(v, w) & 无人机从位置$v$到位置$w$的飞行时间（或距离），$v, w \in V$ \\
+    \alpha & 无人机与卡车的速度关联常数，满足$\alpha c^d(v, w) \geq c(v, w)$对所有$v, w \in V$，表示无人机最大速度为卡车的$\alpha$倍 \\
+    o & 单个操作（operation），由起始节点、终止节点、最多一个无人机节点（由无人机单独服务的节点）和若干卡车节点（卡车单独服务的节点）组成，当没有无人机节点时，卡车搭载无人机进行服务，当起始节点和终止节点一致且没有卡车节点但有无人机节点时，卡车在起始节点等待无人机服务完后会合 \\
+    t(o) & 单个操作$o$的持续时间，取卡车行驶总时间与无人机飞行总时间的最大值 \\
+    S & $V$的子集，用于表示动态规划中已覆盖的节点集合 \\
+    D_{\text{TSP}}(S, w) & 标准TSP中，从起点$v \in S$出发覆盖子集$S$中所有节点并结束于$w \in S \setminus \{v\}$的最短路径成本 \\
+    % $D_T(S, v, w)$ & 第一遍动态规划结果，卡车从起点$v$出发、结束于$w$、覆盖子集$S$中所有卡车节点的最短路径成本，$w \in S$ \\
+    % $D_{\text{OP}}(S, v, w)$ & 第二遍动态规划结果，高效操作的成本（结合卡车路径与无人机节点），操作起点为$v$、终点为$w$、覆盖子集$S$中所有节点 \\
+    % $D(S, w)$ & 第三遍动态规划结果，从仓库$v_0$出发覆盖子集$S$中所有节点并结束于$w$的最优TSP-D路径成本，$w \in S$ \\
+    % $\hat{O} = (\hat{o}_1, \hat{o}_2, ..., \hat{o}_l)$ & 最优TSP-D路径对应的操作序列，$l$为操作序列长度 \\
+    % $\hat{o}_i$ & 最优操作序列中的第$i$个操作，$i = 1, 2, ..., l$ \\
+    % $k$ & 每操作允许的最大卡车仅访问节点数（限制参数），无限制时记为$k = \infty$ \\
+    % $Z^k$ & 限制每操作最多$k$个卡车节点时的TSP-D最优解目标值 \\
+    % $Z^\infty$ & 无卡车节点数量限制时的TSP-D最优解目标值 \\
+    % $\Delta(\%)$ & 相对偏差，计算公式为$\frac{Z^k - Z^\infty}{Z^\infty} \times 100$，用于衡量限制条件对解质量的影响 \\
+    % $\text{Max}(\%)$ & 最大相对偏差，即多组实例中$\Delta(\%)$的最大值 \\
+    % $\# \text{opt}$ & 限制条件下找到最优解$Z^\infty$的实例数量 \\
+    % $U$ & $V$的子集，用于动态规划迭代中表示当前待扩展的节点集合 \\
+    % $T$ & $V$的子集，用于第三遍动态规划中表示单个操作覆盖的节点集合 \\
+    % $d$ & 无人机节点（drone node），即仅由无人机单独访问的节点 \\
+    \bottomrule[1pt] % 表尾线宽1pt
+\end{longtblr}
+
+\section{Solution Approaches}
+
+该研究的解决方法主要基于 Bellman-Held-Karp dynamic programming algorithm for the TSP\footnote{关于Bellman-Held-Karp 算法的进一步理解可以参考本文的末尾的附录部分，该文档来源于\href{https://www.math.nagoya-u.ac.jp/~richard/teaching/s2020/Quang1.pdf}{Nagoya University 的 Serge Richard教授}。}进行改良\cite{bellmanDynamicProgrammingTreatment1962, heldDynamicProgrammingApproach1961}，该方法分为三个阶段：
+
+\begin{enumerate}
+    \item 对于任意一个起始节点、终止节点以及中间卡车服务的节点集合，枚举所有这样组合的卡车行驶的最短路
+    \item 在阶段一的卡车行驶最短路径的基础上引入无人机节点，然后计算最小时间花费的覆盖所有服务节点集合的可行操作（efficient operation）
+    \item 计算满足服务所有顾客节点且起始节点和终止节点都在仓库的最优的可行操作排序
+\end{enumerate}
+
+\subsection{Dynamic Programming Approach for The Standard TSP}
+
+通常的 Traveling Salesman Problem (TSP) 是找到一条从任意一个起点 $v$ 出发，访问所有 $V$ 中的节点并且最终回到起点 $v$ 的最短路。路径的权重可以是距离、时间、排放量等可以被分解到每一步的量，表示为 $D_{\text{TSP}}(V,v)$。
+
+接下来简单介绍一下 Bellman-Held-Karp (BHK) 算法，对于一个包含了 $v$ 和 $w \in S \setminus \{w\}$ 的集合 $S \subset V$，用 $D_{\text{TSP}}(S, w)$ 表示从起点 $v$ 出发，访问 $S$ 中所有节点并到达终点 $w$ 的最短路所需要的花费（时间或者距离等）。而 $D_{\text{TSP}}(S, w)$ 又可以分解为一个更小的子问题（subproblem），即该问题可以由从某个节点 $u \in S$ 到达终点 $w$ 的弧和从 $v$ 出发访问集合 $S \setminus \{w\}$ 中所有节点并到达终点 $u$ 的最短路组合而成。因此解决问题 $D_{\text{TSP}}(S, w)$ 可以变成解决考虑所有弧 $(u, w): u \in S \setminus \{w\}$ 和子问题 $D_{\text{TSP}}(S\setminus \{w\}, u)$ 的所有组合。可以通过递归公式来表达上述过程：
+
+\begin{equation}
+    D_{\text{TSP}}(S, w) = 
+    \begin{cases}
+        \infty & \text{if } w \notin S \\
+        c(v, w) & \text{if } S = \{w\} \\
+        \min_{u \in S} \left\{D_{\text{TSP}}(S \setminus \{w\}, u) + c(u, w)\right\} & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+由于 $V$ 的所有可能的子集数量为 $2^n$，并且 $v$ 的选择有 $n$ 种（即有 $n$ 个地点作为可能的起点），因此最多可能有 $n \cdot 2^n$ 个子问题。对于解决每个递归的子问题时，最多考虑 $n$ 次递归（因为每次递归都减少一个节点，最多有 $n$ 个节点），所以该算法的时间复杂度为 $O(n^2\cdot 2^n)$。 
+
+\bibliography{references}
+
+\begin{appendix}
+    \includepdf[pages=-]{Travelling Salesman Problem and Bellman-Held-Karp Algorithm.pdf}
+\end{appendix}
+
+\end{document}
