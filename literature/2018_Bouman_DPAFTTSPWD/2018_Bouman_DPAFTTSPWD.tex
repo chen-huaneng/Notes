@@ -19,7 +19,7 @@
 
 \section{Problem Description}
 
-该研究\cite{boumanDynamicProgrammingApproaches2018}针对的问题是 Traveling Salesman Problem with Drone (TSP-D)，目标函数是求卡车和无人机返回仓库的最短时间，单次无人机飞行只能够服务一个顾客，允许无人机的配送路径是个环（即卡车在某个顾客节点等待无人机服务后返回），且卡车和无人机会合的节点只能够是顾客节点或者仓库。该研究用到的符号及其含义如表\cref{tab:tspd-sign-meaning}所示。
+该研究\cite{boumanDynamicProgrammingApproaches2018}针对的问题是 Traveling Salesman Problem with Drone (TSP-D)，目标函数是求卡车和无人机返回仓库的最短时间，单次无人机飞行只能够服务一个顾客，允许无人机的配送路径是个环（即卡车在某个顾客节点等待无人机服务后返回），且卡车和无人机会合的节点只能够是顾客节点或者仓库。该研究不考虑无人机和卡车的载重限制，也不考虑无人机的续航时间限制。该研究用到的符号及其含义如表\cref{tab:tspd-sign-meaning}所示。
 
 % 使用tabularray宏包的longtblr环境创建跨页长表格
 \begin{longtblr}[
@@ -46,21 +46,6 @@
     o & 单个操作（operation），由起始节点、终止节点、最多一个无人机节点（由无人机单独服务的节点）和若干卡车节点（卡车单独服务的节点）组成，当没有无人机节点时，卡车搭载无人机进行服务，当起始节点和终止节点一致且没有卡车节点但有无人机节点时，卡车在起始节点等待无人机服务完后会合 \\
     t(o) & 单个操作$o$的持续时间，取卡车行驶总时间与无人机飞行总时间的最大值 \\
     S & $V$的子集，用于表示动态规划中已覆盖的节点集合 \\
-    D_{\text{TSP}}(S, w) & 标准TSP中，从起点$v \in S$出发覆盖子集$S$中所有节点并结束于$w \in S \setminus \{v\}$的最短路径成本 \\
-    % $D_T(S, v, w)$ & 第一遍动态规划结果，卡车从起点$v$出发、结束于$w$、覆盖子集$S$中所有卡车节点的最短路径成本，$w \in S$ \\
-    % $D_{\text{OP}}(S, v, w)$ & 第二遍动态规划结果，高效操作的成本（结合卡车路径与无人机节点），操作起点为$v$、终点为$w$、覆盖子集$S$中所有节点 \\
-    % $D(S, w)$ & 第三遍动态规划结果，从仓库$v_0$出发覆盖子集$S$中所有节点并结束于$w$的最优TSP-D路径成本，$w \in S$ \\
-    % $\hat{O} = (\hat{o}_1, \hat{o}_2, ..., \hat{o}_l)$ & 最优TSP-D路径对应的操作序列，$l$为操作序列长度 \\
-    % $\hat{o}_i$ & 最优操作序列中的第$i$个操作，$i = 1, 2, ..., l$ \\
-    % $k$ & 每操作允许的最大卡车仅访问节点数（限制参数），无限制时记为$k = \infty$ \\
-    % $Z^k$ & 限制每操作最多$k$个卡车节点时的TSP-D最优解目标值 \\
-    % $Z^\infty$ & 无卡车节点数量限制时的TSP-D最优解目标值 \\
-    % $\Delta(\%)$ & 相对偏差，计算公式为$\frac{Z^k - Z^\infty}{Z^\infty} \times 100$，用于衡量限制条件对解质量的影响 \\
-    % $\text{Max}(\%)$ & 最大相对偏差，即多组实例中$\Delta(\%)$的最大值 \\
-    % $\# \text{opt}$ & 限制条件下找到最优解$Z^\infty$的实例数量 \\
-    % $U$ & $V$的子集，用于动态规划迭代中表示当前待扩展的节点集合 \\
-    % $T$ & $V$的子集，用于第三遍动态规划中表示单个操作覆盖的节点集合 \\
-    % $d$ & 无人机节点（drone node），即仅由无人机单独访问的节点 \\
     \bottomrule[1pt] % 表尾线宽1pt
 \end{longtblr}
 
@@ -89,7 +74,128 @@
     \end{cases}
 \end{equation}
 
-由于 $V$ 的所有可能的子集数量为 $2^n$，并且 $v$ 的选择有 $n$ 种（即有 $n$ 个地点作为可能的起点），因此最多可能有 $n \cdot 2^n$ 个子问题。对于解决每个递归的子问题时，最多考虑 $n$ 次递归（因为每次递归都减少一个节点，最多有 $n$ 个节点），所以该算法的时间复杂度为 $O(n^2\cdot 2^n)$。 
+由于 $V$ 的所有可能的子集数量为 $2^n$，并且 $w$ 的选择最多有 $n$ 种（即最多有 $n$ 个地点作为可能的终点），因此最多可能有 $n \cdot 2^n$ 个子问题。对于解决每个递归的子问题时，最多考虑 $n$ 次递归（因为每次递归都减少一个节点，最多有 $n$ 个节点），所以该算法的时间复杂度为 $O(n^2\cdot 2^n)$。 
+
+\subsection{First Pass}
+
+第一阶段采用 Bellman-Held-Karp 的动态规划的方法计算对于每一个起始节点 $v$，终止节点 $w$ 和卡车服务的节点集合 $S$ 的不同组合的卡车最短路，同样可以用递归公式表示：
+
+\begin{equation}
+    D_{\text{T}}(S, v, w) = 
+    \begin{cases}
+        \infty & \text{if } w \notin S \\
+        c(v, w) & \text{if } S = \{w\} \\
+        \min_{u \in S} \left\{D_{\text{T}}(S \setminus \{w\}, v, u) + c(u, w)\right\} & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+由于 $S$ 的最多所有可能的子集数量为 $2^n$，并且 $w$ 的选择最多有 $n$ 种（即最多有 $n$ 个地点作为可能的终点），$v$ 的选择最多有 $n$ 种（即最多有 $n$ 个地点作为可能的起点），因此最多可能有 $n^2 \cdot 2^n$ 个子问题。对于解决每个递归的子问题时，最多考虑 $n$ 次递归（因为每次递归都减少一个节点，最多有 $n$ 个节点），所以第一阶段的时间复杂度为 $O(n^3 \cdot 2^n)$。 
+
+\subsection{Second Pass}
+
+第二阶段中，通过结合不同的无人机服务节点和第一阶段获得的卡车路径来获得有效的操作（efficient operations），每一个有效的操作是给定起始节点 $v$ 和终止节点 $w$，覆盖节点集合 $S$ 的最小花费的路径。 具体而言，即在第一阶段的每一个子问题中，对于任意一个无人机服务的节点 $d \in S \setminus \{v, w\}$，结合卡车从 $v$ 出发，服务节点 $S \setminus \{d\}$ 并最终回到节点 $w$ 的路径进行计算得到有效操作的花费。写成递归方程表示为：
+
+\begin{equation}
+    D_{\text{OP}}(S, v, w) = 
+    \begin{cases}
+        \infty & \text{if } w \notin S \\
+        D_{\text{T}}(S, v, w) & \text{if } S = \{w\} \\
+        \min_{d \in S \setminus \{v, w\}} \max\left\{c^d(v, d) + c^d(d, w), D_{\text{T}}(S \setminus \{d\}, v, w)\right\} & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+第二阶段最多可能有 $2^n \cdot n^2$ 个子问题，每个子问题中的无人机可能服务的节点最多可能有 $n$ 种选择，又由于在第一阶段已经计算了相应的 $D_{\text{T}}$，因此第二阶段的时间复杂度为 $O(2^n \cdot n^3)$
+
+\subsection{Third Pass}
+
+第三阶段的目标是找到一个从仓库出发最终回到仓库并服务所有的顾客节点的有效操作的序列。寻找的思路是通过状态转移，即从状态 $D(\{v_0\}, v_0)$ （没有服务任何顾客，最终到达的节点是仓库节点）出发，通过每次增加一个有效操作进行迭代，直到服务所有顾客并回到仓库，即达到状态 $D(V, v_0)$ 时停止。比如从状态 $D(S_1, w_1)$ 到状态 $D(S_2, w_2)$（其中 $S_1 \subsetneq S_2$）只需要增加一个有效操作 $D_{\text{OP}}(S_2 \setminus S_1, w_1, w_2)$，即从 $w_1$ 节点出发服务节点 $S_2 \setminus S_1$ 然后到达 $w_2$ 节点的有效操作。接下来该研究使用了两种方法来找到最优的操作序列，第一种是标准的动态规划的方法，而第二种则采用了 $A^*$ 算法的原理\cite{hartCorrectionFormalBasis1972, hartFormalBasisHeuristic1968}。 
+
+\subsubsection{Standard Dynamic Programming Implementation of Third Pass}\label{sec:third-pass-method-1}
+
+第一种方法通过将状态 $D(S, w)$ 用类似于第二阶段的思想拆分成前一个状态和一个有效操作的所有可能组合中的最小值，从而来进行状态转移，其中状态$D(S, w)$ 表示从仓库 $v_0$ 出发，服务节点 $S$ 最终到达节点 $w$ 所需的花费，同样用递归公式表达为：
+
+\begin{equation}
+    D(S, w) = 
+    \begin{cases}
+        \infty & \text{if } w \notin S \\
+        c(v_0, w) & \text{if } S = \{w\} \\
+        \min_{T \subset S} \min_{u \in S}\left\{D(S \setminus (T \setminus \{u\}), u) + D_{\text{OP}}(T, u, w)\right\} & \text{otherwise}
+    \end{cases}
+    \label{eq:third-pass-method-1}
+\end{equation}
+
+对于这个方法的时间复杂度，粗略估算应该是 $O(4^n \cdot n^2)$，因为最多有 $2^n \cdot n$ 个子问题需要解决，而解决每个子问题需要最多 $2^n \cdot n$ 的时间（假设更小的子问题已经被解决了），即每个 $S$ 最多有 $2^n$ 个子集 $T$，而 $u \in S$ 最多有 $n$ 种选择。但是可以证明这个方法的时间复杂度远比粗略估算的要小得多。 
+
+\begin{theorem*}[Binomial Theorem]
+    \begin{equation}
+        (x + y)^r = \sum_{k = 0}^r\binom{r}{k}x^ky^{r-k}
+    \end{equation}
+\end{theorem*}
+
+\begin{theorem*}
+    The TSP-D with n locations can be solved in $O(3^n \cdot n^2)$ time using dynamic programming. 
+\end{theorem*}
+
+\begin{proof}
+    对于公式\cref{eq:third-pass-method-1}中 $\lvert S \rvert = 1$ 的情况，共有 $O\left(\binom{n}{1} \cdot n\right)$ 个子问题，$\lvert S \rvert = 2$ 时，有 $O\left(\binom{n}{2} \cdot n\right)$ 个子问题，对于 $\lvert S \rvert = i$ 时，有 $O\left(\binom{n}{i} \cdot n\right)$ 个子问题（因为当集合 $S$ 的元素个数为 $i$ 时，可以从 $V$ 集合中选取 $i$ 个，即 $\binom{n}{i}$，然后对于终点 $w$，最多有 $n$ 种选择）。针对 $\lvert S \rvert = i$ 的情况，因为集合 $S$ 有 $2^i$ 个可能的子集 $T$，有 $O(n)$ 个可能的 $u \in S$ 可以选择，所以解决这个子问题所需要的时间为 $O\left(n \cdot 2^i\right)$。所以对于一个集合大小确定为 $i$ 的子集 $S$ 来说，解决集合大小为 $i$ 的所有子问题所需的时间为 $O\left(\binom{n}{i}2^in^2\right)$。为了解决所有的子问题，需要解决子集大小为 $i = 1, 2, \dots, n$ 的所有子问题，因此有：
+
+    \begin{equation}
+        O\left(\sum_{i = 1}^n\binom{n}{i}2^in^2\right) < O\left(\sum_{i = 0}^n\binom{n}{i}2^in^2\right) = O\left(n^2\sum_{i = 0}^n\binom{n}{i}2^i \cdot 1^{n - i}\right) = O\left((2 + 1)^n \cdot n^2\right) = O\left(3^n \cdot n^2\right)
+    \end{equation}
+\end{proof}
+
+整个算法一共有三个阶段，而前两个阶段的时间复杂度为 $O\left(2^n \cdot n^3\right)$，最后一个阶段的时间复杂度为 $O\left(3^n \cdot n^2\right) = O\left(2^n \cdot \left(\frac{3}{2}\right)^n \cdot n^2\right)$，因此整个算法的时间复杂度主要取决于第三阶段的时间复杂度，所以整个算法的时间复杂度为 $O\left(3^n \cdot n^2\right)$。
+
+\subsubsection{A* Implementation of Third Pass}
+
+第二种方法则采用了 $A^*$ 寻路算法的思想，由于\cref{sec:third-pass-method-1}节的第一种方法考虑了很多与最优解不相关的子问题，因此第二种方法考虑通过启发式算法（informed search）的思想来跳过这些不相关的子问题从而减小问题的规模。其思想是通过估计当前的部分解有多好的程度（比如估计距离最优解的下界还有多少）来引导搜索的方向朝最优解的方向进行。
+
+$A^*$ 的关键在于设计一个函数来估计（estimates）从当前状态到最终状态（sink state）的距离（distance）。通过仅考虑加总到达当前状态的花费和到达最终状态的函数估计值最小的状态，该算法不会生成（考虑）远离最终状态的状态，从而减小可行解的空间。Dechter 和 Pearl \cite{dechterGeneralizedBestfirstSearch1985}证明了，当这个函数不会高估（overestimates）到达最终状态的距离时，这个方法能够找到最优解。
+
+为了获得从当前状态到最终状态的路径的下界，该研究通过计算最后一个访问的节点、未访问的节点以及仓库节点组成的图的最小生成树（minimum spanning tree）的长度乘以 $\frac{1}{2 + \alpha}$，在作者的另一篇论文\cite{agatzOptimizationApproachesTraveling2018}中证明了，在距离满足三角不等式的时候，存在一个 TSP 的最小生成树的路径是相应的 TSP-D 路径的 $(2 + \alpha)$ 倍近似（approximation），其中 $\alpha$ 是前面提到的关联无人机与卡车速度的常数。 
+
+\subsection{Restricting the Number of Operations}
+
+为了减少第一阶段和第二阶段生成的操作的数量，从而减少需要考虑的子问题的数量，以便降低整个算法的空间复杂度和时间复杂度，该研究通过考虑限制卡车在单独服务时可以访问的顾客节点数量为 $k$ 来实现这个目的。 
+
+要将该限制加到阶段一和阶段二可以通过只考虑最多 $k + 2$ 个元素的子集 $S$ 来实现，因为起始节点和终止节点不属于卡车单独服务的节点。因此在考虑子问题 $D_{\text{T}}(S, v, w)$ 时，只需要考虑 $\lvert S \rvert \leq k + 1$ 的情况，因为无人机节点在阶段二才加入，且按照惯例，$v \notin S$ 且 $w \in S$。而在考虑子问题 $D_{\text{OP}}(S, v, w)$ 时，当 $v \neq w$ 时，只考虑 $\lvert S \rvert \leq k + 2$ 否则考虑 $\lvert S \rvert \leq k + 1$。 
+
+这意味着，在前两个阶段的子问题数量为 $O\left(\sum_{i = 1}^{k + 2}i^2\binom{n}{i}\right)$，而不是 $O\left(n^2\cdot 2^n\right)$\footnote{对于$\lvert S \rvert = i$ 时来说，从 $V$ 的 $n$  个节点中选择 $i$  个节点作为集合 $S$，然后在这 $S$ 中对于起始节点和终止节点最多各有 $i$ 种选择，而 $\lvert S \rvert$  的大小从 $1$ 到 $k + 2$，因为除去起始和终止节点，卡车最多只能单独服务 $k$ 个节点。}。对于第三阶段而言，仍然需要考虑 $O\left(2^n\cdot\right)$ 个子问题，但是解决每个子问题所需要的步骤可以减少，这是因为不需要考虑 $S$ 的所有可能子集，而只需要考虑 $\lvert T \rvert \leq k + 2$ 的子集，这意味着每个子问题都可以在 $O\left(n^{k+1}\right)$ 时间复杂度内解决，这是因为对于 $T$ 集合来说，最多有 $\sum_{i = 0}^k\binom{n}{i}$ 种可能的子集，其上界是 $\frac{k + 1}{k!}n^k$\footnote{这里假设了 $k < \frac{n}{2}$，这样才能确保最大的组合数是 $\binom{n}{k}$}，而 $w$ 是确定的节点，$u$ 则最多有 $n$ 种可能的选择。因此所有的子集可以在时间复杂度 $O\left(2^n\cdot n^{k + 2}\right)$ 内解决，而不是 $O\left(3^nn^2\right)$。如果禁止卡车单独进行服务，即 $k = 0$，则总的时间复杂度为 $O\left(2^n \cdot n^3\right)$，这是因为对于 $S$ 来说，一共有 $O\left(2^n\cdot n\right)$  个子问题，而此时卡车不能单独服务顾客，因此对于 $D_{\text{OP}}$ 来说，$u$ 最多有 $n$ 种可能的选择，而 $w$ 是确定的，集合 $T$ 最多只能包含除了 $u$ 和 $w$ 之外的一个节点，且这个节点应该是无人机进行服务的，而这个无人机服务的节点最多也只能有 $n$  种可能的选择，因此最终的时间复杂度为 $O\left(2^n\cdot n^3\right)$。
+
+\begin{theorem*}
+    \begin{equation*}
+        \sum_{i = 0}^k\binom{n}{i} < \frac{k + 1}{k!}n^k, \text{when } k < \frac{n}{2} 
+    \end{equation*}
+\end{theorem*}
+\begin{proof}
+    \begin{equation*}
+        \sum_{i = 0}^k\binom{n}{i} < \sum_{i = 0}^k \binom{n}{k} = (k + 1)\frac{n!}{k!(n - k)!} = (k+1)\frac{n\cdot(n -1)\cdots(n-k+1)}{k!} < \frac{(k + 1)}{k!}n^k
+    \end{equation*}
+\end{proof}
+
+假设 $k$ 是一个比较小的值是合理的，因为这样可以使得无人机和卡车更多地进行协同服务，从而更多地减少卡车单独服务的节点，从而减少总的服务时间。 
+
+\begin{theorem*}
+    For any instance of the TSP-D with symmetric drone costs, that is, $c^d(v, w) = c^d(w, v)$, there is a TSP-D tour without truck nodes (i.e., every operation consists of a start node, an end node, and possibly a drone node), whose time duration is at most twice the time duration of the optimal TSP-D tour for that instance.
+\end{theorem*}
+\begin{proof}
+    假设 $\hat{O} = (\hat{o}_1, \hat{o}_2, \dots, \hat{o}_l)$ 为最优的 TSP-D 路径，可以通过将每一个 $\hat{o}_i, i = 1, \dots, l$ 替换为不存在卡车单独服务节点的 TSP-D 路径 $o$，从而使得没有卡车单独服务的路径的总时间最多为最优 TSP-D 路径的两倍。
+
+    让 $o$ 作为一个有 $k$ 个卡车单独服务节点 $v^1,\dots,v^k$，起始节点和终止节点分别为 $v^0$ 和 $v^{k + 1}$ 的操作，并且无人机服务节点为 $v^d$。如果 $c^d(v^0, v^d) \leq c^d(v^d, v^{k + 1})$，通过替换 $o$ 为 $(o^0,o^, \dots, o^{k + 1})$，其中操作 $o^0$ 中，无人机从 $v^0$ 起飞到 $v^d$ 然后再回到 $v^0$，卡车在 $v^0$ 等待无人机，然后在操作 $o^j, j = 1, \dots, k + 1$ 时，卡车从 $v^{j - 1}$ 行驶到 $v^{j}$（无人机在卡车上）。否则就将操作 $o$ 替换为 $(o^1, o^2, \dots, o^{k+1},o^0)$，其中 $o^0$ 中无人机从 $v^{k+1}$ 飞行到 $v^d$，卡车在 $v^{k + 1}$ 处等待无人机返回，而 $o^j, j = 1, \dots, k + 1$ 则仿照前一种情况。因此有：
+
+    \begin{equation*}
+        \sum_{j=0}^{k+1} t(o^j) = \underbrace{2 \cdot \min\{ c^d(v_0, v_d), c^d(v^d, v^{k+1}) \}}_{\leq c^d(o)} + \underbrace{\sum_{j=0}^{k+1} c(v_{j-1}, v_j)}_{= c(o)} \leq 2 \cdot \max\{ c(o), c^d(o) \} = 2t(o)
+    \end{equation*}
+\end{proof}
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.4\linewidth]{tspd-example.png}\\
+    \caption{$v_1$ 和 $v_2$ 分别为两个顾客节点，黑色矩形块为仓库，假设卡车和无人机的速度一致且均为 $1$}
+    \label{fig:tspd-example}
+\end{figure}
+
+通过图\cref{fig:tspd-example}可以说明上面这个上界是紧的（tight）。在这个例子中，假设无人机和卡车的速度相等且两个顾客距离仓库的距离一致，最短的配送应该是无人机和卡车分别负责配送一个顾客，然后同时回到仓库，总耗时为 $2$，当限制卡车不能进行单独服务时，卡车和无人机一起进行配送，需要的总时间为 $4$，或者无人机进行单独配送，而卡车在仓库不动，同样也需要总时间为 $4$，因此上面给出的上界是紧的。
 
 \bibliography{references}
 
