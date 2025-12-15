@@ -1,0 +1,38 @@
+%! TeX program = xelatex
+\documentclass[fontset=none]{ctexart}
+\input{../note-setup.tex}
+
+\title{Report for future work}
+\author{Chen Huaneng}
+\date{\today}
+\setauthoremail{huanengchen@foxmail.com} % 笔记作者的邮箱
+
+\begin{document}
+
+\maketitle
+
+\section{卡车搭载无人车进行配送}
+
+\begin{note*}
+	搜索关键词：vans and robots, mobile satellite facilities, mothership, two-echelon routing, Truck-based Robot Delivery (TBRD), Vehicle Routing Problem with Movement Synchronization (VRPMS),  Traveling Salesman Problem with Robot (TSP-R), Vehicle Routing Problem with Delivery Robots, Van-based Robot Delivery, Integrated truck-robot delivery, sidewalk automated (autoomous) delivery robots
+\end{note*}
+
+Diao 等人\cite{diaoMultidepotRoutingProblem2024}提出了一种基于卡车和无人车的多仓库路径规划，该问题包含两个阶段，第一个阶段是卡车携带无人车和货物到达指定的停靠点（不是顾客节点），在停靠点释放或收集无人车，第二个阶段，无人车从仓库或卡车所在位置出发给顾客配送货物，卡车可以从不同的仓库出发返回到不同的仓库，无人车可以被某个卡车释放，被不同的卡车收集。并且该研究规定每个仓库初始时刻和最终时刻的卡车的数量要一样，即平衡每个仓库的卡车数量，而无人车则没有这个限制。因此可以考虑结合多卡车和多仓库的配送问题，每辆卡车搭载一架无人机，无人机每次飞行只服务一个顾客节点。
+
+Boysen 等人\cite{boysenSchedulingLastmileDeliveries2018}指出，尽管无人车和无人机与卡车结合配送的物理形式不同，但是从路径规划的角度来说，两个概念是十分类似的。Boysen 等人\cite{boysenSchedulingLastmileDeliveries2018}研究的问题同样是把卡车作为无人车的移动仓库进行配送（即卡车不进行直接的顾客配送），特别之处在于，该研究考虑的是一辆卡车搭配多个无人车，无人车在释放后返回无人车仓库（不存储货物，只作为无人车的停放仓库），之后卡车根据需要可以重复访问无人车仓库再次搭载无人车配送货物直到卡车上的货物都配送完成，然后卡车返回仓库装载新货物进行下一轮配送。
+
+Grazia Speranza\cite{graziasperanzaTrendsTransportationLogistics2018}提到，VRP的研究已经开始结合选址、库存管理、生产计划、多阶段的配送问题（Multi-echelon routing problems optimize the routes of vehicles in distribution systems comprising two or more echelons）\footnote{卡车搭载无人机进行配送就是一种多阶段的配送优化问题。}以及同时优化货物的装载和路径，并且这种结合其他问题的集成问题研究将会是未来研究的趋势。可以考虑背包问题与无人机和卡车的协同配送问题的结合问题，先考虑如何装载卡车，然后进行路径规划。
+
+Savelsbergh 等人\cite{savelsbergh50thAnniversaryInvited2016}在未来物流的机遇部分提到，多级网络（Multiechelon Networks）的配送是一个可行的方向，第一种多级网络是结合固定的城市配送中心/卫星设施（urban distribution centers/satellite facilities）进行配送，即先由大型货物卡车运送货物到这些距离最终配送顾客（靠近城市中心）较近的小型仓库（距离城市中心比原本仓库近），然后由其他类型的车辆（比如更加环保的新能源车）配送到最终顾客。第二种多级网络是把大型配送卡车作为移动仓库，卡车不进行最终顾客的配送，而是由其他更为小型的运输工具进行配送（比如无人机、无人车等）。对于第一种多级网络，可以考虑结合选址和路径规划，第二种多级网络和Diao 等人\cite{diaoMultidepotRoutingProblem2024}的研究类似。
+
+Lamb 等人\cite{lambPlanningOptimisedLocal2025}总结了 Sidewalk Autonomous Delivery Robots (SADRs) 和 Mothership vans (MSs) 的组合配送的研究，对其进行分类并设计了衡量不同组合策略配送效率的指标，在论文中提到，目前的研究分为允许 Mothership vans 对顾客进行配送和不允许的两种情况。
+
+\bibliography{references}
+
+\appendix
+
+\section{无人机相关资料参考来源}
+
+\href{https://www.dji.com/cn/flycart-30}{大疆无人机}、\href{https://www.meituan.com/news/NN25032008100109X}{美团无人机}、\href{https://www.fyuav.cn/}{顺丰丰翼无人机}、\href{https://www.youuav.com/}{无人机网}、\href{https://www.matternet.com/}{matternet}
+
+\end{document}
