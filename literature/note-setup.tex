@@ -1,6 +1,6 @@
 %===================================
 % note-setup-leftsidebox.tex
-% huanengchen@foxmail.com 2025-11-29
+% huanengchen@foxmail.com 2026-05-11
 %===================================
 % 参考：https://tex.stackexchange.com/questions/59702/suggest-a-nice-font-family-for-my-basic-latex-template-text-and-math
 
@@ -39,7 +39,7 @@
 %===================================
 
 \usepackage{booktabs, multirow, multicol}
-\usepackage{tabularx} % 表格自动换行，调整表格宽度 
+\usepackage{tabularx} % 表格自动换行，调整表格宽度
 \usepackage{tabularray} % 跨页表格添加脚注，参考：https://tex.stackexchange.com/questions/754588/how-can-i-make-the-following-threeparttable-with-footnote-span-multiple-pages-in
 \UseTblrLibrary{booktabs} % 跨页表格添加脚注
 \usepackage{makecell} % 单元格内换行
@@ -103,7 +103,7 @@
     numbers=left, % 显示行号
     numbersep=2pt, % 行号与代码的距离
     mathescape, % 允许在代码注释中使用数学公式
-    breaklines, % 允许代码自动断行 
+    breaklines, % 允许代码自动断行
     fontsize=\footnotesize, % 设置代码字体大小
     frame=single, % 设置代码框
     framerule=0.5pt, % 设置代码框线宽
@@ -175,7 +175,7 @@
 % 页脚和页眉
 %===================================
 
-\usepackage{fancyhdr} % 参考：https://tex.stackexchange.com/questions/732462/chapter-number-in-the-header-with-chapter/732464?noredirect=1#comment1824660_732464 
+\usepackage{fancyhdr} % 参考：https://tex.stackexchange.com/questions/732462/chapter-number-in-the-header-with-chapter/732464?noredirect=1#comment1824660_732464
 \usepackage{lastpage} % 获取总页码
 % \setlength{\headheight}{13pt} % 设置页眉高度
 
@@ -288,7 +288,7 @@
     Path=../fonts/,
     AutoFakeBold=1.5,  % 生成粗体效果
     ItalicFont=FZSSJW.TTF, % 设置斜体为方正书宋
-] 
+]
 
 % 英文字体，具体设置参考 fontspec 宏包
 \setmonofont{MapleMono-NF-CN}[ % 设置英文等宽字体
