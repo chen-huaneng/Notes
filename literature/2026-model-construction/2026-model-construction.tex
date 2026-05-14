@@ -13,7 +13,52 @@
 
 \section{文献综述}
 
+近年来，电子商务与同城配送需求急剧增长，城市物流网络面临巨大效率压力。两级物流系统通过引入卫星仓库（如前置仓、配送中心等），将运输过程拆分为“干线运输+支线配送”，能够显著降低配送成本并提高服务响应速度。同时，无人机技术的成熟使得车辆与无人机协同配送的模式受到广泛关注。本节重点回顾与选址-路径问题（Location Routing Problem，LRP）、两级物流网络与卫星仓库选址和车辆与无人机协同配送（Vehicle Routing Problem with Drone，VRP-D）相关的研究文献，并分析先前文献中存在的空白，为后续模型构建奠定基础。
+
+\subsection{选址-路径问题研究现状}
+% 研究的问题应该是属于 Multi-/N-echelon Vehicle Routing Problem (Location Routing Problem) 的一个变体（variant）
+选址-路径问题（Location Routing Problem，LRP）结合了物流中的两个基本的规划任务，即设施的选址决策和车辆路径的决策。将这两种规划任务彼此独立地进行决策，可能会导致非最优的规划结果\cite{salhiEffectIgnoringRoutes1989, drexlSurveyVariantsExtensions2015}，即使选址是基于长期规划而做出的决策也仍然可能导致整体目标非最优的结果\cite{salhiClusterInsertionHeuristic1999}，因此，如何有效地同时优化选址和路径规划成为了物流学界研究的热门课题\cite{albareda-sambolaLocationRoutingLocationArcRouting2015, balakrishnanIntegratedFacilityLocation1987, drexlSurveyVariantsExtensions2015, lopesTaxonomicalAnalysisCurrent2013, marinakisLocationRoutingProblem2008, nagyLocationroutingIssuesModels2007, prodhonSurveyRecentResearch2014, schneiderSurveyStandardLocationrouting2017, cavagniniRecentDevelopmentsLocationrouting2026, marinakisLocationRoutingProblem2024, wandeltLiteratureReviewHub2025, schifferVehicleRoutingLocation2019a}。
+
+标准的路径-选址问题如果只有一个潜在可以选择的设施且车辆队列仅包含一辆无限容量的卡车，则退化为旅行商问题（Traveling Salesman Problem，TSP），已知TSP是NP-Hard\cite{computers-and-intractability}，因此标准的以及拓展的路径-选址问题也是NP-Hard。在路径-选址问题（LRP）中，必须做出至少以下两种相互依赖的决策类型：
+
+\begin{enumerate}[label=(\roman*)]
+    \item 从有限或者无限的潜在设施集合（如工厂、仓库、配送中心、枢纽等）中选择哪些设施被启用。
+    \item 使用给定的车辆，应建立哪些车辆路径来服务给定的需求点。
+\end{enumerate}
+
+并且在 LRP 中，路径的选择不能隐含选址的决策，即选址的决策和路径的决策不能够相互依赖，Schneider和Drexl指出，当满足以下三个条件之一时路径决策和选址决策是相互独立的\cite{schneiderSurveyStandardLocationrouting2017}：
+
+\begin{enumerate}[label=(\roman*)]
+    \item 启用设施存在固定成本或使用设施存在与体积相关的可变成本；
+    \item 必须从某个更大的集合中选择恰好或最多一定数量的设施；
+    \item 设施具有某种容量的限制。
+\end{enumerate}
+
+自Salhi和Rand以及Salhi和Nagy的开创性工作之后\cite{salhiEffectIgnoringRoutes1989, salhiClusterInsertionHeuristic1999}，LRP的研究在理论和应用层面均取得了长足发展。早期的综述（如Balakrishnan等人\cite{balakrishnanIntegratedFacilityLocation1987}，Min等人\cite{minCombinedLocationroutingProblems1998}）奠定了问题基础，而Nagy和Salhi的综述则系统梳理了2006年前的模型与方法\cite{nagyLocationroutingIssuesModels2007}。在标准LRP的定义上，后续研究普遍遵循Schneider和Drexl所归纳的三个准则：启用设施存在固定成本、需从更大集合中选择有限数量设施、或设施存在容量限制\cite{schneiderSurveyStandardLocationrouting2017}。基于此，标准LRP通常被界定为确定性、静态、离散、单层级、单目标的问题，其中每个顾客必须被恰好访问一次，且不涉及库存决策\cite{drexlSurveyVariantsExtensions2015, cavagniniRecentDevelopmentsLocationrouting2026}。
+
+在精确算法方面，早期研究致力于通过分支定价（branch-and-price）或分支切割（branch-and-cut）求解小规模实例。Berger等人利用分支定价法解决了含路径长度约束的LRP，作者通过Feillet等人提出的标签算法（labeling algorithm）求解生成新路径的子问题\cite{feilletExactAlgorithmElementary2004}，可在两个小时内求解含10个潜在设施以及50-100个顾客的算例\cite{bergerLocationRoutingProblemsDistance2007a}。Akca等人提出了结合有效不等式的分支定价算法，但求解能力仍局限在5个设施及40个顾客左右\cite{akcaBranchandPriceAlgorithmCombined2009}。Belenguer等人通过引入多种有效不等式，包括源自容量约束车辆路径问题Capacitated Vehicle Routing Problem，CVRP）的切割，增强了分支切割算法，该算法优于Akca等人提出的分支定价算法\cite{akcaBranchandPriceAlgorithmCombined2009}，成功求解了含5个设施及50个顾客的算例\cite{belenguerBranchandCutMethodCapacitated2011}。Baldacci等人在Akca等人提出的模型基础上\cite{akcaBranchandPriceAlgorithmCombined2009}，提出了一种类似集合划分（set-partitioning-like）的新颖精确方法，通过动态规划与对偶上升法（dual ascent methods）等不同的界限分析技术生成紧的下界，并将原LRP分解为有限个带容量限制的多仓库车辆路径问题（multicapacitated depot vehicle-routing problems，MCDVRP），该方法显著提升了求解规模，能够求解含14个潜在仓库和199个顾客的实例\cite{baldacciExactMethodCapacitated2011}。Contardo等人在此基础上进一步发展了弧变量和路径变量两种建模框架，并提出了多种新的有效不等式，实验的计算结果表明，提出的方法不仅能够求解Baldacci等人公开的所有实例\cite{baldacciExactMethodCapacitated2011}，还首次解决了四个此前未决的算例，并改进了三个算例的最优上界\cite{contardoComputationalComparisonFlow2013, contardoExactAlgorithmBased2014}。然而，精确算法仍然难以在有效时间内求解更大规模的算例，直到Liguori等人提出的分支-切割-定价（branch-cut-and-price）算法，通过引入非鲁棒的路由装载背包割（Route Load Knapsack Cuts，RLKCs），才首次能够稳定求解含300个顾客和20个候选设施的较大规模算例，标志着标准LRP精确求解能力的重要突破\cite{liguoriNonrobustStrongKnapsack2023}。
+
+鉴于LRP的NP-Hard特性，启发式与元启发式算法一直是研究主流。早期方法多采用两阶段分解策略：先确定设施选址与顾客分配，再为每个启用的设施规划车辆路径。Prins等人提出的贪婪随机自适应搜索过程（greedy randomized adaptive search procedure，GRASP）结合路径重连（Path Relinking），通过随机化的扩展Clarke-Wright算法（Randomized Extended Clarke and Wright Algorithm，RECWA）构造初始解，并设计多样化和强化阶段来搜索设施配置空间\cite{nguyenSolvingTwoechelonLocation2012}。后来Prins等人又进一步提出了带种群管理的模因算法（Memetic Algorithm with Population Management，MA|PM）\cite{prinsMemeticAlgorithmPopulation2006}，通过采用车辆巨型路线编码和动态规划分割技术，实现了相比于后来Prins等人提出的算法的解质量提升，但需要花费更多的求解时间\cite{prinsSolvingCapacitatedLocationRouting2007}。这些工作在经典的Tuzun和Barreto\cite{tuzunTwophaseTabuSearch1999}，Prins等人\cite{nguyenSolvingTwoechelonLocation2012, prinsSolvingCapacitatedLocationRouting2007}和Barreto等人\cite{barretoUsingClusteringAnalysis2007}的算例集上取得了当时的最优结果。
+
+随后的十年间，启发式算法在搜索机制和问题扩展上持续创新。Yu等人设计了高效的模拟退火（Simulated Annealing，SA）算法，改进了多个已知最优解\cite{yuSimulatedAnnealingHeuristic2010}。Duhamel等人将GRASP与进化局部搜索（Evolutionary Local Search，ELS）结合，进一步提升了求解质量\cite{duhamelGRASPxELSApproachCapacitated2010}。Hemmelmayr等人提出的自适应大邻域搜索（Adaptive Large Neighborhood Search，ALNS）不仅高效求解两级车辆路径问题（Two-Echelon Vehicle Routing Problem，2E-VRP），还能通过转换求解标准LRP，展现了方法的通用性\cite{hemmelmayrAdaptiveLargeNeighborhood2012}。Escobar等人提出了融合变邻域搜索（variable neighborhood search，VNS）和粒度禁忌搜索（granular tabu search，GTS）的混合算法，在计算效率与解质量之间取得了良好平衡\cite{escobarGranularVariableTabu2014, escobarTwophaseHybridHeuristic2013}。Ting和Chen则探索了多蚁群协同优化（multiple ant colony optimization）框架，三个蚁群分别处理选址、分配和路径决策三个任务\cite{tingMultipleAntColony2013}。Schneider和Löffler提出了一种基于树搜索的算法（tree-based search algorithm，TBSA），系统性地探索设施配置空间，并采用包含14种算子的复合大邻域进行路径优化，该算法在处理含600个顾客和30个设施的大规模算例时表现出优异的扩展性和鲁棒性，并在经典的算例集中发现了多个新的最优解结构\cite{schneiderLargeCompositeNeighborhoods2019}。此外，部分研究致力于发展近似算法，例如Heine等人提出了基于最小生成树和聚类问题的多项式时间近似算法，虽然不能够直接获得最优解，但能处理超大规模实例，为实际应用提供了保障\cite{carrascoheineBifactorApproximationLocation2023}。
+
+% 尽管标准LRP的研究已相对成熟，但为应对现实物流系统的复杂性，研究焦点逐渐向更具挑战性的变体扩展。其中，多级物流网络（特别是两级LRP） 被认为是近十年来最重要的模型扩展之一（Drexl & Schneider, 2015）。两级LRP将配送网络划分为干线运输（第一级）和支线配送（第二级），通过引入中转设施（如卫星仓库）实现成本聚合与高效分拨。Perboli等人（2011）首次系统定义了两级容量约束车辆路径问题（2E-CVRP）并提出了基于弧变量的混合整数规划（MIP）模型。随后，Crainic等人（2010）、Nguyen等人（2012a, 2012b）、Contardo等人（2012）等分别提出了多种元启发式（如多起点启发式、GRASP、ALNS）和精确算法（分支切割）。这些研究一致表明，在恰当的设施布局下，两级系统相较于单级系统能显著降低总配送成本，尤其在城市物流场景中具有巨大潜力（Drexl & Schneider, 2015）。然而，现有研究多忽略了两级网络间货物转运的时空同步要求，这为后续研究（包括本文所探讨的车辆与无人机协同配送）提供了切入点。
+
+% 综上所述，选址-路径问题经过数十年的发展，已在问题定义、模型构建和算法设计方面形成了较为完整的体系。然而，随着电子商务、即时配送和城市物流的快速发展，传统的单级、纯车辆配送模式正面临挑战。一方面，两级或更多级物流网络的实践应用日益广泛，对其中转设施（卫星仓库）的选址与路径联合优化提出了更高要求；另一方面，车辆与无人机协同配送作为一种新兴模式，能够利用无人机的空中直线路径和卡车的续航载重优势，进一步提升“最后一公里”的配送效率。将这两类扩展（多级网络与新型运载工具）进行整合，研究面向两级配送网络的卫星仓库选址与车辆-无人机协同路径问题，既是LRP领域自然的研究延伸，也具有显著的实际应用价值。
+
+\subsection{两级物流网络与卫星仓库选址研究现状}
+
+\subsection{车辆与无人机协同配送（Vehicle Routing Problem with Drone，VRP-D）研究现状}
+
 \section{问题描述}
+
+% 可以拓展的方向
+% 1. 卡车行驶时间不确定性和顾客需求不确定性（stochastic）
+% 2. 周期性的决策问题，即周期性决定选址及路径规划（periodic）
+% 3. 选址可以是在连续空间选址也可以在固定的集合中选址（discrete vs continuous）
+% 4. 多级网络可以考虑在两级以上的配送网络（multiple echelons）
+% 5. 考虑多目标（multiple objective）
+% 6. 考虑多个选址之间物流的运输，即物流中心之间的货物运输（hub location-routing problem）
 
 给定一个物流配送网络$G = (V, A)$，该网络为一个完全图，网络中的节点包含一个郊区仓库$0$和一个待选的卫星仓库集合$S$以及一个需要配送的顾客集合$N$，即$V = \{0\} \cup S \cup N$，网络的弧集合为$A = \{(i,j)|i,j \in V, i \neq j\}$。
 
@@ -112,6 +157,12 @@
 
 目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}和\cref{eq:conv-level-truck-return}分别表示只有一辆大型卡车从主仓库$0$出发进行配送以及只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $j$ 时的累计载荷包含了该卫星仓库的需求$\sum_{v \in K}\psi_{jv}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:conv-level-2-truck-satellite}表示每辆协同卡车最多只能被分配到一个卫星仓库。约束\cref{eq:conv-level-1-and-2}表示只有建设的卫星仓库才能给它分配任务。约束\cref{eq:conv-level-2-satellite}表示如果卡车被分配给卫星仓库 $s$，那么它必须从 $s$ 出发并最终回到 $s$。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卡车 $v$ 从被分配的卫星仓库 $s$ 带出的货物总重量 $\psi_{sv}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-level-2-truck-time}表示卡车在节点之间的行驶时间推移，到达 $j$ 的时间必定晚于离开 $i$ 的时间加上行驶时间，同理约束\cref{eq:conv-level-2-drone-time}表示无人机的飞行时间推移。约束\cref{eq:conv-level-2-wait-time-1,eq:conv-level-2-wait-time-2}表示无人机和卡车的等待机制，即卡车组离开节点 $k$ 的时间 $\rho_{kv}$ 必须同时晚于卡车到达 $k$ 的时间以及无人机到达 $k$的时间。约束\cref{eq:conv-decision-variable,eq:conv-auxiliary-variable}表示变量的定义域。
 
-% \bibliography{references}
+\bibliography{references}
+
+\appendix
+
+\section{数据集}
+
+Drexl和Michael的文章中的Table 1中有一些LRP及其变体相关的数据集\cite{drexlSurveyVariantsExtensions2015, schneiderSurveyStandardLocationrouting2017}。Cavagnini和Santini等人的文章中的Table 1中也有一些LRP及其相关变体的数据集\cite{cavagniniRecentDevelopmentsLocationrouting2026}，相应的数据仓库在\href{https://github.com/alberto-santini/lrp-instances}{https://github.com/alberto-santini/lrp-instances}中。
 
 \end{document}
