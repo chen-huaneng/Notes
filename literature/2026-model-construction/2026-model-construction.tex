@@ -13,7 +13,7 @@
 
 \section{文献综述}
 
-近年来，电子商务与同城配送需求急剧增长，城市物流网络面临巨大效率压力。两级物流系统通过引入卫星仓库（如前置仓、配送中心等），将运输过程拆分为“干线运输+支线配送”，能够显著降低配送成本并提高服务响应速度。同时，无人机技术的成熟使得车辆与无人机协同配送的模式受到广泛关注。本节重点回顾与选址-路径问题（Location Routing Problem，LRP）、两级物流网络与卫星仓库选址和车辆与无人机协同配送（Vehicle Routing Problem with Drone，VRP-D）相关的研究文献，并分析先前文献中存在的空白，为后续模型构建奠定基础。
+近年来，电子商务与同城配送需求急剧增长，城市物流网络面临巨大效率压力。两级物流系统通过引入卫星仓库（如前置仓、配送中心等），将运输过程拆分为“干线运输+支线配送”，能够显著降低配送成本并提高服务响应速度。同时，无人机技术的成熟使得车辆与无人机协同配送的模式受到广泛关注。本节重点回顾与选址-路径问题（Location Routing Problem，LRP）和车辆与无人机协同配送（Vehicle Routing Problem with Drone，VRP-D）相关的研究文献，并分析先前文献中存在的空白，为后续模型构建奠定基础。
 
 \subsection{选址-路径问题研究现状}
 % 研究的问题应该是属于 Multi-/N-echelon Vehicle Routing Problem (Location Routing Problem) 的一个变体（variant）
@@ -42,13 +42,43 @@
 
 随后的十年间，启发式算法在搜索机制和问题扩展上持续创新。Yu等人设计了高效的模拟退火（Simulated Annealing，SA）算法，改进了多个已知最优解\cite{yuSimulatedAnnealingHeuristic2010}。Duhamel等人将GRASP与进化局部搜索（Evolutionary Local Search，ELS）结合，进一步提升了求解质量\cite{duhamelGRASPxELSApproachCapacitated2010}。Hemmelmayr等人提出的自适应大邻域搜索（Adaptive Large Neighborhood Search，ALNS）不仅高效求解两级车辆路径问题（Two-Echelon Vehicle Routing Problem，2E-VRP），还能通过转换求解标准LRP，展现了方法的通用性\cite{hemmelmayrAdaptiveLargeNeighborhood2012}。Escobar等人提出了融合变邻域搜索（variable neighborhood search，VNS）和粒度禁忌搜索（granular tabu search，GTS）的混合算法，在计算效率与解质量之间取得了良好平衡\cite{escobarGranularVariableTabu2014, escobarTwophaseHybridHeuristic2013}。Ting和Chen则探索了多蚁群协同优化（multiple ant colony optimization）框架，三个蚁群分别处理选址、分配和路径决策三个任务\cite{tingMultipleAntColony2013}。Schneider和Löffler提出了一种基于树搜索的算法（tree-based search algorithm，TBSA），系统性地探索设施配置空间，并采用包含14种算子的复合大邻域进行路径优化，该算法在处理含600个顾客和30个设施的大规模算例时表现出优异的扩展性和鲁棒性，并在经典的算例集中发现了多个新的最优解结构\cite{schneiderLargeCompositeNeighborhoods2019}。此外，部分研究致力于发展近似算法，例如Heine等人提出了基于最小生成树和聚类问题的多项式时间近似算法，虽然不能够直接获得最优解，但能处理超大规模实例，为实际应用提供了保障\cite{carrascoheineBifactorApproximationLocation2023}。
 
-% 尽管标准LRP的研究已相对成熟，但为应对现实物流系统的复杂性，研究焦点逐渐向更具挑战性的变体扩展。其中，多级物流网络（特别是两级LRP） 被认为是近十年来最重要的模型扩展之一（Drexl & Schneider, 2015）。两级LRP将配送网络划分为干线运输（第一级）和支线配送（第二级），通过引入中转设施（如卫星仓库）实现成本聚合与高效分拨。Perboli等人（2011）首次系统定义了两级容量约束车辆路径问题（2E-CVRP）并提出了基于弧变量的混合整数规划（MIP）模型。随后，Crainic等人（2010）、Nguyen等人（2012a, 2012b）、Contardo等人（2012）等分别提出了多种元启发式（如多起点启发式、GRASP、ALNS）和精确算法（分支切割）。这些研究一致表明，在恰当的设施布局下，两级系统相较于单级系统能显著降低总配送成本，尤其在城市物流场景中具有巨大潜力（Drexl & Schneider, 2015）。然而，现有研究多忽略了两级网络间货物转运的时空同步要求，这为后续研究（包括本文所探讨的车辆与无人机协同配送）提供了切入点。
+尽管标准LRP的研究已相对成熟，但为应对现实物流系统的复杂性，研究焦点逐渐向更具挑战性的变体扩展。其中，多级物流网络（特别是两级LRP） 被认为是近十年来最重要的模型扩展之一\cite{drexlSurveyVariantsExtensions2015}。两级LRP（Two-echelon LRP）将配送网络划分为干线运输（第一级）和支线配送（第二级），通过引入中转设施（如卫星仓库）实现成本聚合与高效分拨。多级物流网络（multi-echelon/N-echelon VRP/LRP）术语最早是由Perboli等人提出的，Perboli等人系统定义了两级容量约束车辆路径问题（two-echelon vehicle routing problem，2E-VRP）并提出了基于弧变量的混合整数规划（Mixed Integer Programming，MIP）模型\cite{perboliTwoEchelonCapacitatedVehicle2011}。随后，Crainic等人\cite{crainicMultistartHeuristicsTwoEchelon2011}、Nguyen等人\cite{nguyenSolvingTwoechelonLocation2012, nguyenMultistartIteratedLocal2012}、Contardo等人\cite{contardoLowerUpperBounds2012}分别提出了多起点启发式（multi-start heuristic）、GRASP、ALNS和精确算法（branch-and-cut algorithm）。这些研究一致表明，在恰当的设施布局下，两级系统相较于单级系统能显著降低总配送成本，尤其在城市物流场景中具有巨大潜力。然而，现有研究多忽略了第二级物流网络通过无人机协同来进行配送优化，这为后续研究提供了切入点。
 
-% 综上所述，选址-路径问题经过数十年的发展，已在问题定义、模型构建和算法设计方面形成了较为完整的体系。然而，随着电子商务、即时配送和城市物流的快速发展，传统的单级、纯车辆配送模式正面临挑战。一方面，两级或更多级物流网络的实践应用日益广泛，对其中转设施（卫星仓库）的选址与路径联合优化提出了更高要求；另一方面，车辆与无人机协同配送作为一种新兴模式，能够利用无人机的空中直线路径和卡车的续航载重优势，进一步提升“最后一公里”的配送效率。将这两类扩展（多级网络与新型运载工具）进行整合，研究面向两级配送网络的卫星仓库选址与车辆-无人机协同路径问题，既是LRP领域自然的研究延伸，也具有显著的实际应用价值。
+综上所述，选址-路径问题经过数十年的发展，已在问题定义、模型构建和算法设计方面形成了较为完整的体系。然而，随着电子商务、即时配送和城市物流的快速发展，传统的单级、纯车辆配送模式正面临挑战。一方面，两级或更多级物流网络的实践应用日益广泛，对其中转设施（卫星仓库、配送中心、前置仓等）的选址与路径联合优化提出了更高要求；另一方面，车辆与无人机协同配送作为一种新兴模式，能够利用无人机的空中直线路径和卡车的续航载重优势，进一步提升“最后一公里”的配送效率。将这两类扩展（多级网络与新型运载工具）进行整合，研究面向两级配送网络的卫星仓库选址与车辆-无人机协同路径问题，既是LRP领域自然的研究延伸，也具有显著的实际应用价值。
 
-\subsection{两级物流网络与卫星仓库选址研究现状}
+% \subsection{两级物流网络与卫星仓库选址研究现状}
 
-\subsection{车辆与无人机协同配送（Vehicle Routing Problem with Drone，VRP-D）研究现状}
+\subsection{车辆与无人机协同配送研究现状}
+
+车辆与无人机协同配送问题（Vehicle Routing Problem with Drone，VRP-D）是近年来物流优化领域的研究热点。该问题将传统卡车的长距离、大载重优势与无人机的高机动性、直线飞行能力相结合，旨在提升“最后一公里”配送的效率与灵活性。Murray和Chu首次提出利用车辆和无人机协同配送进行“最后一公里”配送\cite{murrayFlyingSidekickTraveling2015}，提出了TSP的两种变体，分别称为飞行助手旅行商问题（Flying Sidekick Traveling Salesman Problem，FSTSP）和并行无人机调度旅行商问题（Parallel Drone Scheduling Traveling Salesman Proble，PDSTSP）。在FSTSP中，一辆卡车搭载一架无人机进行配送任务，并且无人机每次飞行只能服务单个顾客点。该论文明确给出了基于弧的混合整数线性规划（Mixed Integer Linear Programming，MILP）模型，并且通过设计基于成本节约的大邻域搜索算法，对10-20个节点的实例进行了数值计算。这一工作为后来的车辆与无人机协同配送问题研究奠定了基础，其他学者在FSTSP基础上进行了大量的延伸拓展研究。
+
+在FSTSP模型基础上，Ha等人首次以最小化服务成本为目标函数\cite{haMincostTravelingSalesman2018}，考虑了无人机和卡车因为等待另一方的时间成本，用改进的简单启发式算法和贪婪随机自适应搜索过程（Greedy Randomized Adaptive Search Procedure，GRASP）求解，并比较了最小服务时间和最小服务成本两种目标的解决方案异同。Agatz等人在之前的研究基础上基于最小化服务成本的目标函数建立了能够解决最多12个顾客点的最优整数规划（Integer Programming，IP）模型\cite{agatzOptimizationApproachesTraveling2018}，并提出了一种基于局部搜索和动态规划的启发式算法，通过对比最优结果和启发式算法的结果，验证了协同配送相较于纯卡车配送的优越性。Bouman等人同样以最小化服务成本为目标函数\cite{boumanDynamicProgrammingApproaches2018}，将精确求解方法用于更大规模的算例求解中，并通过基于Bellman-Held-Karp的三阶段动态规划方法进行求解，同时通过限制卡车和无人机分离时卡车可以访问的节点来加速运算。
+
+Phan等人则将模型拓展到结合单辆卡车和多架无人机协同的包裹配送问题\cite{tuTravelingSalesmanProblem2018}，并称之为TSP-mD（Traveling Salesman Problem with multiple Drones），作者在论文中提出了一种基于自适应大邻域搜索（Adaptive Large Neighborhood Search，ALNS）的启发式算法来解决这一问题，并与GRASP进行了比较，证明了ALNS算法在效率上优于GRASP。Murray等人在FSTSP的基础上提出多无人机的混合整数线性规划数学模型\cite{murrayMultipleFlyingSidekicks2020}，并通过三阶段的启发式方法求解，并分析了五种不同的无人机耐力模型，发现使用过于简化的耐力模型可能会导致无人机无法安全返回。Poikonen等人同样对一辆卡车与多架无人机协同配送包裹的问题进行研究\cite{poikonenMultivisitDroneRouting2020}，目标是最小化所有包裹送达客户地点的总路线完成时间，该问题允许无人机携带多个不同重量的包裹，并考虑了无人机的能耗函数，该函数取决于包裹重量和飞行距离。该论文采用RTS（Route，Transform，Shortest Path）启发式方法进行求解，发现增加无人机数量可以减少总路线完成时间，但存在边际收益递减的现象。
+
+Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem with Drones）\cite{kitjacharoenchaiMultipleTravelingSalesman2019}，即多卡车与多无人机的协同配送问题，目标是最小化包裹配送的完成时间，文章提出了一个混合整数规划模型和一种基于插入启发式（Adaptive Insertion Heuristic，ADI）的算法，以解决大规模问题。Rinaldi等人设计并实现了几种启发式方法来解决这一问题\cite{rinaldiDevelopmentHeuristicApproaches2023}，包括局部搜索算法、两种混合遗传算法（可行解变体和不可行解变体）以及一种自定义的贪心算法，结果表明，遗传算法在提高配送效率方面表现最佳，尤其是在大规模实例中。Cui等人在之前的研究上更进一步\cite{cuiDynamicCollaborativeTruckdrone2024}，以最大化预期收益为目标函数，考虑了顾客随时可能出现的需求（即需求的不确定性）和无人机可以不在顾客节点起飞降落的情形，并使用分散学习和集中调度（decentralized learning and centralized dispatching）的方法来提高强化学习的表现。
+
+针对多卡车与多无人机的协同配送且考虑卡车容量的问题（Vehicle Routing Problem with Drones，VRPD），Wang等人的研究旨在通过配备无人机的卡车车队来优化包裹配送\cite{wangVehicleRoutingProblem2017}，目标是最小化总配送时间，作者通过理论分析，探讨了使用无人机相比传统卡车配送在最坏情况下的时间节省潜力，并给出了多个关键结论和定理。在此基础上，Poikonen等人拓展了研究的例子\cite{poikonenVehicleRoutingProblem2017}，主要是针对无人机的电池容量、无人机面临空中障碍物以及考虑无人机和卡车的使用成本的情况，进一步拓展了使用无人机带来的潜在收益。Schermer等人将VRPD形式化为一个混合整数线性规划模型\cite{schermerMatheuristicVehicleRouting2019}，并引入了一系列有效的不等式以提高求解器的性能，由于求解器在处理大规模实例时性能有限，作者提出了一种基于问题结构的启发式方法，该方法通过分解问题来有效利用VRPD的结构特性，并且通过对比不同规模实例的结果，作者发现无人机的使用可以显著减少完成时间，且这种减少在不同规模的实例中都是一致的。
+
+根据前文所述文献，车辆与无人机协同配送的相关研究可以根据车辆数量、车载无人机数量和是否考虑车辆容量分成四类：TSPD、TSP-mD、mTSPD和VRPD。这四类问题的区别如表\cref{tab:tspd1}所示。
+
+\begin{table}[!htbp]
+    \centering
+    \caption{车辆与无人机协同配送问题分类}
+    \label{tab:tspd1}
+    \begin{tabular}{cccc}
+        \toprule[1pt] % 表头线宽1镑（point, pt）
+        问题类型 & 车辆数 $n$ & 车载无人机数 $m$ & 是否考虑卡车容量 \\
+        \midrule[0.75pt] % 表中间线宽0.75镑（point, pt）
+        TSP-D & 1 & 1 & 是 \\
+        TSP-mD & 1 & $m > 1$ & 是 \\
+        mTSPD & $n > 1$ & $m \geq 1$ & 否 \\
+        VRP-D & $n > 1$ & $m \geq 1$ & 是 \\
+        \bottomrule[1pt] % 表尾线宽1镑（point, pt）
+    \end{tabular}
+\end{table}
+
+从上述文献梳理可以看出，现有VRP-D研究虽然在问题变体与求解方法上取得了长足进展，但绝大多数模型默认采用单级配送网络结构，即卡车从中央仓库出发，完成配送后返回同一仓库。这种结构在城市物流中面临两个现实瓶颈：一是长距离行驶导致卡车配送时效下降；二是中央仓库的固定成本较高，难以灵活应对分散化的末端需求。同时，将卫星仓库选址与车辆-无人机协同配送进行联合优化的研究仍相对匮乏\cite{liMultiechelonLocationRouting2026}，现有文献多将卫星仓库位置视为已知输入，或仅考虑纯车辆的两级配送。因此，面向两级物流网络，研究卫星仓库的选址决策与车辆-无人机协同路径的联合优化问题，既是LRP与VRP-D交叉领域的重要理论延伸，也具备显著的实际应用价值。
 
 \section{问题描述}
 
@@ -62,7 +92,7 @@
 
 给定一个物流配送网络$G = (V, A)$，该网络为一个完全图，网络中的节点包含一个郊区仓库$0$和一个待选的卫星仓库集合$S$以及一个需要配送的顾客集合$N$，即$V = \{0\} \cup S \cup N$，网络的弧集合为$A = \{(i,j)|i,j \in V, i \neq j\}$。
 
-首先由大型卡车将需要配送的货物从郊区仓库$0$运输到一个选择建设的卫星仓库节点集合$\hat{S} \subseteq S$，然后由卡车和无人机从卫星仓库出发进行协同配送，无人机和卡车都可以进行货物的单独配送，无人机进行配送的过程中卡车可以进行下一个顾客点的配送，但是无人机的配送受到自身最大载重$Q^D$和最大电量$E$的限制，需要在载重的约束下，并且在自身电量耗尽前到达和卡车的汇合节点，无人机可以在汇合节点等待卡车配送完成后汇合，也可以卡车在汇合节点等待无人机配送完成后汇合，同样，卡车也受到最大载重$Q^T$的限制，即携带的无人机和包裹总重量不能超过卡车的最大载重$Q^T$，且每辆卡车最多只能携带一架无人机进行协同配送，目标是最小化经济成本，包括卡车和无人机的运输成本，卫星仓库的固定建设成本。
+首先由大型卡车将需要配送的货物从郊区仓库$0$运输到一个选择建设的卫星仓库节点集合$\hat{S} \subseteq S$，每个建设的卫星仓库都配有一辆卡车和一架相应的无人机负责配送，由卡车和无人机从卫星仓库出发进行协同配送，无人机和卡车都可以进行货物的单独配送，无人机进行配送的过程中卡车可以进行下一个顾客点的配送，但是无人机的配送受到自身最大载重$Q^D$和最大电量$E$的限制，需要在载重的约束下，并且在自身电量耗尽前到达和卡车的汇合节点，无人机可以在汇合节点等待卡车配送完成后汇合，也可以卡车在汇合节点等待无人机配送完成后汇合，同样，卡车也受到最大载重$Q^T$的限制，即携带的无人机和包裹总重量不能超过卡车的最大载重$Q^T$，且每辆卡车最多只能携带一架无人机进行协同配送，目标是最小化经济成本，包括卡车和无人机的运输成本，卫星仓库的固定建设成本。
 
 因为无人机起飞和回收的时间相比于卡车和无人机配送的时间来说很短，因此模型中不考虑无人机的起飞和降落时间。无人机在每次飞行任务结束后通过更换电池从而达到最大电量，因此每次无人机起飞时都有最大电量$E$。
 
@@ -87,10 +117,9 @@
     \midrule[0.75pt] % 中间线宽0.75pt
 	$ V = \{0\} \cup S \cup N$ & 完全图的所有节点集合，$0$为郊区主仓库 \\
     $N$ & 需要配送的顾客节点集合 \\
-	$S$ & 待选的卫星仓库节点集合 \\
+	$S$ & 待选卫星仓库节点集合，每个 $s \in S$ 卫星仓库都有一辆卡车和相应的无人机组合 \\
 	$V_1 = \{0\} \cup S$ & 第一级网络（郊区仓库到卫星仓库）节点集合 \\
 	$V_2 = S \cup N$ & 第二级网络（卫星仓库到顾客节点）节点集合 \\
-	$K$ & 第二级网络中协同配送的卡车集合 \\
 	$q_i$ & 顾客 $i \in N$ 的需求重量 \\
 	$f_s$ & 建设卫星仓库$s \in S$的固定建设成本 \\
 	$c^L_{ij}$ & 大型卡车在弧 $(i,j)$ 上的运输成本 \\
@@ -108,15 +137,14 @@
 	$e_{ij}$ & 无人机飞行弧 $(i,j)$ 消耗的电量 \\
 	$y_s \in \{0,1\}$ & 如果在节点 $s \in S$ 建设卫星仓库则为1，否则为0 \\
 	$x_{ij}^L \in \{0, 1\}$ & 如果大型卡车驶过弧$(i,j) \in V_1$则为1，否则为0 \\
-	$x_{ijv}^T \in \{0, 1\}$ & 如果协同卡车$v \in K$驶过弧$(i,j) \in V_2$则为1，否则为0 \\
-	$x_{ijkv}^D \in \{0, 1\}$ & 如果协同卡车$v \in K$上的无人机从节点$i$起飞，为顾客$j$进行配送，并在节点$k$降落则为1，否则为0，$i,k \in V_2, j \in N$ \\
-	$z_{sv} \in \{0,1\}$ & 如果协同卡车 $v \in K$ 被分配到卫星仓库 $s \in S$ 执行配送任务则为1，否则为0 \\
-	$\tau_{iv}^T$ & 协同卡车 $v$ 到达节点 $i$ 的时间 \\
-	$\tau_{iv}^D$ & 卡车 $v$ 协同的无人机到达节点 $i$ 的时间 \\
-	$\rho_{iv}$ & 卡车组 $v$ 到达节点 $i$ 的时间，即卡车或无人机最后一个到达节点 $i$ 的时间 \\
+	$x_{ijs}^T \in \{0, 1\}$ & 如果卫星仓库 $s \in S$ 的协同卡车驶过弧$(i,j) \in V_2$则为1，否则为0 \\
+	$x_{ijks}^D \in \{0, 1\}$ & 如果卫星仓库 $s \in S$ 的协同卡车上的无人机从节点$i$起飞，为顾客$j$进行配送，并在节点$k$降落则为1，否则为0，$i,k \in V_2, j \in N$ \\
+	$\tau_{is}^T$ & 卫星仓库$s \in S$的协同卡车到达节点 $i$ 的时间 \\
+	$\tau_{is}^D$ & 卫星仓库$s \in S$的卡车协同的无人机到达节点 $i$ 的时间 \\
+	$\rho_{is}$ & 卫星仓库$s \in S$的卡车组到达节点 $i$ 的时间，即卡车或无人机最后一个到达节点 $i$ 的时间 \\
 	$u_i^L \geq 0$ & 大型卡车在访问第一级网络节点 $i \in V_1$ 后的累计载重 \\
-	$u_{iv}^T \geq 0$ & 协同卡车 $v \in K$ 在访问第二级网络节点 $i \in V_2$ 时的累计载重量 \\
-	$\psi_{sv} \geq 0$ & 协同卡车 $v \in K$ 从卫星仓库 $s \in S$ 取走的货物总重量 \\
+	$u_{is}^T \geq 0$ & 卫星仓库$s \in S$的协同卡车在访问第二级网络节点 $i \in V_2$ 时的累计载重量 \\
+	$\psi_{s} \geq 0$ & 卫星仓库$s \in S$从郊区仓库接收的货物总重量（也即其服务的顾客总需求） \\
     \bottomrule[1pt] % 表尾线宽1pt
 \end{longtblr}
 
@@ -126,37 +154,35 @@
 \begin{theorem}
 {
 \begin{align}
-    \min \quad & Z = \sum_{s \in S}f_s y_s + \sum_{i \in V_1}\sum_{j \in V_1}c_{ij}^L x_{ij}^L + \sum_{v \in K}\sum_{i \in V_2}\sum_{j \in V_2}c_{ij}^T x_{ijv}^T + \sum_{v \in K}\sum_{i \in V_2}\sum_{j \in N}\sum_{k \in V_2}(c_{ij}^D + c_{jk}^D)x_{ijkv}^D\label{eq:conv-obj}\\
-    \text{s.t.} \quad & \sum_{j \in S}x_{0j}^L = 1 \label{eq:conv-level-1-truck}\\
-    \quad & \sum_{i \in S}x_{i0}^L = 1 \label{eq:conv-level-truck-return}\\
-    \quad & \sum_{i \in V_1}x_{ij}^L = \sum_{i \in V_1}x_{ji}^L = y_j, \forall j \in S \label{eq:conv-level-1-flow}\\
-    \quad & u_j^L \geq u_i^L + \sum_{v \in K}\psi_{jv} - M(1 - x_{ij}^L), \forall i,j \in V_1 \label{eq:conv-level-1-subtour}\\
-	\quad & \sum_{v \in K}\psi_{jv} \leq u_j^L \leq Q^L, \forall j \in S \label{eq:conv-level-1-weight}\\
-	\quad & \sum_{v \in K}\sum_{i \in V_2}x_{ijv}^T + \sum_{v \in K}\sum_{i \in V_2}\sum_{k \in V_2}x_{ijkv}^D = 1, \forall j \in N \label{eq:conv-level-2-customer}\\
-	\quad & \sum_{s \in S}z_{sv} \leq 1, \forall v \in K \label{eq:conv-level-2-truck-satellite}\\
-    \quad & \sum_{v \in K}z_{sv} \leq y_s, \forall s \in S \label{eq:conv-level-1-and-2}\\
-	\quad & \sum_{j \in V_2}x_{sjv}^T = \sum_{i \in V_2}x_{isv}^T = z_{sv}, \forall s \in S, v \in K \label{eq:conv-level-2-satellite}\\
-	\quad & \sum_{i \in V_2}x_{ijv}^T = \sum_{k \in V_2}x_{jkv}^T, \forall j \in N, v \in K \label{eq:conv-level-2-flow}\\
-	\quad & u_{jv}^T \geq u_{iv}^T + 1 - M(1 - x_{ijv}^T), \forall i,j \in N, v \in K \label{eq:conv-level-2-subtour}\\
-	\quad & \sum_{j \in N}\sum_{k \in V_2}x_{ijkv}^D \leq \sum_{h \in V_2}x_{hiv}^T, \forall i \in V_2, v \in K \label{eq:conv-level-2-truck-drone-1}\\
-	\quad & \sum_{i \in V_2}\sum_{j \in N}x_{ijkv}^D \leq \sum_{h \in V_2}x_{hkv}^T, \forall k \in V_2, v \in K \label{eq:conv-level-2-truck-drone-2}\\
-	\quad & \sum_{j \in N}q_j\left(\sum_{i \in V_2}x_{ijv}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijkv}^D\right) + w \leq Q^T, \forall v \in K \label{eq:conv-level-2-truck-weight}\\
-	\quad & \psi_{sv} \geq \sum_{j \in N}q_j\left(\sum_{i \in V_2}x_{ijv}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijkv}^D\right) - M (1 - z_{sv}), \forall s \in S, v \in K \label{eq:conv-level-1-and-2-truck-weight}\\
-	\quad & \sum_{i \in V_2}\sum_{k \in V_2}q_jx_{ijkv}^D \leq Q^D, \forall j \in N, v \in K \label{eq:conv-level-2-drone-weight}\\
-	\quad & \sum_{i \in V_2}\sum_{k \in V_2}(e_{ij} + e_{jk})x_{ijkv}^D \leq E, \forall j \in N, v \in K \label{eq:conv-level-2-drone-battery}\\
-	\quad & \tau_{jv}^T \geq \rho_{iv} + \frac{d_{ij}}{v^T} - M(1 - x_{ijv}^T), \forall i,j \in V_2, v \in K \label{eq:conv-level-2-truck-time}\\
-	\quad & \tau_{kv}^D \geq \rho_{iv} + \frac{d_{ij} + d_{jk}}{v^D} - M(1 - x_{ijkv}^D), \forall i,k \in V_2, j \in N, v \in K \label{eq:conv-level-2-drone-time}\\
-	\quad & \rho_{kv} \geq \tau_{kv}^T, \forall k \in V_2, v \in K \label{eq:conv-level-2-wait-time-1}\\
-	\quad & \rho_{kv} \geq \tau_{kv}^D - M \left(1 - \sum_{i \in V_2}\sum_{j \in N}x_{ijkv}^D\right), \forall k \in V_2, v \in K \label{eq:conv-level-2-wait-time-2}\\
-    \quad & u_{sv}^T = 0, \forall s \in S, v \in K \label{eq:conv-auxiliary-initial}\\
-	\quad & y_s, x_{ij}^L, x_{ijv}^T, x_{ijkv}^D,z_{sv} \in \{0 ,1\} \label{eq:conv-decision-variable}\\
-    \quad & u_i^L, u_{iv}^T, \psi_{sv}, \tau_{iv}^T,\tau_{iv}^D, \rho_{iv} \geq 0\label{eq:conv-auxiliary-variable}
+    \min \quad & Z = \sum_{s \in S}f_s y_s + \sum_{i \in V_1}\sum_{j \in V_1}c_{ij}^L x_{ij}^L + \sum_{s \in S}\sum_{i \in V_2}\sum_{j \in V_2}c_{ij}^T x_{ijs}^T + \sum_{s \in S}\sum_{i \in V_2}\sum_{j \in N}\sum_{k \in V_2}(c_{ij}^D + c_{jk}^D)x_{ijks}^D\label{eq:conv-obj}\\
+    \text{s.t.} \quad & \sum_{i \in S}x_{0i}^L = \sum_{j \in S}x_{j0}^L = 1 \label{eq:conv-level-1-truck}\\
+    \quad & \sum_{i \in V_1}x_{ij}^L = \sum_{k \in V_1}x_{jk}^L = y_j, \quad \forall j \in S, i \neq j, k \neq j \label{eq:conv-level-1-flow}\\
+    \quad & u_j^L \geq u_i^L + \psi_{j} - M(1 - x_{ij}^L), \quad \forall i,j \in V_1 \label{eq:conv-level-1-subtour}\\
+	\quad & \psi_{j} \leq u_j^L \leq Q^L, \quad \forall j \in S \label{eq:conv-level-1-weight}\\
+	\quad & \sum_{s \in S}\left(\sum_{i \in V_2}x_{ijs}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijks}^D\right) = 1, \quad \forall j \in N \label{eq:conv-level-2-customer}\\
+	\quad & \sum_{i \in V_2}x_{sis}^T = \sum_{j \in V_2}x_{jss}^T = y_s, \quad \forall s \in S \label{eq:con-level-2-truck-start} \\
+	\quad & \sum_{i \in V_2}x_{ijs}^T = \sum_{k \in V_2}x_{jks}^T, \quad \forall j \in N, s \in S \label{eq:conv-level-2-flow}\\
+    \quad & x_{ijs}^T \leq y_s, \quad \forall i,j \in V_2, s \in S \label{eq:con-level-2-truck-store}\\
+    \quad & x_{ijks}^D \leq y_s, \quad \forall i,k \in V_2, j \in N, s \in S \label{eq:con-level-2-drone-store}\\
+	\quad & u_{js}^T \geq u_{is}^T + 1 - M(1 - x_{ijs}^T), \quad \forall i,j \in N, s \in S \label{eq:conv-level-2-subtour}\\
+	\quad & \sum_{j \in N}\sum_{k \in V_2}x_{ijks}^D \leq \sum_{h \in V_2}x_{his}^T, \quad \forall i \in V_2, s \in S \label{eq:conv-level-2-truck-drone-1}\\
+	\quad & \sum_{i \in V_2}\sum_{j \in N}x_{ijks}^D \leq \sum_{h \in V_2}x_{hks}^T, \quad \forall k \in V_2, s \in S \label{eq:conv-level-2-truck-drone-2}\\
+	\quad & \sum_{j \in N}q_j\left(\sum_{i \in V_2}x_{ijs}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijks}^D\right) + w \leq Q^T, \quad \forall s \in S \label{eq:conv-level-2-truck-weight}\\
+	\quad & \psi_{s} = \sum_{j \in N}q_j\left(\sum_{i \in V_2}x_{ijs}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijks}^D\right), \quad \forall s \in S \label{eq:conv-level-1-and-2-truck-weight}\\
+	\quad & \sum_{i \in V_2}\sum_{k \in V_2}q_jx_{ijks}^D \leq Q^D, \quad \forall j \in N, s \in S \label{eq:conv-level-2-drone-weight}\\
+	\quad & \sum_{i \in V_2}\sum_{k \in V_2}(e_{ij} + e_{jk})x_{ijks}^D \leq E, \quad \forall j \in N, s \in S \label{eq:conv-level-2-drone-battery}\\
+	\quad & \tau_{js}^T \geq \rho_{is} + \frac{d_{ij}}{v^T} - M(1 - x_{ijs}^T), \quad \forall i,j \in V_2, s \in S \label{eq:conv-level-2-truck-time}\\
+	\quad & \tau_{ks}^D \geq \rho_{is} + \frac{d_{ij} + d_{jk}}{v^D} - M(1 - x_{ijks}^D), \quad \forall i,k \in V_2, j \in N, s \in S \label{eq:conv-level-2-drone-time}\\
+	\quad & \rho_{ks} \geq \tau_{ks}^T, \quad \forall k \in V_2, s \in S \label{eq:conv-level-2-wait-time-1}\\
+	\quad & \rho_{ks} \geq \tau_{ks}^D - M \left(1 - \sum_{i \in V_2}\sum_{j \in N}x_{ijks}^D\right), \quad \forall k \in V_2, s \in S \label{eq:conv-level-2-wait-time-2}\\
+    \quad & u_{ss}^T = 0, \quad \forall s \in S \label{eq:conv-auxiliary-initial}\\
+	\quad & y_s, x_{ij}^L, x_{ijs}^T, x_{ijks}^D \in \{0 ,1\} \label{eq:conv-decision-variable}\\
+    \quad & u_i^L, u_{is}^T, \psi_{s}, \tau_{is}^T,\tau_{is}^D, \rho_{is} \geq 0\label{eq:conv-auxiliary-variable}
 \end{align}
 }
 \end{theorem}
 
-目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}和\cref{eq:conv-level-truck-return}分别表示只有一辆大型卡车从主仓库$0$出发进行配送以及只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $j$ 时的累计载荷包含了该卫星仓库的需求$\sum_{v \in K}\psi_{jv}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:conv-level-2-truck-satellite}表示每辆协同卡车最多只能被分配到一个卫星仓库。约束\cref{eq:conv-level-1-and-2}表示只有建设的卫星仓库才能给它分配任务。约束\cref{eq:conv-level-2-satellite}表示如果卡车被分配给卫星仓库 $s$，那么它必须从 $s$ 出发并最终回到 $s$。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卡车 $v$ 从被分配的卫星仓库 $s$ 带出的货物总重量 $\psi_{sv}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-level-2-truck-time}表示卡车在节点之间的行驶时间推移，到达 $j$ 的时间必定晚于离开 $i$ 的时间加上行驶时间，同理约束\cref{eq:conv-level-2-drone-time}表示无人机的飞行时间推移。约束\cref{eq:conv-level-2-wait-time-1,eq:conv-level-2-wait-time-2}表示无人机和卡车的等待机制，即卡车组离开节点 $k$ 的时间 $\rho_{kv}$ 必须同时晚于卡车到达 $k$ 的时间以及无人机到达 $k$的时间。约束\cref{eq:conv-decision-variable,eq:conv-auxiliary-variable}表示变量的定义域。
-
+目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}表示只有一辆大型卡车从主仓库$0$出发进行配送且最终只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $j$ 时的累计载荷包含了该卫星仓库的需求$\psi_{j}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:con-level-2-truck-start}表示协同卡车必须从卫星仓库出发并且最终需要返回该卫星仓库。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:con-level-2-truck-store}和\cref{eq:con-level-2-drone-store}分别限制了没有建立的仓库不会进行卡车和无人机的配送。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卫星仓库 $s \in S$ 的卡车带出的货物总重量 $\psi_{s}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-level-2-truck-time}表示卡车在节点之间的行驶时间推移，到达 $j$ 的时间必定晚于离开 $i$ 的时间加上行驶时间，同理约束\cref{eq:conv-level-2-drone-time}表示无人机的飞行时间推移。约束\cref{eq:conv-level-2-wait-time-1,eq:conv-level-2-wait-time-2}表示无人机和卡车的等待机制，即卡车组离开节点 $k$ 的时间 $\rho_{ks}$ 必须同时晚于卡车到达 $k$ 的时间以及无人机到达 $k$的时间。约束\cref{eq:conv-decision-variable,eq:conv-auxiliary-variable}表示变量的定义域。
 \bibliography{references}
 
 \appendix
