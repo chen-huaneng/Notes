@@ -46,6 +46,11 @@
 \usepackage{threeparttable} % 给表格添加脚注，参考：https://tex.stackexchange.com/questions/6090/clickable-table-footnote
 \usepackage{ltablex} % 跨页表格
 
+% 将longtblr底部续表提示改为空
+\DefTblrTemplate{contfoot-text}{default}{}
+% 将longtblr顶部续表标题改为"（续）"
+\DefTblrTemplate{conthead-text}{default}{（续）}
+
 %===================================
 % 参考文献
 %===================================
@@ -162,6 +167,9 @@
 \crefname{equation}{}{} % 设置非首字母大写的引用格式
 \Crefname{equation}{}{} % 设置首字母大写的引用格式
 \crefrangeformat{equation}{(#3#1#4)-(#5#2#6)} % 多公式引用的格式
+\crefname{table}{表}{表} % 设置非首字母大写的表引用格式
+\Crefname{table}{表}{表} % 设置首字母大写的表引用格式
+\renewcommand{\crefpairconjunction}{-} % 引用两个公式时用"-"代替"and"
 
 %===================================
 % 边注
