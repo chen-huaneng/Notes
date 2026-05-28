@@ -2,7 +2,7 @@
 \documentclass[fontset=none]{ctexart}
 \input{../note-setup.tex}
 
-\title{Capacitated Two-Echelon Location Routing Problem with Drone and Truck Collaboration}
+\title{Capacitated Two-Echelon Location Routing Problem with Drone-Truck Synchronization}
 \author{Chen Huaneng}
 \date{\today}
 \setauthoremail{huanengchen@foxmail.com} % 笔记作者的邮箱
@@ -34,14 +34,14 @@ Contardo等人则提出了一种双索引车辆流模型（two-index vehicle flo
 
 标准的路径-选址问题如果只有一个潜在可以选择的设施且车辆队列仅包含一辆无限容量的卡车，则退化为旅行商问题（Traveling Salesman Problem，TSP），已知TSP是NP-Hard\cite{computers-and-intractability}，因此标准的以及拓展的路径-选址问题也是NP-Hard。在路径-选址问题（LRP）中，必须做出至少以下两种相互依赖的决策类型：
 
-\begin{enumerate}[label=(\roman*)]
+\begin{enumerate}[label = (\roman*)]
     \item 从有限或者无限的潜在设施集合（如工厂、仓库、配送中心、枢纽等）中选择哪些设施启用。
     \item 使用给定的车辆，应建立哪些车辆路径来服务给定的需求点。
 \end{enumerate}
 
 并且在 LRP 中，路径的选择不能隐含选址的决策，即选址的决策和路径的决策不能够相互依赖，Schneider和Drexl指出，当满足以下三个条件之一时路径决策和选址决策是相互独立的\cite{schneiderSurveyStandardLocationrouting2017}：
 
-\begin{enumerate}[label=(\roman*)]
+\begin{enumerate}[label = (\roman*)]
     \item 启用设施存在固定成本或使用设施存在与体积相关的可变成本；
     \item 必须从某个更大的集合中选择恰好或最多一定数量的设施；
     \item 设施具有某种容量的限制。
@@ -49,7 +49,7 @@ Contardo等人则提出了一种双索引车辆流模型（two-index vehicle flo
 
 自Salhi和Rand\cite{salhiEffectIgnoringRoutes1989}以及Salhi和Nagy\cite{salhiClusterInsertionHeuristic1999}的开创性工作之后，LRP的研究在理论和应用层面均取得了长足发展。早期的综述（如Balakrishnan等人\cite{balakrishnanIntegratedFacilityLocation1987}，Min等人\cite{minCombinedLocationroutingProblems1998}）奠定了问题基础，而Nagy和Salhi的综述则系统梳理了2006年前的模型与方法\cite{nagyLocationroutingIssuesModels2007}。在标准LRP的定义上，后续研究普遍遵循Schneider和Drexl所归纳的三个准则：启用设施存在固定成本、需从更大集合中选择有限数量设施、或设施存在容量限制\cite{schneiderSurveyStandardLocationrouting2017}。基于此，标准LRP通常被界定为确定性、静态、离散、单层级、单目标的问题，其中每个顾客必须被恰好访问一次，且不涉及库存决策\cite{drexlSurveyVariantsExtensions2015, cavagniniRecentDevelopmentsLocationrouting2026}。
 
-在精确算法方面，早期研究致力于通过分支定价（Branch and Price）或分支切割（Branch and Cut）求解小规模实例。Berger等人利用分支定价法解决了含路径长度约束的LRP，作者通过Feillet等人提出的标签算法（labeling algorithm）求解生成新路径的子问题\cite{feilletExactAlgorithmElementary2004}，可在两个小时内求解含10个潜在设施以及50-100个顾客的算例\cite{bergerLocationRoutingProblemsDistance2007a}。Akca等人提出了结合有效不等式的分支定价算法，但求解能力仍局限在5个设施及40个顾客左右\cite{akcaBranchandPriceAlgorithmCombined2009}。Belenguer等人通过引入多种有效不等式，包括源自容量约束车辆路径问题（Capacitated Vehicle Routing Problem，CVRP）的切割，增强了分支切割算法，该算法优于Akca等人提出的分支定价算法\cite{akcaBranchandPriceAlgorithmCombined2009}，成功求解了含5个设施及50个顾客的算例\cite{belenguerBranchandCutMethodCapacitated2011}。Baldacci等人在Akca等人提出的模型基础上\cite{akcaBranchandPriceAlgorithmCombined2009}，提出了一种类似集合划分（set-partitioning-like）的新颖精确方法，通过动态规划与对偶上升法（dual ascent methods）等不同的界限分析技术生成紧的下界，并将原LRP分解为有限个带容量限制的多仓库车辆路径问题（multi-capacitated depot vehicle routing problems），该方法显著提升了求解规模，能够求解含14个潜在仓库和199个顾客的实例\cite{baldacciExactMethodCapacitated2011}。Contardo等人在此基础上进一步发展了弧变量和路径变量两种建模框架，并提出了多种新的有效不等式，实验的计算结果表明，提出的方法不仅能够求解Baldacci等人公开的所有实例\cite{baldacciExactMethodCapacitated2011}，还首次解决了四个此前未决的算例，并改进了三个算例的最优上界\cite{contardoComputationalComparisonFlow2013, contardoExactAlgorithmBased2014}。然而，精确算法仍然难以在有效时间内求解更大规模的算例，直到Liguori等人提出的分支-切割-定价（branch-cut-and-price）算法，通过引入非鲁棒的路由装载背包割（route load knapsack cuts），才首次能够稳定求解含300个顾客和20个候选设施的较大规模算例，标志着标准LRP精确求解能力的重要突破\cite{liguoriNonrobustStrongKnapsack2023}。
+在精确算法方面，早期研究致力于通过分支定价（Branch and Price）或分支切割（Branch and Cut）求解小规模实例。Berger等人利用分支定价法解决了含路径长度约束的LRP，作者通过Feillet等人提出的标签算法（labeling algorithm）求解生成新路径的子问题\cite{feilletExactAlgorithmElementary2004}，可在两个小时内求解含10个潜在设施以及50--100个顾客的算例\cite{bergerLocationRoutingProblemsDistance2007a}。Akca等人提出了结合有效不等式的分支定价算法，但求解能力仍局限在5个设施及40个顾客左右\cite{akcaBranchandPriceAlgorithmCombined2009}。Belenguer等人通过引入多种有效不等式，包括源自容量约束车辆路径问题（Capacitated Vehicle Routing Problem，CVRP）的切割，增强了分支切割算法，该算法优于Akca等人提出的分支定价算法\cite{akcaBranchandPriceAlgorithmCombined2009}，成功求解了含5个设施及50个顾客的算例\cite{belenguerBranchandCutMethodCapacitated2011}。Baldacci等人在Akca等人提出的模型基础上\cite{akcaBranchandPriceAlgorithmCombined2009}，提出了一种类似集合划分（set-partitioning-like）的新颖精确方法，通过动态规划与对偶上升法（dual ascent methods）等不同的界限分析技术生成紧的下界，并将原LRP分解为有限个带容量限制的多仓库车辆路径问题（multi-capacitated depot vehicle routing problems），该方法显著提升了求解规模，能够求解含14个潜在仓库和199个顾客的实例\cite{baldacciExactMethodCapacitated2011}。Contardo等人在此基础上进一步发展了弧变量和路径变量两种建模框架，并提出了多种新的有效不等式，实验的计算结果表明，提出的方法不仅能够求解Baldacci等人公开的所有实例\cite{baldacciExactMethodCapacitated2011}，还首次解决了四个此前未决的算例，并改进了三个算例的最优上界\cite{contardoComputationalComparisonFlow2013, contardoExactAlgorithmBased2014}。然而，精确算法仍然难以在有效时间内求解更大规模的算例，直到Liguori等人提出的分支-切割-定价（branch-cut-and-price）算法，通过引入非鲁棒的路由装载背包割（route load knapsack cuts），才首次能够稳定求解含300个顾客和20个候选设施的较大规模算例，标志着标准LRP精确求解能力的重要突破\cite{liguoriNonrobustStrongKnapsack2023}。
 
 鉴于LRP的NP-Hard特性，启发式与元启发式算法一直是研究主流。早期方法多采用两阶段分解策略：先确定设施选址与顾客分配，再为每个启用的设施规划车辆路径。Prins等人提出的贪婪随机自适应搜索过程（Greedy Randomized Adaptive Search Procedure，GRASP）结合路径重连（path relinking），通过随机化的扩展Clarke-Wright算法（Randomized Extended Clarke and Wright Algorithm，RECWA）构造初始解，并设计多样化和强化阶段来搜索设施配置空间\cite{nguyenSolvingTwoechelonLocation2012}。后来Prins等人又进一步提出了带种群管理的模因算法（Memetic Algorithm with Population Management，MA|PM）\cite{prinsMemeticAlgorithmPopulation2006}，通过采用车辆巨型路线编码和动态规划分割技术，实现了相比于后来Prins等人提出的算法的解质量提升，但需要花费更多的求解时间\cite{prinsSolvingCapacitatedLocationRouting2007}。这些工作在经典的Tuzun和Barreto\cite{tuzunTwophaseTabuSearch1999}，Prins等人\cite{nguyenSolvingTwoechelonLocation2012, prinsSolvingCapacitatedLocationRouting2007}和Barreto等人\cite{barretoUsingClusteringAnalysis2007}的算例集上取得了当时的最优结果。
 
@@ -61,11 +61,11 @@ Contardo等人则提出了一种双索引车辆流模型（two-index vehicle flo
 
 \subsection{车辆与无人机协同配送研究现状}
 
-车辆与无人机协同配送问题（Vehicle Routing Problem with Drone，VRP-D）是近年来物流优化领域的研究热点。该问题将传统卡车的长距离、大载重优势与无人机的高机动性、直线飞行能力相结合，旨在提升“最后一公里”配送的效率与灵活性。Murray和Chu首次提出利用车辆和无人机协同配送进行“最后一公里”配送\cite{murrayFlyingSidekickTraveling2015}，提出了TSP的两种变体，分别称为飞行助手旅行商问题（Flying Sidekick Traveling Salesman Problem，FSTSP）和并行无人机调度旅行商问题（Parallel Drone Scheduling Traveling Salesman Proble，PDSTSP）。在FSTSP中，一辆卡车搭载一架无人机进行配送任务，并且无人机每次飞行只能服务单个顾客点。该论文明确给出了基于弧的混合整数线性规划（Mixed Integer Linear Programming，MILP）模型，并且通过设计基于成本节约的大邻域搜索算法，对10-20个节点的实例进行了数值计算。这一工作为后来的车辆与无人机协同配送问题研究奠定了基础，其他学者在FSTSP基础上进行了大量的延伸拓展研究。
+车辆与无人机协同配送问题（Vehicle Routing Problem with Drone，VRP-D）是近年来物流优化领域的研究热点。该问题将传统卡车的长距离、大载重优势与无人机的高机动性、直线飞行能力相结合，旨在提升“最后一公里”配送的效率与灵活性。Murray和Chu首次提出利用车辆和无人机协同配送进行“最后一公里”配送\cite{murrayFlyingSidekickTraveling2015}，提出了TSP的两种变体，分别称为飞行助手旅行商问题（Flying Sidekick Traveling Salesman Problem，FSTSP）和并行无人机调度旅行商问题（Parallel Drone Scheduling Traveling Salesman Proble，PDSTSP）。在FSTSP中，一辆卡车搭载一架无人机进行配送任务，并且无人机每次飞行只能服务单个顾客点。该论文明确给出了基于弧的混合整数线性规划（Mixed Integer Linear Programming，MILP）模型，并且通过设计基于成本节约的大邻域搜索算法，对10--20个节点的实例进行了数值计算。这一工作为后来的车辆与无人机协同配送问题研究奠定了基础，其他学者在FSTSP基础上进行了大量的延伸拓展研究。
 
 在FSTSP模型基础上，Ha等人首次以最小化服务成本为目标函数\cite{haMincostTravelingSalesman2018}，考虑了无人机和卡车因为等待另一方的时间成本，用改进的简单启发式算法和贪婪随机自适应搜索过程（Greedy Randomized Adaptive Search Procedure，GRASP）求解，并比较了最小服务时间和最小服务成本两种目标的解决方案异同。Agatz等人在之前的研究基础上基于最小化服务成本的目标函数建立了能够解决最多12个顾客点的最优整数规划（Integer Programming，IP）模型\cite{agatzOptimizationApproachesTraveling2018}，并提出了一种基于局部搜索和动态规划的启发式算法，通过对比最优结果和启发式算法的结果，验证了协同配送相较于纯卡车配送的优越性。Bouman等人同样以最小化服务成本为目标函数\cite{boumanDynamicProgrammingApproaches2018}，将精确求解方法用于更大规模的算例求解中，并通过基于Bellman-Held-Karp的三阶段动态规划方法进行求解，同时通过限制卡车和无人机分离时卡车可以访问的节点来加速运算。
 
-Phan等人则将模型拓展到结合单辆卡车和多架无人机协同的包裹配送问题\cite{tuTravelingSalesmanProblem2018}，并称之为TSP-mD（Traveling Salesman Problem with multiple Drones），作者在论文中提出了一种基于自适应大邻域搜索（Adaptive Large Neighborhood Search，ALNS）的启发式算法来解决这一问题，并与GRASP进行了比较，证明了ALNS算法在效率上优于GRASP。Murray等人在FSTSP的基础上提出多无人机的混合整数线性规划数学模型\cite{murrayMultipleFlyingSidekicks2020}，并通过三阶段的启发式方法求解，并分析了五种不同的无人机耐力模型，发现使用过于简化的耐力模型可能会导致无人机无法安全返回。Poikonen等人同样对一辆卡车与多架无人机协同配送包裹的问题进行研究\cite{poikonenMultivisitDroneRouting2020}，目标是最小化所有包裹送达客户地点的总路线完成时间，该问题允许无人机携带多个不同重量的包裹，并考虑了无人机的能耗函数，该函数取决于包裹重量和飞行距离。该论文采用RTS（Route，Transform，Shortest Path）启发式方法进行求解，发现增加无人机数量可以减少总路线完成时间，但存在边际收益递减的现象。
+Phan等人则将模型拓展到结合单辆卡车和多架无人机协同的包裹配送问题\cite{tuTravelingSalesmanProblem2018}，并称之为TSP-mD（Traveling Salesman Problem with multiple Drones），作者在论文中提出了一种基于自适应大邻域搜索（Adaptive Large Neighborhood Search，ALNS）的启发式算法来解决这一问题，并与GRASP进行了比较，证明了ALNS算法在效率上优于GRASP。Murray等人在FSTSP的基础上提出多无人机的混合整数线性规划数学模型\cite{murrayMultipleFlyingSidekicks2020}，并通过三阶段的启发式方法求解，并分析了五种不同的无人机耐力模型，发现使用过于简化的耐力模型可能会导致无人机无法安全返回。Poikonen等人同样对一辆卡车与多架无人机协同配送包裹的问题进行研究\cite{poikonenMultivisitDroneRouting2020}，目标是最小化所有包裹送达顾客地点的总路线完成时间，该问题允许无人机携带多个不同重量的包裹，并考虑了无人机的能耗函数，该函数取决于包裹重量和飞行距离。该论文采用RTS（Route，Transform，Shortest Path）启发式方法进行求解，发现增加无人机数量可以减少总路线完成时间，但存在边际收益递减的现象。
 
 Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem with Drones）\cite{kitjacharoenchaiMultipleTravelingSalesman2019}，即多卡车与多无人机的协同配送问题，目标是最小化包裹配送的完成时间，文章提出了一个混合整数规划模型和一种基于插入启发式（Adaptive Insertion Heuristic，ADI）的算法，以解决大规模问题。Rinaldi等人设计并实现了几种启发式方法来解决这一问题\cite{rinaldiDevelopmentHeuristicApproaches2023}，包括局部搜索算法、两种混合遗传算法（可行解变体和不可行解变体）以及一种自定义的贪心算法，结果表明，遗传算法在提高配送效率方面表现最佳，尤其是在大规模实例中。Cui等人在之前的研究上更进一步\cite{cuiDynamicCollaborativeTruckdrone2024}，以最大化预期收益为目标函数，考虑了顾客随时可能出现的需求（即需求的不确定性）和无人机可以不在顾客节点起飞降落的情形，并使用分散学习和集中调度（decentralized learning and centralized dispatching）的方法来提高强化学习的表现。
 
@@ -75,8 +75,7 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 
 \begin{table}[!htbp]
     \centering
-    \caption{车辆与无人机协同配送问题分类}
-    \label{tab:tspd1}
+    \caption{车辆与无人机协同配送问题分类}\label{tab:tspd1}
     \begin{tabular}{cccc}
         \toprule[1pt] % 表头线宽1镑（point, pt）
         问题类型 & 车辆数 $n$ & 车载无人机数 $m$ & 是否考虑卡车容量 \\
@@ -109,9 +108,9 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 
 首先是无人机的能力限制。因为无人机起飞和回收的时间相比于卡车和无人机配送的时间来说很短，因此模型中不考虑无人机的起飞和降落时间。无人机在每次飞行任务结束后通过更换电池从而达到最大电量，因此每次无人机起飞时都有最大电量$E$。
 
-其次是客户需求特性。每个客户仅接收一个单位的货物，且任一客户既可以由卡车配送，也可以由无人机配送，当顾客被无人机或卡车服务后，无人机和卡车都不能再次访问该顾客。
+其次是顾客需求特性。任一顾客既可以由卡车配送，也可以由无人机配送，当顾客被无人机或卡车服务后，无人机和卡车都不能再次访问该顾客，无人机不能重复访问同一个顾客，即卡车不能在同一个顾客节点等待无人机，从而不会产生无人机飞行路径是个环的情况。
 
-再次是协同规则约束。无人机的起飞和降落地点仅限于仓库或客户位置。无人机和卡车只能够在顾客节点会合，不能在行驶过程中进行会合，在实际应用中，由于无人机降落在行驶过程中的卡车需要卡车和无人机的速度相匹配，而这个匹配的过程十分困难\cite{buchmueller2016landing}，并且无人机降低速度匹配卡车会降低无人机的配送效率，因此这里假设无人机和卡车只能在顾客节点会合。当卡车和无人机在某一节点会合时，如果卡车先到达，需等待无人机，若无人机先到达，则无人机等待卡车，但是无人机的等待时间不能超过无人机剩下的续航时间。
+再次是协同规则约束。无人机的起飞和降落地点仅限于仓库或顾客位置。无人机和卡车只能够在顾客节点会合，不能在行驶过程中进行会合，在实际应用中，由于无人机降落在行驶过程中的卡车需要卡车和无人机的速度相匹配，而这个匹配的过程十分困难\cite{buchmueller2016landing}，并且无人机降低速度匹配卡车会降低无人机的配送效率，因此这里假设无人机和卡车只能在顾客节点会合。当卡车和无人机在某一节点会合时，如果卡车先到达，需等待无人机，若无人机先到达，则无人机等待卡车，但是无人机的等待时间不能超过无人机剩下的续航时间。
 
 最后是行驶路径假设。假设卡车和无人机在任意两点之间的行驶路径是确定的，即卡车遵循道路行驶，无人机遵循直线飞行。且行驶时间仅取决于两点之间的距离和各自的行驶速度，不考虑实际路况中的交通拥堵、天气、空域管制等因素对行驶时间的影响，以简化模型的构建和求解过程。
 
@@ -173,14 +172,14 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 \begin{theorem}
 {
 \begin{align}
-    \min \quad & Z = \sum_{s \in S}f_s y_s + \sum_{i \in V_1}\sum_{j \in V_1}c_{ij}^L x_{ij}^L + \sum_{s \in S}\sum_{i \in V_2}\sum_{j \in V_2}c_{ij}^T x_{ijs}^T + \sum_{s \in S}\sum_{i \in V_2}\sum_{j \in N}\sum_{k \in V_2}(c_{ij}^D + c_{jk}^D)x_{ijks}^D\label{eq:conv-obj}\\
+    \min \quad & Z = \sum_{s \in S}f_s y_s + \sum_{i \in V_1}\sum_{\substack{j \in V_1\\ j \neq i}}c_{ij}^L x_{ij}^L + \sum_{s \in S}\sum_{i \in V_2}\sum_{\substack{j \in V_2\\ j \neq i}}c_{ij}^T x_{ijs}^T + \sum_{s \in S}\sum_{i \in V_2}\sum_{\substack{j \in N\\ j \neq i}}\sum_{\substack{k \in V_2\\ k \neq i, k \neq j}}(c_{ij}^D + c_{jk}^D)x_{ijks}^D\label{eq:conv-obj}\\
     \text{s.t.} \quad & \sum_{i \in S}x_{0i}^L = \sum_{j \in S}x_{j0}^L = 1 \label{eq:conv-level-1-truck}\\
-    \quad & \sum_{i \in V_1}x_{ij}^L = \sum_{k \in V_1}x_{jk}^L = y_j, \quad \forall j \in S, i \neq j, k \neq j \label{eq:conv-level-1-flow}\\
-    \quad & u_j^L \geq u_i^L + \psi_{j} - M(1 - x_{ij}^L), \quad \forall i,j \in V_1 \label{eq:conv-level-1-subtour}\\
+    \quad & \sum_{\substack{i \in S \\ i \neq j}}x_{ij}^L = \sum_{\substack{k \in S\\ k \neq j}}x_{jk}^L \leq y_j, \quad \forall j \in S \label{eq:conv-level-1-flow}\\
+    \quad & u_j^L \geq u_i^L + \psi_{j} - M(1 - x_{ij}^L), \quad \forall i,j \in V_1, i \neq j \label{eq:conv-level-1-subtour}\\
 	\quad & \psi_{j} \leq u_j^L \leq Q^L, \quad \forall j \in S \label{eq:conv-level-1-weight}\\
-	\quad & \sum_{s \in S}\left(\sum_{i \in V_2}x_{ijs}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijks}^D\right) = 1, \quad \forall j \in N \label{eq:conv-level-2-customer}\\
-	\quad & \sum_{i \in V_2}x_{sis}^T = \sum_{j \in V_2}x_{jss}^T = y_s, \quad \forall s \in S \label{eq:con-level-2-truck-start} \\
-	\quad & \sum_{i \in V_2}x_{ijs}^T = \sum_{k \in V_2}x_{jks}^T, \quad \forall j \in N, s \in S \label{eq:conv-level-2-flow}\\
+	\quad & \sum_{s \in S}\left(\sum_{\substack{i \in V_2\\ i \neq j}}x_{ijs}^T + \sum_{\substack{i \in V_2\\ i \neq j}}\sum_{\substack{k \in V_2\\ k \neq i, k \neq j}}x_{ijks}^D\right) = 1, \quad \forall j \in N \label{eq:conv-level-2-customer}\\
+	\quad & \sum_{i \in N}x_{sis}^T = \sum_{j \in N}x_{jss}^T = y_s, \quad \forall s \in S \label{eq:con-level-2-truck-start} \\
+	\quad & \sum_{\substack{i \in N\\ i \neq j}}x_{ijs}^T = \sum_{\substack{k \in N\\ k \neq j}}x_{jks}^T, \quad \forall j \in N, s \in S \label{eq:conv-level-2-flow}\\
     \quad & x_{ijs}^T \leq y_s, \quad \forall i,j \in V_2, s \in S \label{eq:con-level-2-truck-store}\\
     \quad & x_{ijks}^D \leq y_s, \quad \forall i,k \in V_2, j \in N, s \in S \label{eq:con-level-2-drone-store}\\
 	\quad & u_{js}^T \geq u_{is}^T + 1 - M(1 - x_{ijs}^T), \quad \forall i,j \in N, s \in S \label{eq:conv-level-2-subtour}\\
@@ -188,26 +187,29 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 	\quad & \sum_{i \in V_2}\sum_{j \in N}x_{ijks}^D \leq \sum_{h \in V_2}x_{hks}^T, \quad \forall k \in V_2, s \in S \label{eq:conv-level-2-truck-drone-2}\\
 	\quad & \sum_{j \in N}q_j\left(\sum_{i \in V_2}x_{ijs}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijks}^D\right) + w \leq Q^T, \quad \forall s \in S \label{eq:conv-level-2-truck-weight}\\
 	\quad & \psi_{s} = \sum_{j \in N}q_j\left(\sum_{i \in V_2}x_{ijs}^T + \sum_{i \in V_2}\sum_{k \in V_2}x_{ijks}^D\right), \quad \forall s \in S \label{eq:conv-level-1-and-2-truck-weight}\\
-	\quad & \sum_{i \in V_2}\sum_{k \in V_2}q_jx_{ijks}^D \leq Q^D, \quad \forall j \in N, s \in S \label{eq:conv-level-2-drone-weight}\\
+	\quad & \sum_{i \in V_2}\sum_{k \in V_2} q_j x_{ijks}^D \leq Q^D, \quad \forall j \in N, s \in S \label{eq:conv-level-2-drone-weight}\\
 	\quad & \sum_{i \in V_2}\sum_{k \in V_2}(e_{ij} + e_{jk})x_{ijks}^D \leq E, \quad \forall j \in N, s \in S \label{eq:conv-level-2-drone-battery}\\
 	\quad & \tau_{js}^T \geq \rho_{is} + \frac{d_{ij}}{v^T} - M(1 - x_{ijs}^T), \quad \forall i,j \in V_2, s \in S \label{eq:conv-level-2-truck-time}\\
 	\quad & \tau_{ks}^D \geq \rho_{is} + \frac{d_{ij} + d_{jk}}{v^D} - M(1 - x_{ijks}^D), \quad \forall i,k \in V_2, j \in N, s \in S \label{eq:conv-level-2-drone-time}\\
 	\quad & \rho_{ks} \geq \tau_{ks}^T, \quad \forall k \in V_2, s \in S \label{eq:conv-level-2-wait-time-1}\\
 	\quad & \rho_{ks} \geq \tau_{ks}^D - M \left(1 - \sum_{i \in V_2}\sum_{j \in N}x_{ijks}^D\right), \quad \forall k \in V_2, s \in S \label{eq:conv-level-2-wait-time-2}\\
     \quad & u_{ss}^T = 0, \quad \forall s \in S \label{eq:conv-auxiliary-initial}\\
+    \quad & u_0^L = 0 \label{eq:conv-auxiliary-initial-2}\\
+    % \quad & \tau_{ss}^T = \tau_{ss}^D = \rho_{ss} = 0, \quad \forall s \in S \label{eq:conv-auxiliary-initial-3}\\
 	\quad & y_s, x_{ij}^L, x_{ijs}^T, x_{ijks}^D \in \{0 ,1\} \label{eq:conv-decision-variable}\\
     \quad & u_i^L, u_{is}^T, \psi_{s}, \tau_{is}^T,\tau_{is}^D, \rho_{is} \geq 0\label{eq:conv-auxiliary-variable}
 \end{align}
 }
 \end{theorem}
 
-目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}表示只有一辆大型卡车从主仓库$0$出发进行配送且最终只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $j$ 时的累计载荷包含了该卫星仓库的需求$\psi_{j}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:con-level-2-truck-start}表示协同卡车必须从卫星仓库出发并且最终需要返回该卫星仓库。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:con-level-2-truck-store,eq:con-level-2-drone-store}分别限制了没有建立的仓库不会进行卡车和无人机的配送。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卫星仓库 $s \in S$ 的卡车带出的货物总重量 $\psi_{s}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-level-2-truck-time}表示卡车在节点之间的行驶时间推移，到达 $j$ 的时间必定晚于离开 $i$ 的时间加上行驶时间，同理约束\cref{eq:conv-level-2-drone-time}表示无人机的飞行时间推移。约束\cref{eq:conv-level-2-wait-time-1,eq:conv-level-2-wait-time-2}表示无人机和卡车的等待机制，即卡车组离开节点 $k$ 的时间 $\rho_{ks}$ 必须同时晚于卡车到达 $k$ 的时间以及无人机到达 $k$的时间。约束\cref{eq:conv-decision-variable,eq:conv-auxiliary-variable}表示变量的定义域。
+目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}表示只有一辆大型卡车从主仓库$0$出发进行配送且最终只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $j$ 时的累计载荷包含了该卫星仓库的需求$\psi_{j}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:con-level-2-truck-start}表示协同卡车必须从卫星仓库出发并且最终需要返回该卫星仓库。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:con-level-2-truck-store,eq:con-level-2-drone-store}分别限制了没有建立的仓库不会进行卡车和无人机的配送。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卫星仓库 $s \in S$ 的卡车带出的货物总重量 $\psi_{s}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-level-2-truck-time}表示卡车在节点之间的行驶时间推移，到达 $j$ 的时间必定晚于离开 $i$ 的时间加上行驶时间，同理约束\cref{eq:conv-level-2-drone-time}表示无人机的飞行时间推移。约束\cref{eq:conv-level-2-wait-time-1,eq:conv-level-2-wait-time-2}表示无人机和卡车的等待机制，即卡车组离开节点 $k$ 的时间 $\rho_{ks}$ 必须同时晚于卡车到达 $k$ 的时间以及无人机到达 $k$的时间。约束\cref{eq:conv-auxiliary-initial,eq:conv-auxiliary-initial-2}初始化变量，约束\cref{eq:conv-decision-variable,eq:conv-auxiliary-variable}表示变量的定义域。
+
 \bibliography{references}
 
 \appendix
 
 \section{数据集}
 
-Drexl和Michael的文章中的Table 1中有一些LRP及其变体相关的数据集\cite{drexlSurveyVariantsExtensions2015, schneiderSurveyStandardLocationrouting2017}。Cavagnini和Santini等人的文章中的Table 1中也有一些LRP及其相关变体的数据集\cite{cavagniniRecentDevelopmentsLocationrouting2026}，相应的数据仓库在\href{https://github.com/alberto-santini/lrp-instances}{https://github.com/alberto-santini/lrp-instances}中。
+Drexl和Michael的文章中的Table 1中有一些LRP及其变体相关的数据集\cite{drexlSurveyVariantsExtensions2015, schneiderSurveyStandardLocationrouting2017}。Cavagnini和Santini等人的文章中的Table 1中也有一些LRP及其相关变体的数据集\cite{cavagniniRecentDevelopmentsLocationrouting2026}，相应的数据仓库在 GitHub 上\footnote{\url{https://github.com/alberto-santini/lrp-instances}}。
 
 \end{document}

@@ -1,6 +1,6 @@
 %===================================
 % note-setup-leftsidebox.tex
-% huanengchen@foxmail.com 2026-05-11
+% huanengchen@foxmail.com 2026-05-28
 %===================================
 % 参考：https://tex.stackexchange.com/questions/59702/suggest-a-nice-font-family-for-my-basic-latex-template-text-and-math
 
@@ -56,7 +56,7 @@
 %===================================
 
 \usepackage[sort&compress]{gbt7714} % 参考文献样式
-\bibliographystyle{gbt7714-numerical} % 顺序编码制
+\bibliographystyle{gbt7714-numeric} % 顺序编码制
 
 %===================================
 % 颜色
@@ -85,7 +85,7 @@
 %===================================
 
 \usepackage[linesnumbered, ruled, longend, lined]{algorithm2e} % 参考 algorithm2e 宏包文档
-\DontPrintSemicolon % 不打印分号
+\DontPrintSemicolon% 不打印分号
 \setlength{\algomargin}{2em} % 设置算法缩进使得行号在线框内
 \renewcommand{\CommentSty}[1]{\normalsize\textit{#1}} % 设置注释的字体样式为意大利斜体，字体大小为 \normalsize
 
@@ -169,14 +169,14 @@
 \crefrangeformat{equation}{(#3#1#4)-(#5#2#6)} % 多公式引用的格式
 \crefname{table}{表}{表} % 设置非首字母大写的表引用格式
 \Crefname{table}{表}{表} % 设置首字母大写的表引用格式
-\renewcommand{\crefpairconjunction}{-} % 引用两个公式时用"-"代替"and"
+\AtBeginDocument{\renewcommand{\crefpairconjunction}{-}} % 引用两个公式时用"-"代替"and"
 
 %===================================
 % 边注
 %===================================
 
 % 设置边注的字体大小
-\let\oldmarginpar\marginpar
+\let\oldmarginpar\marginpar%
 \renewcommand{\marginpar}[1]{\oldmarginpar{\footnotesize #1}}
 
 %===================================
@@ -207,9 +207,9 @@
 
 % 重新定义 \author 和 \date 命令用于页眉
 \makeatletter
-\let\oldauthor\author
+\let\oldauthor\author%
 \renewcommand{\author}[1]{\oldauthor{#1}\def\myauthor{#1}}
-\let\olddate\date
+\let\olddate\date%
 \renewcommand{\date}[1]{\olddate{#1}\def\mydate{#1}}
 
 % 重定义\maketitle：调整标题/作者/日期 + 与页眉间距
@@ -220,26 +220,26 @@
         {\huge \@title \par} % 标题
     \end{center}
     {% 添加期刊名称和论文作者
-        \ifx\paperauthor\empty
+        \ifx\paperauthor\empty%
         \else
             \textbf{Paper Author:} \paperauthor \par
             \vspace{-0.2cm}
         \fi
-        \ifx\journalname\empty
+        \ifx\journalname\empty%
         \else
             \textbf{Journal:} \journalname \par
             \vspace{-0.2cm}
         \fi
     }
     {% 添加论文发表日期和DOI行
-        \ifx\paperdate\empty
-            \ifx\paperdoi\empty
+        \ifx\paperdate\empty%
+            \ifx\paperdoi\empty%
                 % 两者都为空，不添加额外垂直间距
             \else
                 \hfill \textbf{DOI:} \paperdoi \par
             \fi
         \else
-            \ifx\paperdoi\empty
+            \ifx\paperdoi\empty%
                 \textbf{Published:} \paperdate \hfill \mbox{} \par
             \else
                 \textbf{Published:} \paperdate \hspace{\fill} \textbf{DOI:} \paperdoi \par
