@@ -138,20 +138,20 @@ psi = model.addVars(S,
                     name="psi")
 
 # 时间变量
-tauT = model.addVars(V2, S,
-                     lb=0,
-                     vtype=GRB.CONTINUOUS,
-                     name="tauT")
+# tauT = model.addVars(V2, S,
+#                      lb=0,
+#                      vtype=GRB.CONTINUOUS,
+#                      name="tauT")
 
-tauD = model.addVars(V2, S,
-                     lb=0,
-                     vtype=GRB.CONTINUOUS,
-                     name="tauD")
+# tauD = model.addVars(V2, S,
+#                      lb=0,
+#                      vtype=GRB.CONTINUOUS,
+#                      name="tauD")
 
-rho = model.addVars(V2, S,
-                    lb=0,
-                    vtype=GRB.CONTINUOUS,
-                    name="rho")
+# rho = model.addVars(V2, S,
+#                     lb=0,
+#                     vtype=GRB.CONTINUOUS,
+#                     name="rho")
 
 # ============================================================
 # 目标函数
@@ -201,14 +201,14 @@ for j in S:
 
     model.addConstr(
         gp.quicksum(xL[i, j]
-                    for i in S if i != j)
-        <= y[j]
+                    for i in V1 if i != j)
+        == y[j]
     )
 
     model.addConstr(
         gp.quicksum(xL[j, k]
-                    for k in S if k != j)
-        <= y[j]
+                    for k in V1 if k != j)
+        == y[j]
     )
 
 # 一级MTZ
@@ -301,25 +301,26 @@ for s in S:
 
 for s in S:
     Ns = N + [s]
-    for i in Ns:
-        for j in Ns:
-            if i != j:
-
-                model.addConstr(
-                    xT[i, j, s] <= y[s]
-                )
+    model.addConstr(
+        gp.quicksum(
+            xT[i, j, s]
+            for i in Ns
+            for j in Ns
+            if i != j
+        ) <= M * y[s]
+    )
 
 for s in S:
     Ns = N + [s]
-    for i in Ns:
-        for j in N:
-            for k in Ns:
-
-                if i != j and j != k and i != k:
-
-                    model.addConstr(
-                        xD[i, j, k, s] <= y[s]
-                    )
+    model.addConstr(
+        gp.quicksum(
+            xD[i, j, k, s]
+            for i in Ns
+            for j in N
+            for k in Ns
+            if i != j and k != i and k != j
+        ) <= M * y[s]
+    )
 
 # ============================================================
 # 二级MTZ
@@ -334,7 +335,7 @@ for s in S:
                 model.addConstr(
                     uT[i, s] - uT[j, s] + 1
                     <=
-                    len(N) * (1 - xT[i, j, s])
+                    (len(N) + 1) * (1 - xT[i, j, s])
                 )
 
 # ============================================================
@@ -357,7 +358,7 @@ for s in S:
             <=
 
             gp.quicksum(
-                xT[h, i, s]
+                xT[i, h, s]
                 for h in Ns if h != i
             )
         )
@@ -500,57 +501,49 @@ for s in S:
 # 时间同步约束
 # ============================================================
 
-for s in S:
-    Ns = N + [s]
-    for i in Ns:
-        for j in Ns:
+# for s in S:
+#     Ns = N + [s]
+#     for i in Ns:
+#         for j in Ns:
 
-            if i != j:
+#             if i != j:
 
-                model.addConstr(
-                    tauT[j, s]
-                    >=
-                    rho[i, s]
-                    + d[i, j] / vT
-                    - M * (1 - xT[i, j, s])
-                )
+#                 model.addConstr(
+#                     tauT[j, s]
+#                     >=
+#                     rho[i, s]
+#                     + d[i, j] / vT
+#                     - M * (1 - xT[i, j, s])
+#                 )
 
-for s in S:
-    Ns = N + [s]
-    for i in Ns:
-        for j in N:
-            for k in Ns:
+# for s in S:
+#     Ns = N + [s]
+#     for i in Ns:
+#         for j in N:
+#             for k in Ns:
 
-                if i != j and j != k and i != k:
+#                 if i != j and j != k and i != k:
 
-                    model.addConstr(
-                        tauD[k, s]
-                        >=
-                        rho[i, s]
-                        + (d[i, j] + d[j, k]) / vD
-                        - M * (1 - xD[i, j, k, s])
-                    )
+#                     model.addConstr(
+#                         tauD[k, s]
+#                         >=
+#                         rho[i, s]
+#                         + (d[i, j] + d[j, k]) / vD
+#                         - M * (1 - xD[i, j, k, s])
+#                     )
 
 # 等待同步
-for s in S:
-    Ns = N + [s]
-    for k in Ns:
+# for s in S:
+#     Ns = N + [s]
+#     for k in Ns:
 
-        model.addConstr(
-            rho[k, s] >= tauT[k, s]
-        )
+#         model.addConstr(
+#             rho[k, s] >= tauT[k, s]
+#         )
 
-        model.addConstr(
-            rho[k, s]
-            >=
-            tauD[k, s]
-            - M * (1 - gp.quicksum(
-                           xD[i, j, k, s]
-                           for i in Ns
-                           for j in N
-                           if i != j and j != k and i != k
-                        ))
-        )
+#         model.addConstr(
+#             rho[k, s] >= tauD[k, s]
+#         )
 
 # ============================================================
 # 初始条件
@@ -572,7 +565,7 @@ model.addConstr(uL[0] == 0)
 # ============================================================
 
 model.Params.TimeLimit = 3600 # seconds
-model.Params.MIPGap = 0.01
+model.Params.MIPGap = 0.0001
 
 # ============================================================
 # 求解
@@ -662,7 +655,7 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
             print(f"    (无路径)")
 
     # ---------- 二级载重 uT ----------
-    print_section("二级载重 uT[i,s]")
+    print_section("二级网络访问顺序 uT[i,s]")
     for s in S:
         print(f"\n  --- 卫星仓库 {s} ---")
         for i in V2:
@@ -690,26 +683,26 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
             print(f"    (无无人机配送)")
 
     # ---------- 时间变量 ----------
-    print_section("卡车到达时间 tauT[i,s]")
-    for s in S:
-        print(f"\n  --- 卫星仓库 {s} ---")
-        for i in V2:
-            val = var_val(tauT[i, s])
-            print(f"    tauT[{i},{s}] = {val:.4f}")
+    # print_section("卡车到达时间 tauT[i,s]")
+    # for s in S:
+    #     print(f"\n  --- 卫星仓库 {s} ---")
+    #     for i in V2:
+    #         val = var_val(tauT[i, s])
+    #         print(f"    tauT[{i},{s}] = {val:.4f}")
 
-    print_section("无人机到达时间 tauD[i,s]")
-    for s in S:
-        print(f"\n  --- 卫星仓库 {s} ---")
-        for i in V2:
-            val = var_val(tauD[i, s])
-            print(f"    tauD[{i},{s}] = {val:.4f}")
+    # print_section("无人机到达时间 tauD[i,s]")
+    # for s in S:
+    #     print(f"\n  --- 卫星仓库 {s} ---")
+    #     for i in V2:
+    #         val = var_val(tauD[i, s])
+    #         print(f"    tauD[{i},{s}] = {val:.4f}")
 
-    print_section("节点出发时间 rho[i,s]")
-    for s in S:
-        print(f"\n  --- 卫星仓库 {s} ---")
-        for i in V2:
-            val = var_val(rho[i, s])
-            print(f"    rho[{i},{s}] = {val:.4f}")
+    # print_section("节点出发时间 rho[i,s]")
+    # for s in S:
+    #     print(f"\n  --- 卫星仓库 {s} ---")
+    #     for i in V2:
+    #         val = var_val(rho[i, s])
+    #         print(f"    rho[{i},{s}] = {val:.4f}")
 
 else:
     print("\n模型无可行解，请检查约束。")
