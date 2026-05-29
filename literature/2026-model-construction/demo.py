@@ -239,7 +239,7 @@ for j in N:
         gp.quicksum(
             xT[i, j, s]
             for s in S
-            for i in V2
+            for i in N + [s]
             if i != j
         )
 
@@ -248,8 +248,8 @@ for j in N:
         gp.quicksum(
             xD[i, j, k, s]
             for s in S
-            for i in V2
-            for k in V2
+            for i in N + [s]
+            for k in N + [s]
             if i != j and j != k and i != k
         )
 
@@ -280,17 +280,18 @@ for s in S:
 
 # 流平衡
 for s in S:
+    Ns = N + [s]
     for j in N:
 
         model.addConstr(
             gp.quicksum(
                 xT[i, j, s]
-                for i in N if i != j
+                for i in Ns if i != j
             )
             ==
             gp.quicksum(
                 xT[j, k, s]
-                for k in N if k != j
+                for k in Ns if k != j
             )
         )
 
@@ -299,8 +300,9 @@ for s in S:
 # ============================================================
 
 for s in S:
-    for i in V2:
-        for j in V2:
+    Ns = N + [s]
+    for i in Ns:
+        for j in Ns:
             if i != j:
 
                 model.addConstr(
@@ -308,9 +310,10 @@ for s in S:
                 )
 
 for s in S:
-    for i in V2:
+    Ns = N + [s]
+    for i in Ns:
         for j in N:
-            for k in V2:
+            for k in Ns:
 
                 if i != j and j != k and i != k:
 
@@ -329,10 +332,9 @@ for s in S:
             if i != j:
 
                 model.addConstr(
-                    uT[j, s]
-                    >=
-                    uT[i, s] + 1
-                    - M * (1 - xT[i, j, s])
+                    uT[i, s] - uT[j, s] + 1
+                    <=
+                    len(N) * (1 - xT[i, j, s])
                 )
 
 # ============================================================
@@ -340,14 +342,15 @@ for s in S:
 # ============================================================
 
 for s in S:
-    for i in V2:
+    Ns = N + [s]
+    for i in Ns:
 
         model.addConstr(
 
             gp.quicksum(
                 xD[i, j, k, s]
                 for j in N
-                for k in V2
+                for k in Ns
                 if i != j and j != k and i != k
             )
 
@@ -355,18 +358,19 @@ for s in S:
 
             gp.quicksum(
                 xT[h, i, s]
-                for h in V2 if h != i
+                for h in Ns if h != i
             )
         )
 
 for s in S:
-    for k in V2:
+    Ns = N + [s]
+    for k in Ns:
 
         model.addConstr(
 
             gp.quicksum(
                 xD[i, j, k, s]
-                for i in V2
+                for i in Ns
                 for j in N
                 if i != j and j != k and i != k
             )
@@ -375,7 +379,7 @@ for s in S:
 
             gp.quicksum(
                 xT[h, k, s]
-                for h in V2 if h != k
+                for h in Ns if h != k
             )
         )
 
@@ -384,6 +388,7 @@ for s in S:
 # ============================================================
 
 for s in S:
+    Ns = N + [s]
 
     model.addConstr(
 
@@ -392,15 +397,15 @@ for s in S:
             q[j] * (
                 gp.quicksum(
                     xT[i, j, s]
-                    for i in V2 if i != j
+                    for i in Ns if i != j
                 )
 
                 +
 
                 gp.quicksum(
                     xD[i, j, k, s]
-                    for i in V2
-                    for k in V2
+                    for i in Ns
+                    for k in Ns
                     if i != j and j != k and i != k
                 )
             )
@@ -418,6 +423,7 @@ for s in S:
 # ============================================================
 
 for s in S:
+    Ns = N + [s]
 
     model.addConstr(
 
@@ -431,15 +437,15 @@ for s in S:
 
                 gp.quicksum(
                     xT[i, j, s]
-                    for i in V2 if i != j
+                    for i in Ns if i != j
                 )
 
                 +
 
                 gp.quicksum(
                     xD[i, j, k, s]
-                    for i in V2
-                    for k in V2
+                    for i in Ns
+                    for k in Ns
                     if i != j and j != k and i != k
                 )
             )
@@ -453,14 +459,15 @@ for s in S:
 # ============================================================
 
 for s in S:
+    Ns = N + [s]
     for j in N:
 
         model.addConstr(
 
             gp.quicksum(
                 q[j] * xD[i, j, k, s]
-                for i in V2
-                for k in V2
+                for i in Ns
+                for k in Ns
                 if i != j and j != k and i != k
             )
 
@@ -472,6 +479,7 @@ for s in S:
 # ============================================================
 
 for s in S:
+    Ns = N + [s]
     for j in N:
 
         model.addConstr(
@@ -480,8 +488,8 @@ for s in S:
                 (e[i, j] + e[j, k])
                 * xD[i, j, k, s]
 
-                for i in V2
-                for k in V2
+                for i in Ns
+                for k in Ns
                 if i != j and j != k and i != k
             )
 
@@ -493,8 +501,9 @@ for s in S:
 # ============================================================
 
 for s in S:
-    for i in V2:
-        for j in V2:
+    Ns = N + [s]
+    for i in Ns:
+        for j in Ns:
 
             if i != j:
 
@@ -507,9 +516,10 @@ for s in S:
                 )
 
 for s in S:
-    for i in V2:
+    Ns = N + [s]
+    for i in Ns:
         for j in N:
-            for k in V2:
+            for k in Ns:
 
                 if i != j and j != k and i != k:
 
@@ -523,7 +533,8 @@ for s in S:
 
 # 等待同步
 for s in S:
-    for k in V2:
+    Ns = N + [s]
+    for k in Ns:
 
         model.addConstr(
             rho[k, s] >= tauT[k, s]
@@ -535,7 +546,7 @@ for s in S:
             tauD[k, s]
             - M * (1 - gp.quicksum(
                            xD[i, j, k, s]
-                           for i in V2
+                           for i in Ns
                            for j in N
                            if i != j and j != k and i != k
                         ))
@@ -572,45 +583,133 @@ model.optimize()
 # ============================================================
 # 输出结果
 # ============================================================
+def print_section(title):
+    print(f"\n{'='*60}")
+    print(f"  {title}")
+    print(f"{'='*60}")
+
+def var_val(v):
+    """安全获取变量值"""
+    try:
+        return v.X
+    except:
+        return None
+
+# ---------- 模型状态 ----------
+print_section("模型求解状态")
+print(f"Status: {model.status}  (2=OPTIMAL, 9=TIME_LIMIT, 3=INFEASIBLE)")
+if model.SolCount > 0:
+    print(f"目标值: {model.objVal}")
+    print(f"MIPGap: {model.MIPGap}")
+    print(f"求解时间: {model.Runtime:.2f}s")
+else:
+    print("未找到可行解！")
 
 if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
 
-    print("\n最优目标值:", model.objVal)
+    # ---------- 目标函数各项 ----------
+    print_section("目标函数分解")
+    print(f"obj1 (选址成本)  = {obj1.getValue():.4f}")
+    print(f"obj2 (一级运输)  = {obj2.getValue():.4f}")
+    print(f"obj3 (二级卡车)  = {obj3.getValue():.4f}")
+    print(f"obj4 (无人机)    = {obj4.getValue():.4f}")
+    print(f"总计             = {model.objVal:.4f}")
 
-    print("\n建设的卫星仓库:")
+    # ---------- 卫星仓库选址 y ----------
+    print_section("选址变量 y[s]")
     for s in S:
-        if y[s].X > 0.5:
-            print(f"卫星仓库 {s}")
+        val = var_val(y[s])
+        print(f"  y[{s}] = {val:.4f}  {'✓ 建设' if val > 0.5 else '✗ 不建'}")
 
-    print("\n一级卡车路径:")
+    # ---------- 一级卡车路径 xL ----------
+    print_section("一级卡车路径 xL[i,j]")
+    found = False
     for i in V1:
         for j in V1:
-            if i != j and xL[i, j].X > 0.5:
-                print(i, "->", j)
+            if i != j:
+                val = var_val(xL[i, j])
+                if val > 0.5:
+                    print(f"  xL[{i},{j}] = {val:.4f}  ✓  {i} -> {j}")
+                    found = True
+    if not found:
+        print("  (无路径)")
 
-    print("\n二级卡车路径:")
+    # ---------- 一级载重 uL ----------
+    print_section("一级载重 uL[i]")
+    for i in V1:
+        val = var_val(uL[i])
+        print(f"  uL[{i}] = {val:.4f}")
+
+    # ---------- 卫星仓库需求 psi ----------
+    print_section("卫星仓库需求 psi[s]")
     for s in S:
+        val = var_val(psi[s])
+        print(f"  psi[{s}] = {val:.4f}")
+
+    # ---------- 二级卡车路径 xT ----------
+    print_section("二级卡车路径 xT[i,j,s]")
+    for s in S:
+        print(f"\n  --- 卫星仓库 {s} ---")
+        found = False
         for i in V2:
             for j in V2:
-                # if i != j:
-                    # print(i, j, xT[i, j, s].X)
-                if i != j and xT[i, j, s].X > 0.5:
-                    print(f"仓库{s}: {i} -> {j}")
+                if i != j:
+                    val = var_val(xT[i, j, s])
+                    if val > 0.5:
+                        print(f"    xT[{i},{j},{s}] = {val:.4f}  ✓  {i} -> {j}")
+                        found = True
+        if not found:
+            print(f"    (无路径)")
 
-    print("\n无人机配送:")
+    # ---------- 二级载重 uT ----------
+    print_section("二级载重 uT[i,s]")
     for s in S:
+        print(f"\n  --- 卫星仓库 {s} ---")
+        for i in V2:
+            val = var_val(uT[i, s])
+            print(f"    uT[{i},{s}] = {val:.4f}")
+
+    # ---------- 无人机配送 xD ----------
+    print_section("无人机配送 xD[i,j,k,s]")
+    for s in S:
+        print(f"\n  --- 卫星仓库 {s} ---")
+        found = False
         for i in V2:
             for j in N:
                 for k in V2:
-
                     if i != j and j != k and i != k:
+                        val = var_val(xD[i, j, k, s])
+                        if val > 0.5:
+                            cost = (cD[i,j] + cD[j,k])
+                            energy = (e[i,j] + e[j,k])
+                            print(f"    xD[{i},{j},{k},{s}] = {val:.4f}  ✓  "
+                                  f"{i} → 顾客{j} → {k}  "
+                                  f"cost={cost:.2f}  energy={energy:.2f}")
+                            found = True
+        if not found:
+            print(f"    (无无人机配送)")
 
-                        if xD[i, j, k, s].X > 0.5:
+    # ---------- 时间变量 ----------
+    print_section("卡车到达时间 tauT[i,s]")
+    for s in S:
+        print(f"\n  --- 卫星仓库 {s} ---")
+        for i in V2:
+            val = var_val(tauT[i, s])
+            print(f"    tauT[{i},{s}] = {val:.4f}")
 
-                            print(
-                                f"仓库{s}: "
-                                f"{i} -> 无人机服务顾客{j} -> {k}"
-                            )
+    print_section("无人机到达时间 tauD[i,s]")
+    for s in S:
+        print(f"\n  --- 卫星仓库 {s} ---")
+        for i in V2:
+            val = var_val(tauD[i, s])
+            print(f"    tauD[{i},{s}] = {val:.4f}")
+
+    print_section("节点出发时间 rho[i,s]")
+    for s in S:
+        print(f"\n  --- 卫星仓库 {s} ---")
+        for i in V2:
+            val = var_val(rho[i, s])
+            print(f"    rho[{i},{s}] = {val:.4f}")
 
 else:
-    print("模型无可行解")
+    print("\n模型无可行解，请检查约束。")
