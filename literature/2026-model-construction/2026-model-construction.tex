@@ -18,7 +18,13 @@
 \subsection{两级选址-路径问题研究现状}
 % TODO: 加一个图来展示两级选址-路径问题
 两级选址-路径问题（Two-Echelon Location Routing
-Problem，2E-LRP） 是标准 LRP 向多级物流网络的重要扩展，近年来受到越来越多研究者的关注。根据 Cuda 等人的系统综述\cite{cudaSurveyTwoechelonRouting2015}，2E-LRP 是一个包含了三个不相交顶点集合（潜在仓库、潜在卫星、顾客）的两级配送网络：第一级为仓库到卫星（或卫星之间）的干线运输，第二级为卫星到顾客（或顾客之间）的支线配送。与标准 LRP 相比，2E-LRP 需要同时决策卫星和仓库的选址、两级车辆的路径以及货物在卫星处的中转流量，且货物必须强制经过卫星仓库中转，且卫星和仓库的建设都需要相应的成本。
+Problem，2E-LRP） 是标准 LRP 向多级物流网络的重要扩展，近年来受到越来越多研究者的关注，\cref{fig:2E-LRP}展示了 2E-LRP 配送网络的拓扑结构与运作流程。根据 Cuda 等人的系统综述\cite{cudaSurveyTwoechelonRouting2015}，2E-LRP 是一个包含了三个不相交顶点集合（潜在仓库、潜在卫星、顾客）的两级配送网络：第一级为仓库到卫星（或卫星之间）的干线运输，第二级为卫星到顾客（或顾客之间）的支线配送。与标准 LRP 相比，2E-LRP 需要同时决策卫星和仓库的选址、两级车辆的路径以及货物在卫星处的中转流量，且货物必须强制经过卫星仓库中转，且卫星和仓库的建设都需要相应的成本。
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.8\linewidth]{image/2E-LRP.pdf}\\
+    \caption{两级选址-路径问题配送网络示意图}\label{fig:2E-LRP}
+\end{figure}
 
 早期的2E-LRP研究多集中在考虑第二阶段的卫星仓库的选址决策上\cite{nguyenSolvingTwoechelonLocation2012, nguyenMultistartIteratedLocal2012}，在后续与2E-LRP相关的研究中最基础也研究最多的问题是有容量限制的两级选址-路径问题（Capacitated 2E-LRP，2E-CLRP）\cite{cudaSurveyTwoechelonRouting2015}，本研究也属于2E-CLRP的一个变体。在2E-CLRP中，第一层级只有一个仓库，并且第一级和第二级的车辆和仓库均有容量限制，同一层级的车辆是同质的，即车辆速度和容量限制等均相同\cite{aliIntegratedSequentialAlgorithms2025}。将选址和路径规划决策集成到一个双层方案中的想法可以追溯到Jacobsen和Madsen\cite{jacobsenComparativeStudyHeuristics1980}以及Madsen的研究工作\cite{madsenMethodsSolvingCombined1983}。但是，2E-CLRP最早是由Boccia等人进行了形式化描述\cite{bocciaMetaheuristicTwoEchelon2010}，作者介绍了该问题并基于Tuzun和Burke在解决LRP中使用的两阶段迭代方法（two-phase iterative approach）\cite{tuzunTwophaseTabuSearch1999}，提出了一种基于禁忌搜索（Tabu Search）的启发式方法，该算法主要将问题切分为两个阶段，首先确定设施的数量和位置，然后进行路径规划，并且采用先构建第二阶段的路径再构建第一阶段路径的自底向上的方案，并对包含最多5个仓库、20个卫星仓库和200个顾客节点的实例进行了计算实验。此外，Boccia等人还提出了三种混合整数规划公式，其中基于车辆索引变量（vehicle index variables）的公式表现优于双索引弧变量（two-index arc variables）公式，由此确立了大部分后续文献中采用车辆索引变量建模的传统\cite{sennaTwoechelonLocationroutingProblem2026}。
 
