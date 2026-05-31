@@ -1,6 +1,5 @@
 import gurobipy as gp
 from gurobipy import GRB
-from itertools import product
 import math
 
 # ============================================================
@@ -652,7 +651,7 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
                         print(f"    xT[{i},{j},{s}] = {val:.4f}  ✓  {i} -> {j}")
                         found = True
         if not found:
-            print(f"    (无路径)")
+            print("    (无路径)")
 
     # ---------- 二级载重 uT ----------
     print_section("二级网络访问顺序 uT[i,s]")
@@ -680,7 +679,7 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
                                   f"cost={cost:.2f}  energy={energy:.2f}")
                             found = True
         if not found:
-            print(f"    (无无人机配送)")
+            print("    (无无人机配送)")
 
     # ---------- 时间变量 ----------
     # print_section("卡车到达时间 tauT[i,s]")
