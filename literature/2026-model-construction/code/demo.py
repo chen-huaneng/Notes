@@ -7,10 +7,16 @@ import math
 # ============================================================
 
 # 顾客集合
-N = [1, 2, 3, 4]
+# N = [1, 2, 3, 4]
 
 # 候选卫星仓库
-S = [5, 6]
+# S = [5, 6]
+
+# 顾客集合
+N = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+# 候选卫星仓库
+S = [1, 2, 3, 4]
 
 # 主仓库
 depot = 0
@@ -29,28 +35,64 @@ V = [depot] + S + N
 # ============================================================
 
 # 顾客需求
+# q = {
+#     1: 2,
+#     2: 3,
+#     3: 2,
+#     4: 4
+# }
+
+# 顾客需求
 q = {
-    1: 2,
-    2: 3,
-    3: 2,
-    4: 4
+    5: 4.4, 6: 3.3, 7: 3.8, 8: 1.2, 9: 1.9,
+    10: 2.2, 11: 1.3, 12: 1.9, 13: 1.4, 14: 2.1,
+    15: 3.5, 16: 2.5, 17: 2.5, 18: 1.8, 19: 2.1
 }
 
 # 卫星仓库建设成本
+# f = {
+#     5: 100,
+#     6: 120
+# }
+
+# 卫星仓库建设成本
 f = {
-    5: 100,
-    6: 120
+    1: 190.5, 2: 147.2, 3: 141.4, 4: 75.7
 }
 
 # 所有节点的二维坐标(x, y)
+# coords = {
+#     0: (0, 0),
+#     1: (-10, -10),
+#     2: (5, 5),
+#     3: (15, 0),
+#     4: (15, 5),
+#     5: (5, 0),
+#     6: (0, -10)
+# }
+
+# 所有节点的二维坐标(x, y)
 coords = {
-    0: (0, 0),
-    1: (-10, -10),
-    2: (5, 5),
-    3: (15, 0),
-    4: (15, 5),
-    5: (5, 0),
-    6: (0, -10)
+    0: (0.0, 0.0),
+    1: (31.97, 1.25),
+    2: (13.75, 11.16),
+    3: (36.82, 33.83),
+    4: (44.61, 4.35),
+    5: (21.1, 1.49),
+    6: (10.93, 25.27),
+    7: (1.33, 9.94),
+    8: (32.49, 27.25),
+    9: (11.02, 29.46),
+    10: (40.47, 0.32),
+    11: (40.29, 34.91),
+    12: (17.01, 7.77),
+    13: (47.86, 16.83),
+    14: (4.64, 4.84),
+    15: (42.37, 30.19),
+    16: (40.36, 36.49),
+    17: (26.81, 48.66),
+    18: (18.93, 27.6),
+    19: (41.47, 30.93)
 }
 
 # 距离矩阵
@@ -60,17 +102,23 @@ for i in V:
         if i != j:
             d[i, j] = math.dist(coords[i], coords[j])
 
+# 成本因子
+cL_factor = 2.0
+cT_factor = 1.5
+cD_factor = 0.5
+e_factor = 1.0
+
 # 一级运输成本
-cL = {(i, j): 2 * d[i, j] for i, j in d}
+cL = {(i, j): cL_factor * d[i, j] for i, j in d}
 
 # 二级卡车运输成本
-cT = {(i, j): 1.5 * d[i, j] for i, j in d}
+cT = {(i, j): cT_factor * d[i, j] for i, j in d}
 
 # 无人机运输成本
-cD = {(i, j): 0.5 * d[i, j] for i, j in d}
+cD = {(i, j): cD_factor * d[i, j] for i, j in d}
 
 # 无人机能耗
-e = {(i, j): d[i, j] for i, j in d}
+e = {(i, j): e_factor * d[i, j] for i, j in d}
 
 # 速度
 vT = 40
@@ -264,16 +312,16 @@ for s in S:
     # 从卫星仓库出发
     model.addConstr(
         gp.quicksum(
-            xT[s, j, s]
-            for j in N
+            xT[s, i, s]
+            for i in N
         ) == y[s]
     )
 
     # 返回卫星仓库
     model.addConstr(
         gp.quicksum(
-            xT[i, s, s]
-            for i in N
+            xT[j, s, s]
+            for j in N
         ) == y[s]
     )
 
@@ -309,8 +357,6 @@ for s in S:
         ) <= M * y[s]
     )
 
-for s in S:
-    Ns = N + [s]
     model.addConstr(
         gp.quicksum(
             xD[i, j, k, s]
@@ -362,8 +408,6 @@ for s in S:
             )
         )
 
-for s in S:
-    Ns = N + [s]
     for k in Ns:
 
         model.addConstr(
@@ -548,8 +592,8 @@ for s in S:
 # 初始条件
 # ============================================================
 
-for s in S:
-    model.addConstr(uT[s, s] == 0)
+# for s in S:
+#     model.addConstr(uT[s, s] == 0)
 
     # model.addConstr(tauT[s, s] == 0)
 
@@ -587,6 +631,53 @@ def var_val(v):
     except:
         return None
 
+def build_routes_from_edges(edges, start_node):
+    """
+    从边列表重建完整路径（回路）。
+    例如 edges = [(0,5),(5,6),(6,0)] → [[0, 5, 6, 0]]
+    支持多条回路。
+    """
+    if not edges:
+        return []
+
+    adj = {}
+    for i, j in edges:
+        adj.setdefault(i, []).append(j)
+
+    routes = []
+    visited_edges = set()
+
+    while True:
+        start_edge = None
+        for nxt in adj.get(start_node, []):
+            if (start_node, nxt) not in visited_edges:
+                start_edge = (start_node, nxt)
+                break
+        if start_edge is None:
+            break
+
+        route = [start_node]
+        current = start_node
+
+        while True:
+            next_node = None
+            for nxt in adj.get(current, []):
+                if (current, nxt) not in visited_edges:
+                    next_node = nxt
+                    break
+            if next_node is None:
+                break
+            visited_edges.add((current, next_node))
+            route.append(next_node)
+            current = next_node
+            if current == start_node:
+                break
+
+        if len(route) > 1:
+            routes.append(route)
+
+    return routes
+
 # ---------- 模型状态 ----------
 print_section("模型求解状态")
 print(f"Status: {model.status}  (2=OPTIMAL, 9=TIME_LIMIT, 3=INFEASIBLE)")
@@ -613,17 +704,42 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
         val = var_val(y[s])
         print(f"  y[{s}] = {val:.4f}  {'✓ 建设' if val > 0.5 else '✗ 不建'}")
 
+    # ---------- 顾客需求 ----------
+    print_section("顾客需求")
+    total = 0.0
+    for j in N:
+        demand = q.get(j, 0.0)
+        total += demand
+        print(f"  顾客 {j:>3d}  需求 = {demand:.2f}")
+    print(f"  {'─' * 30}")
+    print(f"  顾客总数: {len(N)}")
+    print(f"  需求总和: {total:.2f}")
+
     # ---------- 一级卡车路径 xL ----------
-    print_section("一级卡车路径 xL[i,j]")
-    found = False
+    print_section("一级卡车路径")
+
+    # 提取一级边
+    first_level_edges = []
     for i in V1:
         for j in V1:
             if i != j:
                 val = var_val(xL[i, j])
-                if val > 0.5:
-                    print(f"  xL[{i},{j}] = {val:.4f}  ✓  {i} -> {j}")
-                    found = True
-    if not found:
+                if val is not None and val > 0.5:
+                    first_level_edges.append((i, j))
+
+    # 重建一级路径
+    first_level_routes = build_routes_from_edges(first_level_edges, depot)
+
+    if first_level_routes:
+        print("\n  重建路径:")
+        for idx, route in enumerate(first_level_routes):
+            route_str = " -> ".join(str(n) for n in route)
+            print(f"    Route {idx + 1}: {route_str}")
+
+        print("\n  原始边:")
+        for i, j in first_level_edges:
+            print(f"    xL[{i},{j}] = 1  ✓  {i} -> {j}")
+    else:
         print("  (无路径)")
 
     # ---------- 一级载重 uL ----------
@@ -639,18 +755,32 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
         print(f"  psi[{s}] = {val:.4f}")
 
     # ---------- 二级卡车路径 xT ----------
-    print_section("二级卡车路径 xT[i,j,s]")
+    print_section("二级卡车路径")
     for s in S:
         print(f"\n  --- 卫星仓库 {s} ---")
-        found = False
+
+        # 提取二级边
+        edges = []
         for i in V2:
             for j in V2:
                 if i != j:
                     val = var_val(xT[i, j, s])
-                    if val > 0.5:
-                        print(f"    xT[{i},{j},{s}] = {val:.4f}  ✓  {i} -> {j}")
-                        found = True
-        if not found:
+                    if val is not None and val > 0.5:
+                        edges.append((i, j))
+
+        # 重建二级路径
+        routes = build_routes_from_edges(edges, s)
+
+        if routes:
+            print("  重建路径:")
+            for idx, route in enumerate(routes):
+                route_str = " -> ".join(str(n) for n in route)
+                print(f"    Route {idx + 1}: {route_str}")
+
+            print("  原始边:")
+            for i, j in edges:
+                print(f"    xT[{i},{j},{s}] = 1  ✓  {i} -> {j}")
+        else:
             print("    (无路径)")
 
     # ---------- 二级载重 uT ----------
@@ -659,7 +789,8 @@ if model.status == GRB.OPTIMAL or model.status == GRB.TIME_LIMIT:
         print(f"\n  --- 卫星仓库 {s} ---")
         for i in V2:
             val = var_val(uT[i, s])
-            print(f"    uT[{i},{s}] = {val:.4f}")
+            if val > 0.5:
+                print(f"    uT[{i},{s}] = {val:.2f}")
 
     # ---------- 无人机配送 xD ----------
     print_section("无人机配送 xD[i,j,k,s]")
