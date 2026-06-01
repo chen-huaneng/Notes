@@ -1,6 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Union
 import math
+import json
+import random
 
 @dataclass
 class Instance:
@@ -140,6 +144,143 @@ class Instance:
             cD_factor=0.5,
             e_factor=1.0,
         )
+
+    # ================================================================
+    # 随机算例
+    # ================================================================
+
+    @classmethod
+    def generate_random(
+        cls,
+        n_customers: int = 10,
+        n_satellites: int = 3,
+        grid_size: float = 50.0,
+        seed: int | None = None,
+    ) -> Instance:
+        """
+        随机生成算例
+
+        Parameters
+        ----------
+        n_customers : 顾客数量
+        n_satellites : 候选卫星仓库数量
+        grid_size : 坐标范围 [0, grid_size]
+        seed : 随机种子
+        """
+        rng = random.Random(seed)
+
+        depot = 0
+        S = list(range(1, n_satellites + 1))
+        N = list(range(n_satellites + 1, n_satellites + 1 + n_customers))
+        V = [depot] + S + N
+
+       # 随机坐标，depot 固定在 (0, 0)
+        coords = {depot: (0.0, 0.0)}
+        used = {(0.0, 0.0)}
+        for v in V:
+            if v == depot:
+                continue
+            while True:
+                x = round(rng.uniform(0, grid_size), 2)
+                y = round(rng.uniform(0, grid_size), 2)
+                if (x, y) not in used:
+                    coords[v] = (x, y)
+                    used.add((x, y))
+                    break
+
+        # 随机需求 [1, 5]
+        q = {j: round(rng.uniform(1, 5), 1) for j in N}
+
+        # 随机建设成本 [50, 200]
+        f = {s: round(rng.uniform(50, 200), 1) for s in S}
+
+        return cls(
+            name=f"random_{n_customers}C_{n_satellites}S_seed{seed}",
+            depot=depot,
+            N=N,
+            S=S,
+            coords=coords,
+            q=q,
+            f=f,
+            vT=40,
+            vD=60,
+            QL=50,
+            QT=15,
+            QD=5,
+            E=20,
+            w=1,
+            cL_factor=2.0,
+            cT_factor=1.5,
+            cD_factor=0.5,
+            e_factor=1.0,
+        )
+
+    # ================================================================
+    # JSON 接口
+    # ================================================================
+
+    @classmethod
+    def from_json(cls, filepath: Union[str, Path]) -> Instance:
+        """从 JSON 文件加载算例"""
+        filepath = Path(filepath)
+        with open(filepath, "r", encoding="utf-8") as fp:
+            data = json.load(fp)
+
+        # JSON 的 key 是字符串，需要转换
+        coords = {int(k): tuple(v) for k, v in data["coords"].items()}
+        q = {int(k): float(v) for k, v in data["q"].items()}
+        f = {int(k): float(v) for k, v in data["f"].items()}
+
+        return cls(
+            name=data["name"],
+            depot=data["depot"],
+            N=data["N"],
+            S=data["S"],
+            coords=coords,
+            q=q,
+            f=f,
+            vT=data["vT"],
+            vD=data["vD"],
+            QL=data["QL"],
+            QT=data["QT"],
+            QD=data["QD"],
+            E=data["E"],
+            w=data["w"],
+            cL_factor=data["cL_factor"],
+            cT_factor=data["cT_factor"],
+            cD_factor=data["cD_factor"],
+            e_factor=data["e_factor"],
+        )
+
+    def to_json(self, filepath: Union[str, Path]) -> None:
+        """将算例保存为 JSON 文件"""
+        filepath = Path(filepath)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+
+        # 转换 dict key 为字符串（JSON 要求）
+        data = {
+            "name": self.name,
+            "depot": self.depot,
+            "N": self.N,
+            "S": self.S,
+            "coords": {str(k): list(v) for k, v in self.coords.items()},
+            "q": {str(k): v for k, v in self.q.items()},
+            "f": {str(k): v for k, v in self.f.items()},
+            "vT": self.vT,
+            "vD": self.vD,
+            "QL": self.QL,
+            "QT": self.QT,
+            "QD": self.QD,
+            "E": self.E,
+            "w": self.w,
+            "cL_factor": self.cL_factor,
+            "cT_factor": self.cT_factor,
+            "cD_factor": self.cD_factor,
+            "e_factor": self.e_factor,
+        }
+
+        with open(filepath, "w", encoding="utf-8") as fp:
+            json.dump(data, fp, indent=2, ensure_ascii=False)
 
     # ================================================================
     # Pretty Print

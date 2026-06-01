@@ -16,7 +16,6 @@
 近年来，电子商务与同城配送需求急剧增长，城市物流网络面临巨大效率压力。两级物流系统通过引入卫星仓库（如前置仓、配送中心等），将运输过程拆分为“干线运输”和“支线配送”，能够显著降低配送成本并提高服务响应速度\cite{martinez-salazarSolvingBiobjectiveTransportation2014,prodhonSurveyRecentResearch2014,chaoOptimizationTwostageLocation2019}。同时，无人机技术的成熟使得车辆与无人机协同配送的模式受到广泛关注\cite{murrayFlyingSidekickTraveling2015,zhouMultitripUAVUGVDelivery2025}。本节先回顾与本研究最相关的两级选址-路径问题（Two-Echelon Location Routing Problem，2E-LRP），然后介绍选址-路径问题（Location Routing Problem，LRP）和车辆与无人机协同配送（Vehicle Routing Problem with Drone，VRP-D）相关的研究文献，并分析先前文献中存在的空白，为后续模型构建奠定基础。
 
 \subsection{两级选址-路径问题研究现状}
-% TODO: 加一个图来展示两级选址-路径问题
 两级选址-路径问题（Two-Echelon Location Routing
 Problem，2E-LRP） 是标准 LRP 向多级物流网络的重要扩展，近年来受到越来越多研究者的关注，\cref{fig:2E-LRP}展示了 2E-LRP 配送网络的拓扑结构与运作流程。根据 Cuda 等人的系统综述\cite{cudaSurveyTwoechelonRouting2015}，2E-LRP 是一个包含了三个不相交顶点集合（潜在仓库、潜在卫星、顾客）的两级配送网络：第一级为仓库到卫星（或卫星之间）的干线运输，第二级为卫星到顾客（或顾客之间）的支线配送。与标准 LRP 相比，2E-LRP 需要同时决策卫星和仓库的选址、两级车辆的路径以及货物在卫星处的中转流量，且货物必须强制经过卫星仓库中转，且卫星和仓库的建设都需要相应的成本。
 

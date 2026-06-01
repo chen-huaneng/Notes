@@ -324,6 +324,7 @@ class ResultPrinter:
 
         self._print_objective()
         self._print_satellites()
+        self._print_customer_demands()
         self._print_first_level()
         self._print_second_level()
         self._print_drones()
@@ -362,6 +363,17 @@ class ResultPrinter:
             demand = self.res.satellite_demand.get(s, 0.0)
             print(f"  y[{s}] = {'1' if opened else '0'}  {mark}  "
                   f"demand={demand:.2f}")
+
+    def _print_customer_demands(self):
+        self._section("顾客需求")
+        total = 0.0
+        for j in self.inst.N:
+            demand = self.inst.q.get(j, 0.0)
+            total += demand
+            print(f"  顾客 {j:>3d}  需求 = {demand:.2f}")
+        print(f"  {'─' * 30}")
+        print(f"  顾客总数: {len(self.inst.N)}")
+        print(f"  需求总和: {total:.1f}")
 
     def _print_first_level(self):
         # 路径

@@ -13,7 +13,21 @@ def main():
     # 1. 加载 / 生成算例
     # ============================================================
 
+    # 默认加载算例
     inst = Instance.default()
+
+    # 也可以从 JSON 加载：
+    # inst = Instance.from_json("data/default.json")
+
+    # 或生成随机算例：
+    n_customers = 15
+    n_satellites = 4
+    seed = 42
+    inst = Instance.generate_random(n_customers=n_customers, n_satellites=n_satellites, seed=seed)
+
+    # 保存默认算例到 JSON（供后续复用）：
+    # inst.to_json("data/default.json")
+    inst.to_json(f"data/random_{n_customers}C_{n_satellites}S_seed{seed}.json")
     print(inst)
 
     # ============================================================
@@ -67,7 +81,7 @@ def main():
 
     NetworkVisualizer.plot_solution(
         vis_data=vis_data,
-        save_path="results/solution_plot.png",
+        save_path=f"results/{inst.name}.png",
         show=True,
     )
 

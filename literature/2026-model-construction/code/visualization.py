@@ -61,7 +61,7 @@ class NetworkVisualizer:
             "alpha": 0.8,
         },
         "second_level": {
-            "color": "#333333",
+            "color": "#000000",
             "linestyle": "-",
             "linewidth": 1.5,
             "label": "2nd Level (Truck)",
@@ -217,7 +217,7 @@ class NetworkVisualizer:
             ax.set_title(title, fontsize=14, fontweight="bold")
         else:
             obj_str = (
-                f"obj={vis_data.solution.obj_val:.2f}"
+                f"obj={vis_data.solution.obj_val:.4f}"
                 if vis_data.solution.obj_val is not None
                 else "No Solution"
             )
@@ -233,11 +233,13 @@ class NetworkVisualizer:
         ax.set_aspect("equal")
         fig.tight_layout()
 
-        if save_path:
-            save_path = Path(save_path)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            fig.savefig(save_path, dpi=150, bbox_inches="tight")
-            print(f"[Visualization] 图片已保存至: {save_path}")
+        if save_path is None:
+            save_path = Path("results") / f"{inst.name}.png"
+
+        save_path = Path(save_path)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        print(f"[Visualization] 图片已保存至: {save_path}")
 
         if show:
             plt.show()
