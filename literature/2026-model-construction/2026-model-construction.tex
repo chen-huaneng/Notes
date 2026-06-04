@@ -105,6 +105,7 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 % 4. 多级网络可以考虑在两级以上的配送网络（multiple echelons）
 % 5. 考虑多目标（multiple objective）
 % 6. 考虑多个选址之间物流的运输，即物流中心之间的货物运输（hub location-routing problem）
+% 7. 考虑无人机的最大续航里程受到其携带的包裹重量的影响
 
 给定一个物流配送网络$G = (V, A)$，该网络为一个完全图，网络中的节点包含一个郊区仓库$0$和一个待选的卫星仓库集合$S$以及一个需要配送的顾客集合$N$，即$V = \{0\} \cup S \cup N$，网络的弧集合为$A = \{(i,j)|i,j \in V, i \neq j\}$。
 
@@ -112,11 +113,11 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 
 为简化问题并构建可行的数学模型，做出以下合理假设：
 
-首先是无人机的能力限制。因为无人机起飞和回收的时间相比于卡车和无人机配送的时间来说很短，因此模型中不考虑无人机的起飞和降落时间。无人机在每次飞行任务结束后通过更换电池从而达到最大电量，因此每次无人机起飞时都有最大电量$E$。
+首先是无人机的能力限制。因为无人机起飞和回收的时间相比于卡车和无人机配送的时间来说很短，因此模型中不考虑无人机的起飞和降落时间。无人机在每次飞行任务结束后通过更换电池从而达到最大电量，因此每次无人机起飞时都有最大电量$E$，且卡车携带的无人机电池足够多，不考虑无人机换电池的时间。
 
-其次是顾客需求特性。任一顾客既可以由卡车配送，也可以由无人机配送，当顾客被无人机或卡车服务后，无人机和卡车都不能再次访问该顾客，无人机不能重复访问同一个顾客，即卡车不能在同一个顾客节点等待无人机，从而不会产生无人机飞行路径是个环的情况。
+其次是顾客需求特性。任一顾客既可以由卡车配送，也可以由无人机配送，当顾客被无人机或卡车服务后，无人机和卡车都不能再次访问该顾客，无人机不能重复访问同一个顾客，即卡车不能在同一个顾客节点等待无人机，从而不会产生无人机飞行路径是个环的情况，每个顾客节点都有充足的空间供无人机起飞和降落，且无人机在会合点需要等待卡车时会降落在地面等待，因此不需要考虑无人机等待卡车的成本。可供建设的卫星仓库数量足够多以至于所有的顾客都能被服务到。
 
-再次是协同规则约束。无人机的起飞和降落地点仅限于仓库或顾客位置。无人机和卡车只能够在顾客节点会合，不能在行驶过程中进行会合，在实际应用中，由于无人机降落在行驶过程中的卡车需要卡车和无人机的速度相匹配，而这个匹配的过程十分困难\cite{buchmueller2016landing}，并且无人机降低速度匹配卡车会降低无人机的配送效率，因此这里假设无人机和卡车只能在顾客节点会合。当卡车和无人机在某一节点会合时，如果卡车先到达，需等待无人机，若无人机先到达，则无人机等待卡车，但是无人机的等待时间不能超过无人机剩下的续航时间。
+再次是协同规则约束。无人机的起飞和降落地点仅限于仓库或顾客位置。无人机和卡车只能够在顾客节点会合，不能在行驶过程中进行会合，在实际应用中，由于无人机降落在行驶过程中的卡车需要卡车和无人机的速度相匹配，而这个匹配的过程十分困难\cite{buchmueller2016landing}，并且无人机降低速度匹配卡车会降低无人机的配送效率，因此这里假设无人机和卡车只能在顾客节点会合。当卡车和无人机在某一节点会合时，如果卡车先到达，需等待无人机，若无人机先到达，则无人机等待卡车，但是无人机的等待时间不能超过无人机剩下的续航时间。每个卡车组的无人机都只能依赖于该卡车组的卡车，即该无人机不能在其他卡车组的卡车上降落或起飞，每个卡车组包含一架无人机和一辆卡车。
 
 最后是行驶路径假设。假设卡车和无人机在任意两点之间的行驶路径是确定的，即卡车遵循道路行驶，无人机遵循直线飞行。且行驶时间仅取决于两点之间的距离和各自的行驶速度，不考虑实际路况中的交通拥堵、天气、空域管制等因素对行驶时间的影响，以简化模型的构建和求解过程。
 
@@ -163,11 +164,12 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 	$x_{ij}^L \in \{0, 1\}$ & 如果大型卡车驶过弧$(i,j) \in V_1$则为1，否则为0 \\
 	$x_{ijs}^T \in \{0, 1\}$ & 如果卫星仓库 $s \in S$ 的协同卡车驶过弧$(i,j) \in V_2$则为1，否则为0 \\
 	$x_{ijks}^D \in \{0, 1\}$ & 如果卫星仓库 $s \in S$ 的协同卡车上的无人机从节点$i$起飞，为顾客$j$进行配送，并在节点$k$降落则为1，否则为0，$i,k \in V_2, j \in N$ \\
+    $\delta_{ils} \in \{0, 1\}$ & 对于卫星仓库 $s \in S$ 的两次无人机出动 $(i, j, k)$ 和 $(l, m, n)$，如果出动 $(i, j, k)$ 先于出动 $(l, m, n)$ 完成（即 $u_{ks}^T \leq u_{ls}^T$），则为1，否则为0\\
 	% $\tau_{is}^T$ & 卫星仓库$s \in S$的协同卡车到达节点 $i$ 的时间 \\
 	% $\tau_{is}^D$ & 卫星仓库$s \in S$的卡车协同的无人机到达节点 $i$ 的时间 \\
 	% $\rho_{is}$ & 卫星仓库$s \in S$的卡车组到达节点 $i$ 的时间，即卡车或无人机最后一个到达节点 $i$ 的时间 \\
 	$u_i^L \geq 0$ & 大型卡车在访问第一级网络节点 $i \in V_1$ 后的累计载重 \\
-	$u_{is}^T \geq 0$ & 整数辅助变量，表示卫星仓库$s \in S$的协同卡车在访问第二级网络节点 $i \in N$ 时的访问顺序 \\
+	$u_{is}^T \geq 0$ & 整数辅助变量，表示卫星仓库$s \in S$的协同卡车在访问第二级网络节点 $i \in V_2$ 时的访问顺序 \\
 	$\psi_{s} \geq 0$ & 卫星仓库$s \in S$从郊区仓库接收的货物总重量（也即其服务的顾客总需求） \\
     \bottomrule[1pt] % 表尾线宽1pt
 \end{longtblr}
@@ -175,7 +177,7 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 \section{数学模型}
 
 数学模型可以表示为 MILP \crefrange{eq:conv-obj}{eq:conv-auxiliary-variable}。
-% TODO: 如果出现无人机的环的问题，则可以把时间相关的约束加回来
+% INFO: 由于存在x_{ijks}^T且 k != i，所以不会存在无人机环的问题
 \begin{theorem}
 {
 \begin{align}
@@ -192,9 +194,16 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 	\quad & u_{is}^T - u_{js}^T + 1 \leq (|N| + 1)\left(1 - x_{ijs}^T\right), \quad \forall i,j \in N, \forall s \in S, i \neq j \label{eq:conv-level-2-subtour}\\
 	\quad & \sum_{\substack{j \in N \\ j \neq i}}\sum_{\substack{k \in N \cup \{s\}\\ k \neq i, k \neq j}}x_{ijks}^D \leq \sum_{\substack{h \in N \cup \{s\}\\ h \neq i}}x_{ihs}^T, \quad \forall i \in N \cup \{s\}, \forall s \in S \label{eq:conv-level-2-truck-drone-1}\\
 	\quad & \sum_{\substack{i \in N \cup \{s\}\\ i \neq k}}\sum_{\substack{j \in N\\ j \neq k, j \neq i}}x_{ijks}^D \leq \sum_{\substack{h \in N \cup \{s\}\\ h \neq k}}x_{hks}^T, \quad \forall k \in N \cup \{s\}, \forall s \in S \label{eq:conv-level-2-truck-drone-2}\\
+	\quad & \sum_{s \in S}\sum_{\substack{j \in N\\ j \neq i}}\sum_{\substack{k \in V_2\\ k \neq i, k \neq j}}x_{ijks}^D \leq 1, \quad \forall i \in V_2 \label{eq:conv-level-2-drone-takeoff}\\
+	\quad & \sum_{s \in S}\sum_{\substack{i \in V_2\\ i \neq k}}\sum_{\substack{j \in N\\ j \neq k, j \neq i}}x_{ijks}^D \leq 1, \quad \forall k \in V_2 \label{eq:conv-level-2-drone-landing}\\
+	\quad & u_{is}^T - u_{ks}^T + 1 \leq \left(|N| + 1\right)\left(1 - \sum_{\substack{j \in N\\ j \neq i, j \neq k}}x_{ijks}^D\right), \quad \forall i \in N \cup \{s\}, \forall k \in N, i \neq k, \forall s \in S \label{eq:conv-level-2-drone-service-order}\\
+	\quad & u_{ks}^T - u_{ls}^T \leq |N|\left(3 - \sum_{\substack{j \in N\\ j \neq i, j \neq k\\ j \neq l, j \neq n}}x_{ijks}^D - \sum_{\substack{m \in N\\ m \neq l, m \neq n\\ m \neq i, m \neq k}}x_{lmns}^D - \delta_{ils}\right),\nonumber \\
+	\quad & \qquad \forall i,k,l,n \in N \cup \{s\}, i \neq k, l \neq n, i \neq n, l \neq k, \forall s \in S \label{eq:conv-level-2-drone-nonoverlap-1}\\
+	\quad & u_{ns}^T - u_{is}^T \leq |N|\left(2 - \sum_{\substack{j \in N\\ j \neq i, j \neq k\\ j \neq l, j \neq n}}x_{ijks}^D - \sum_{\substack{m \in N\\ m \neq l, m \neq n\\ m \neq i, m \neq k}}x_{lmns}^D + \delta_{ils}\right),\nonumber \\
+	\quad & \qquad \forall i,k,l,n \in N \cup \{s\}, i \neq k, l \neq n, i \neq n, l \neq k, \forall s \in S \label{eq:conv-level-2-drone-nonoverlap-2}\\
 	\quad & \sum_{j \in N}q_j\left(\sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}x_{ijs}^T + \sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}\sum_{\substack{k \in N \cup \{s\}\\ k \neq i, k \neq j}}x_{ijks}^D\right) + w \leq Q^T, \quad \forall s \in S \label{eq:conv-level-2-truck-weight}\\
 	\quad & \psi_{s} = \sum_{j \in N}q_j\left(\sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}x_{ijs}^T + \sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}\sum_{\substack{k \in N \cup \{s\}\\ k \neq i, k \neq j}}x_{ijks}^D\right), \quad \forall s \in S \label{eq:conv-level-1-and-2-truck-weight}\\
-	\quad & \sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}\sum_{\substack{k \in N \cup \{s\}\\ k \neq j, k \neq i}} q_j x_{ijks}^D \leq Q^D, \quad \forall j \in N, \forall s \in S \label{eq:conv-level-2-drone-weight}\\
+	\quad & q_j \sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}\sum_{\substack{k \in N \cup \{s\}\\ k \neq j, k \neq i}} x_{ijks}^D \leq Q^D, \quad \forall j \in N, \forall s \in S \label{eq:conv-level-2-drone-weight}\\
 	\quad & \sum_{\substack{i \in N \cup \{s\}\\ i \neq j}}\sum_{\substack{k \in N \cup \{s\}\\ k \neq j, k \neq i}}\left(e_{ij} + e_{jk}\right)x_{ijks}^D \leq E, \quad \forall j \in N, \forall s \in S \label{eq:conv-level-2-drone-battery}\\
     % TODO: 这部分时间相关的约束可以放到拓展的内容中完成
 	% \quad & \tau_{js}^T \geq \rho_{is} + \frac{d_{ij}}{v^T} - M\left(1 - x_{ijs}^T\right), \quad \forall i,j \in N \cup \{s\}, \forall s \in S, i \neq j \label{eq:conv-level-2-truck-time}\\
@@ -202,13 +211,20 @@ Kitjacharoenchai等人首次提出了mTSPD（multiple Traveling Salesman Problem
 	% \quad & \rho_{ks} \geq \tau_{ks}^T, \quad \forall k \in N \cup \{s\}, \forall s \in S \label{eq:conv-level-2-wait-time-1}\\
 	% \quad & \rho_{ks} \geq \tau_{ks}^D, \quad \forall k \in N \cup \{s\}, \forall s \in S \label{eq:conv-level-2-wait-time-2}\\
     \quad & u_0^L = 0 \label{eq:conv-auxiliary-initial}\\
-	\quad & y_s, x_{ij}^L, x_{ijs}^T, x_{ijks}^D \in \{0 ,1\} \label{eq:conv-decision-variable}\\
-    \quad & u_i^L, u_{is}^T, \psi_{s}, \tau_{is}^T,\tau_{is}^D, \rho_{is} \geq 0\label{eq:conv-auxiliary-variable}
+	\quad & y_s \in \{0, 1\}, \quad \forall s \in S \label{eq:conv-decision-variable}\\
+	\quad & x_{ij}^L \in \{0, 1\}, \quad \forall i, j \in V_1 \\
+	\quad & x_{ijs}^T \in \{0, 1\}, \quad \forall i, j \in V_2, \forall s \in S \\
+	\quad & x_{ijks}^D \in \{0 ,1\}, \quad \forall i, k \in V_2, \forall j \in N, \forall s \in S \\
+    \quad & \delta_{ils} \in \{0, 1\}, \quad \forall i, l \in V_2, \forall s \in S \\
+    \quad & u_i^L \geq 0, \quad \forall i \in V_1 \\
+    \quad & u_{is}^T \geq 0, \quad \forall i \in V_2, \forall s \in S \\
+    \quad & \psi_{s} \geq 0, \quad \forall s \in S \label{eq:conv-auxiliary-variable}
+    % \tau_{is}^T,\tau_{is}^D, \rho_{is} \geq 0
 \end{align}
 }
 \end{theorem}
 
-目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}表示只有一辆大型卡车从主仓库$0$出发进行配送且最终只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $s$ 时的累计载荷包含了该卫星仓库的需求$\psi_{s}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:con-level-2-truck-start}表示协同卡车必须从卫星仓库出发并且最终需要返回该卫星仓库。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:con-level-2-truck-store,eq:con-level-2-drone-store}分别限制了没有建立的仓库不会进行卡车和无人机的配送。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卫星仓库 $s \in S$ 的卡车带出的货物总重量 $\psi_{s}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-auxiliary-initial}初始化变量，约束\cref{eq:conv-decision-variable,eq:conv-auxiliary-variable}表示变量的定义域。
+目标函数\cref{eq:conv-obj}最小化系统总成本，包括卫星仓库的建设成本、大型卡车的干线运输成本、协同卡车的支线运输成本以及无人机的配送成本。约束\cref{eq:conv-level-1-truck}表示只有一辆大型卡车从主仓库$0$出发进行配送且最终只有一辆大型卡车返回主仓库$0$。约束\cref{eq:conv-level-1-flow}是大型卡车的流平衡约束，并且确保只有被选中的卫星仓库才会被大型卡车访问。约束\cref{eq:conv-level-1-subtour,eq:conv-level-1-weight}是大型卡车的子回路消除约束，同时确保大型卡车在离开节点 $s$ 时的累计载荷包含了该卫星仓库的需求$\psi_{s}$，并且不超过大型卡车的最大载重$Q^L$。约束\cref{eq:conv-level-2-customer}表示所有顾客节点$j$必须被服务且仅被服务一次。约束\cref{eq:con-level-2-truck-start}表示协同卡车必须从卫星仓库出发并且最终需要返回该卫星仓库。约束\cref{eq:conv-level-2-flow}表示协同卡车在顾客节点$j$的流平衡约束。约束\cref{eq:con-level-2-truck-store,eq:con-level-2-drone-store}分别限制了没有建立的仓库不会进行卡车和无人机的配送。约束\cref{eq:conv-level-2-subtour}表示协同卡车的子路径消除约束。约束\cref{eq:conv-level-2-truck-drone-1,eq:conv-level-2-truck-drone-2}表示无人机的起飞节点$i$和降落节点$k$必须有协同卡车经过，即无人机是由协同卡车进行释放和回收的。约束\cref{eq:conv-level-2-drone-takeoff,eq:conv-level-2-drone-landing}限制了无人机在每个顾客节点和卫星仓库最多起飞和降落各一次，即无人机不会多次从同一个节点起飞。约束\cref{eq:conv-level-2-drone-service-order}表示了无人机服务的方向和卡车行驶的方向一致，即不会出现无人机从卡车后服务的节点起飞回到之前卡车服务过的节点的情况，由于约束\cref{eq:conv-level-2-drone-takeoff,eq:conv-level-2-drone-landing}的存在，隐含了$\sum_{\substack{j \in N\\ j \neq i, j \neq k}}x_{ijks}^D \leq 1$，即对任何一个顾客节点，起飞和降落的次数不能超过一次，如果使 $k \in N \cup \{s\}$ 则会导致同时存在从卫星仓库起飞和到卫星仓库降落的路径不可行，比如存在卫星仓库 $s = 1$ 、卡车路径 $ 1 \rightarrow 2 \rightarrow 1$ 和无人机路径 $1 \rightarrow 3 \rightarrow 2$，$2 \rightarrow 4 \rightarrow 1$，但由于 $u_{11}^T - u_{21}^T + 1 \leq 0$ 和 $u_{21}^T - u_{11}^T + 1 \leq 0$ 同时成立，导致该路径不可行，故令 $k \in N$。约束\crefrange{eq:conv-level-2-drone-nonoverlap-1}{eq:conv-level-2-drone-nonoverlap-2}限制了无人机起飞时不能已经在执行任务，由于每个卡车组只有一架无人机，因此无人机不能同时执行两个配送任务，即连续的两次无人机执行任务必须在前一次无人机降落之后才能进行下一次无人机的起飞，由于约束\crefrange{eq:conv-level-2-drone-takeoff}{eq:conv-level-2-drone-landing}的存在，如果 $i = l$ 或者 $k = n$，会使得 $\sum_{\substack{j \in N\\ j \neq i, j \neq k}}x_{ijks}^D + \sum_{\substack{m \in N\\ m \neq l, m \neq n}}x_{lmns}^D \leq 1$，因此不需要在该约束上加上 $i \neq l, k \neq n$ 的限制。约束\cref{eq:conv-level-2-truck-weight}表示协同卡车的总载重约束，即卡车配送的货物和无人机配送的货物以及无人机自身的重量不能超过卡车的最大载重量$Q^T$。约束\cref{eq:conv-level-1-and-2-truck-weight}是需求传递约束，用于确定卫星仓库 $s \in S$ 的卡车带出的货物总重量 $\psi_{s}$。约束\cref{eq:conv-level-2-drone-weight}表示无人机每次飞行的货物载重约束限制，约束\cref{eq:conv-level-2-drone-battery}表示无人机每次飞行的电量消耗约束限制。约束\cref{eq:conv-auxiliary-initial}初始化变量，约束\crefrange{eq:conv-decision-variable}{eq:conv-auxiliary-variable}表示变量的定义域。
 
 % 约束\cref{eq:conv-level-2-truck-time}表示卡车在节点之间的行驶时间推移，到达 $j$ 的时间必定晚于离开 $i$ 的时间加上行驶时间，同理约束\cref{eq:conv-level-2-drone-time}表示无人机的飞行时间推移。约束\cref{eq:conv-level-2-wait-time-1,eq:conv-level-2-wait-time-2}表示无人机和卡车的等待机制，即卡车组离开节点 $k$ 的时间 $\rho_{ks}$ 必须同时晚于卡车到达 $k$ 的时间以及无人机到达 $k$的时间。
 

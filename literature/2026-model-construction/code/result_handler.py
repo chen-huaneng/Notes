@@ -343,7 +343,7 @@ class ResultPrinter:
         print(f"Status: {self.res.status}  ({status_str})")
 
         if self.res.obj_val is not None:
-            print(f"目标值:   {self.res.obj_val:.4f}")
+            print(f"目标值:   {self.res.obj_val}")
             if self.res.mip_gap is not None:
                 print(f"MIPGap:   {self.res.mip_gap:.6f}")
             print(f"求解时间: {self.res.runtime:.2f}s")
@@ -352,8 +352,8 @@ class ResultPrinter:
         self._section("目标函数分解")
         for label, val in self.res.obj_breakdown.items():
             if val is not None:
-                print(f"  {label:12s} = {val:.4f}")
-        print(f"  {'总计':12s} = {self.res.obj_val:.4f}")
+                print(f"  {label:12s} = {val:.5f}")
+        print(f"  {'总计':12s} = {self.res.obj_val:.5f}")
 
     def _print_satellites(self):
         self._section("选址变量 y[s]")
@@ -421,7 +421,8 @@ class ResultPrinter:
             print(f"\n  --- 卫星仓库 {s} ---")
             mtz = self.res.second_level_mtz.get(s, {})
             for i, val in sorted(mtz.items()):
-                print(f"    uT[{i},{s}] = {val:.4f}")
+                if val > 0.5:
+                    print(f"    uT[{i},{s}] = {val:.2f}")
 
     def _print_drones(self):
         self._section("无人机配送")

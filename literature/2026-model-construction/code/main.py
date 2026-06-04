@@ -22,7 +22,10 @@ def main():
     # 或生成随机算例：
     n_customers = 15
     n_satellites = 4
-    seed = 42
+    seed = 42 # TODO: 测试无人机出动非重叠约束
+    # seed = 31
+    # seed = 20
+    # seed = 9
     inst = Instance.generate_random(n_customers=n_customers, n_satellites=n_satellites, seed=seed)
 
     # 保存默认算例到 JSON（供后续复用）：
@@ -39,7 +42,7 @@ def main():
         big_m=1e6,
         gurobi_params={
             "TimeLimit": 3600,
-            "MIPGap": 0.0001,
+            "MIPGap": 0.00001,
         },
     )
 
