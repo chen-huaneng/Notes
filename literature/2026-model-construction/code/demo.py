@@ -137,20 +137,20 @@ uT = model.addVars(V2, S, lb=0, vtype=GRB.INTEGER, name="uT")
 psi = model.addVars(S, lb=0, vtype=GRB.CONTINUOUS, name="psi")
 
 # 时间变量
-# tauT = model.addVars(V2, S,
-#                      lb=0,
-#                      vtype=GRB.CONTINUOUS,
-#                      name="tauT")
+tauT = model.addVars(V2, S,
+                     lb=0,
+                     vtype=GRB.CONTINUOUS,
+                     name="tauT")
 
-# tauD = model.addVars(V2, S,
-#                      lb=0,
-#                      vtype=GRB.CONTINUOUS,
-#                      name="tauD")
+tauD = model.addVars(V2, S,
+                     lb=0,
+                     vtype=GRB.CONTINUOUS,
+                     name="tauD")
 
-# rho = model.addVars(V2, S,
-#                     lb=0,
-#                     vtype=GRB.CONTINUOUS,
-#                     name="rho")
+rho = model.addVars(V2, S,
+                    lb=0,
+                    vtype=GRB.CONTINUOUS,
+                    name="rho")
 
 # ============================================================
 # 目标函数
@@ -232,10 +232,15 @@ for s in S:
 for s in S:
     Ns = N + [s]
     for j in N:
-        model.addConstr(
-            gp.quicksum(xT[i, j, s] for i in Ns if i != j)
-            == gp.quicksum(xT[j, k, s] for k in Ns if k != j)
-        )
+        # 进入节点j的流量
+        incoming_flow = gp.quicksum(xT[i, j, s] for i in Ns if i != j)
+
+        # 从节点j出去的流量
+        outgoing_flow = gp.quicksum(xT[j, k, s] for k in Ns if k != j)
+
+        # 流平衡约束，并且只有在卫星仓库建设时才能服务，且服务的次数不超过一次
+        model.addConstr(incoming_flow == outgoing_flow)
+        model.addConstr(outgoing_flow <= y[s])
 
 # ============================================================
 # 仓库激活约束
@@ -323,52 +328,52 @@ for k in V2:
 # 无人机服务顺序约束（无人机的服务顺序不能和卡车相反）
 # ============================================================
 
-for s in S:
-    Ns = N + [s]
-    for i in Ns:
-        for k in N:
-            if i == k:
-                continue
-            model.addConstr(
-                uT[i, s] - uT[k, s] + 1
-                <= (len(N) + 1)
-                * (1 - gp.quicksum(xD[i, j, k, s] for j in N if j != i and j != k))
-            )
+# for s in S:
+#     Ns = N + [s]
+#     for i in Ns:
+#         for k in N:
+#             if i == k:
+#                 continue
+#             model.addConstr(
+#                 uT[i, s] - uT[k, s] + 1
+#                 <= (len(N) + 1)
+#                 * (1 - gp.quicksum(xD[i, j, k, s] for j in N if j != i and j != k))
+#             )
 
 # ============================================================
 # 无人机出动非重叠约束
 # ============================================================
 
-for s in S:
-    Ns = N + [s]
-    for i in Ns:
-        for k in Ns:
-            if i == k:
-                continue
-            for l in Ns:
-                for n in Ns:
-                    if l == n:
-                        continue
+# for s in S:
+#     Ns = N + [s]
+#     for i in Ns:
+#         for k in Ns:
+#             if i == k:
+#                 continue
+#             for l in Ns:
+#                 for n in Ns:
+#                     if l == n:
+#                         continue
 
-                    model.addConstr(
-                        uT[k, s] - uT[l, s]
-                        <= len(N) * (
-                            3
-                            - gp.quicksum(xD[i, j, k, s] for j in N if j != i and j != k)
-                            - gp.quicksum(xD[l, m, n, s] for m in N if m != l and m != n)
-                            - delta[i, l, s]
-                        )
-                    )
+#                     model.addConstr(
+#                         uT[k, s] - uT[l, s]
+#                         <= len(N) * (
+#                             3
+#                             - gp.quicksum(xD[i, j, k, s] for j in N if j != i and j != k)
+#                             - gp.quicksum(xD[l, m, n, s] for m in N if m != l and m != n)
+#                             - delta[i, l, s]
+#                         )
+#                     )
 
-                    model.addConstr(
-                        uT[n, s] - uT[i, s]
-                        <= len(N) * (
-                            2
-                            - gp.quicksum(xD[i, j, k, s] for j in N if j != i and j != k)
-                            - gp.quicksum(xD[l, m, n, s] for m in N if m != l and m != n)
-                            + delta[i, l, s]
-                        )
-                    )
+#                     model.addConstr(
+#                         uT[n, s] - uT[i, s]
+#                         <= len(N) * (
+#                             2
+#                             - gp.quicksum(xD[i, j, k, s] for j in N if j != i and j != k)
+#                             - gp.quicksum(xD[l, m, n, s] for m in N if m != l and m != n)
+#                             + delta[i, l, s]
+#                         )
+#                     )
 
 # ============================================================
 # 卡车容量
@@ -427,8 +432,8 @@ for s in S:
     Ns = N + [s]
     for j in N:
         model.addConstr(
-            gp.quicksum(
-                q[j] * xD[i, j, k, s]
+            q[j] * gp.quicksum(
+                xD[i, j, k, s]
                 for i in Ns
                 for k in Ns
                 if i != j and j != k and i != k
@@ -457,36 +462,35 @@ for s in S:
 # 时间同步约束
 # ============================================================
 
-# for s in S:
-#     Ns = N + [s]
-#     for i in Ns:
-#         for j in Ns:
+for s in S:
+    Ns = N + [s]
+    for i in Ns:
+        for j in Ns:
+            if i != j:
 
-#             if i != j:
+                model.addConstr(
+                    tauT[j, s]
+                    >=
+                    rho[i, s]
+                    + d[i, j] / vT
+                    - M * (1 - xT[i, j, s])
+                )
 
-#                 model.addConstr(
-#                     tauT[j, s]
-#                     >=
-#                     rho[i, s]
-#                     + d[i, j] / vT
-#                     - M * (1 - xT[i, j, s])
-#                 )
+for s in S:
+    Ns = N + [s]
+    for i in Ns:
+        for j in N:
+            for k in Ns:
 
-# for s in S:
-#     Ns = N + [s]
-#     for i in Ns:
-#         for j in N:
-#             for k in Ns:
+                if i != j and j != k and i != k:
 
-#                 if i != j and j != k and i != k:
-
-#                     model.addConstr(
-#                         tauD[k, s]
-#                         >=
-#                         rho[i, s]
-#                         + (d[i, j] + d[j, k]) / vD
-#                         - M * (1 - xD[i, j, k, s])
-#                     )
+                    model.addConstr(
+                        tauD[k, s]
+                        >=
+                        rho[i, s]
+                        + (d[i, j] + d[j, k]) / vD
+                        - M * (1 - xD[i, j, k, s])
+                    )
 
 # 等待同步
 # for s in S:
