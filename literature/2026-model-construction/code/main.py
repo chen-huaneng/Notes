@@ -22,7 +22,7 @@ def main():
     # 或生成随机算例：
     n_customers = 15
     n_satellites = 4
-    seed = 42 # TODO: 测试无人机出动非重叠约束
+    seed = 42
     # seed = 31
     # seed = 20
     # seed = 9
