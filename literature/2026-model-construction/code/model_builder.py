@@ -25,16 +25,18 @@ class ModelVars:
     xD: dict  # xD[i, j, k, s]
 
     # 无人机出动顺序变量
-    # delta: dict                      # delta[i, j, s]
+    delta: dict  # delta[i, j, s]
 
-    # 一级载重
+    # 一级访问顺序
     uL: dict  # uL[i]
 
-    # 二级载重 / MTZ
+    # 二级访问顺序
     uT: dict  # uT[i, s]
 
-    # 卫星需求量
-    psi: dict  # psi[s]
+    # 时间变量
+    tauT: dict  # tauT[i, s]
+    tauD: dict  # tauD[i, s]
+    rho: dict   # rho[i, s]
 
     # 目标函数分量（供结果提取）
     obj_components: dict | None = None
@@ -51,8 +53,6 @@ class ModelBuilder:
     ----------
     instance : Instance
         算例数据
-    enable_time_sync : bool
-        是否启用时间同步约束
     big_m : float
         Big-M 常数
     gurobi_params : dict | None
@@ -62,12 +62,10 @@ class ModelBuilder:
     def __init__(
         self,
         instance: Instance,
-        # enable_time_sync: bool = False,
         big_m: float = 1e6,
         gurobi_params: dict | None = None,
     ):
         self.inst = instance
-        # self.enable_time_sync = enable_time_sync
         self.big_m = big_m
         self.gurobi_params = gurobi_params or {}
 
@@ -98,11 +96,11 @@ class ModelBuilder:
         self._add_drone_constraints()
         self._add_drone_takeoff_landing_limit_constraints()
         self._add_drone_service_order_constraints()
-        # self._add_drone_non_overlap_constraints()
+        self._add_drone_no_direct_return_constraint()
         self._add_capacity_constraints()
-        self._add_demand_linking_constraints()
+        self._add_time_constraints()
+        self._add_non_overlapping_drone_constraints()
 
-        self._set_initial_conditions()
         self._apply_params()
 
         return self.model, self.vars
@@ -126,35 +124,63 @@ class ModelBuilder:
         y = m.addVars(inst.S, vtype=GRB.BINARY, name="y")
 
         # --- 一级大型卡车路径 ---
-        xL = m.addVars(inst.V1, inst.V1, vtype=GRB.BINARY, name="xL")
+        xL = m.addVars(inst.V1_minus, inst.V1_plus, vtype=GRB.BINARY, name="xL")
 
         # --- 二级协同卡车路径 ---
-        xT = m.addVars(inst.V2, inst.V2, inst.S, vtype=GRB.BINARY, name="xT")
+        xT = {}
+        for s in inst.S:
+            for i in inst.V_s_minus[s]:
+                for j in inst.V_s_plus[s]:
+                    if i != j:
+                        xT[i, j, s] = m.addVar(vtype=GRB.BINARY, name=f"xT[{i},{j},{s}]")
 
         # --- 无人机配送变量 ---
-        xD = m.addVars(inst.V2, inst.N, inst.V2, inst.S, vtype=GRB.BINARY, name="xD")
+        xD = {}
+        for s in inst.S:
+            for i in inst.V_s_minus[s]:
+                for j in inst.N:
+                    for k in inst.V_s_plus[s]:
+                        if i != j and j != k and i != k:
+                            xD[i, j, k, s] = m.addVar(vtype=GRB.BINARY, name=f"xD[{i},{j},{k},{s}]")
 
         # --- 无人机出动顺序变量 ---
-        # delta = m.addVars(inst.V2, inst.V2, inst.S, vtype=GRB.BINARY, name="delta")
+        delta = {}
+        for s in inst.S:
+            for i in inst.V_s[s]:
+                for j in inst.V_s[s]:
+                    if i != j:
+                        delta[i, j, s] = m.addVar(vtype=GRB.BINARY, name=f"delta[{i},{j},{s}]")
 
-        # --- 一级载重 ---
-        uL = m.addVars(inst.V1, lb=0, vtype=GRB.CONTINUOUS, name="uL")
+        # --- 一级访问顺序 / MTZ ---
+        uL = m.addVars(inst.V1_minus, vtype=GRB.INTEGER, lb=1, ub=len(inst.S)+1, name="uL")
 
         # --- 二级访问顺序 / MTZ ---
-        uT = m.addVars(inst.V2, inst.S, lb=0, vtype=GRB.CONTINUOUS, name="uT")
+        uT = {}
+        for s in inst.S:
+            for i in inst.V_s_minus[s]:
+                uT[i, s] = m.addVar(vtype=GRB.INTEGER, lb=1, ub=len(inst.N)+1, name=f"uT[{i},{s}]")
 
-        # --- 卫星仓库需求量 ---
-        psi = m.addVars(inst.S, lb=0, vtype=GRB.CONTINUOUS, name="psi")
+        # --- 时间变量 ---
+        tauT = {}
+        tauD = {}
+        rho = {}
+        for s in inst.S:
+            for i in inst.V_s[s]:
+                tauT[i, s] = m.addVar(lb=0, vtype=GRB.CONTINUOUS, name=f"tauT[{i},{s}]")
+                tauD[i, s] = m.addVar(lb=0, vtype=GRB.CONTINUOUS, name=f"tauD[{i},{s}]")
+                rho[i, s] = m.addVar(lb=0, vtype=GRB.CONTINUOUS, name=f"rho[{i},{s}]")
 
         self.vars = ModelVars(
             y=y,
             xL=xL,
             xT=xT,
             xD=xD,
-            # delta=delta,
+            delta=delta,
             uL=uL,
             uT=uT,
-            psi=psi,
+            tauT=tauT,
+            tauD=tauD,
+            rho=rho,
         )
 
     # ================================================================
@@ -171,15 +197,15 @@ class ModelBuilder:
 
         # obj2: 一级运输成本
         self.obj2 = gp.quicksum(
-            inst.cL[i, j] * v.xL[i, j] for i in inst.V1 for j in inst.V1 if i != j
+            inst.cL[i, j] * v.xL[i, j] for i in inst.V1_minus for j in inst.V1_plus if i != j
         )
 
         # obj3: 二级卡车运输成本
         self.obj3 = gp.quicksum(
             inst.cT[i, j] * v.xT[i, j, s]
             for s in inst.S
-            for i in inst.V2
-            for j in inst.V2
+            for i in inst.V_s_minus[s]
+            for j in inst.V_s_plus[s]
             if i != j
         )
 
@@ -187,9 +213,9 @@ class ModelBuilder:
         self.obj4 = gp.quicksum(
             (inst.cD[i, j] + inst.cD[j, k]) * v.xD[i, j, k, s]
             for s in inst.S
-            for i in inst.V2
+            for i in inst.V_s_minus[s]
             for j in inst.N
-            for k in inst.V2
+            for k in inst.V_s_plus[s]
             if i != j and j != k and i != k
         )
 
@@ -214,40 +240,31 @@ class ModelBuilder:
         inst = self.inst
         v = self.vars
 
-        # ---- 主仓库出发 & 返回 ----
+        # ---- 主仓库出发 & 返回虚拟仓库 ----
         m.addConstr(
-            gp.quicksum(v.xL[inst.depot, i] for i in inst.S) == 1,
-            name="depot_depart",
+            gp.quicksum(v.xL[inst.depot, j] for j in inst.S) == 1,
+            name="L_depart",
         )
         m.addConstr(
-            gp.quicksum(v.xL[i, inst.depot] for i in inst.S) == 1,
-            name="depot_return",
+            gp.quicksum(v.xL[i, inst.virtual_depot] for i in inst.S) == 1,
+            name="L_arrive",
         )
 
-        # ---- 一级流平衡 ----
+        # ---- 一级网络流守恒 ----
         for j in inst.S:
-            m.addConstr(
-                gp.quicksum(v.xL[i, j] for i in inst.V1 if i != j) == v.y[j],
-                name=f"flow_in_L_{j}",
-            )
-            m.addConstr(
-                gp.quicksum(v.xL[j, k] for k in inst.V1 if k != j) == v.y[j],
-                name=f"flow_out_L_{j}",
-            )
+            inflow = gp.quicksum(v.xL[i, j] for i in inst.V1_minus if i != j)
+            outflow = gp.quicksum(v.xL[j, k] for k in inst.V1_plus if k != j)
+            m.addConstr(inflow == outflow, name=f"L_flow_conservation_{j}")
+            m.addConstr(outflow == v.y[j], name=f"L_flow_open_{j}")
 
         # ---- 一级 MTZ 子回路消除 ----
-        for i in inst.V1:
+        for i in inst.V1_minus:
             for j in inst.S:
                 if i != j:
                     m.addConstr(
-                        v.uL[j] >= v.uL[i] + v.psi[j] - self.big_m * (1 - v.xL[i, j]),
-                        name=f"mtz_L_{i}_{j}",
+                        v.uL[i] - v.uL[j] + 1 <= (len(inst.S) + 1) * (1 - v.xL[i, j]),
+                        name=f"L_MTZ_{i}_{j}",
                     )
-
-        # ---- 一级容量 ----
-        for s in inst.S:
-            m.addConstr(v.uL[s] >= v.psi[s], name=f"cap_L_lb_{s}")
-            m.addConstr(v.uL[s] <= inst.QL, name=f"cap_L_ub_{s}")
 
     # ================================================================
     # 顾客唯一服务约束
@@ -259,23 +276,17 @@ class ModelBuilder:
         v = self.vars
 
         for j in inst.N:
-            m.addConstr(
-                # 卡车服务
-                gp.quicksum(
-                    v.xT[i, j, s] for s in inst.S for i in inst.N + [s] if i != j
-                )
-                +
-                # 无人机服务
-                gp.quicksum(
-                    v.xD[i, j, k, s]
-                    for s in inst.S
-                    for i in inst.N + [s]
-                    for k in inst.N + [s]
-                    if i != j and j != k and i != k
-                )
-                == 1,
-                name=f"service_{j}",
+            truck = gp.quicksum(
+                v.xT[i, j, s] for s in inst.S for i in inst.V_s_minus[s] if i != j
             )
+            drone = gp.quicksum(
+                v.xD[i, j, k, s]
+                for s in inst.S
+                for i in inst.V_s_minus[s]
+                for k in inst.V_s_plus[s]
+                if i != j and j != k and i != k
+            )
+            m.addConstr(truck + drone == 1, name=f"customer_service_{j}")
 
     # ================================================================
     # 二级卡车路径约束
@@ -287,27 +298,22 @@ class ModelBuilder:
         v = self.vars
 
         for s in inst.S:
-            Ns = inst.N + [s]
-
-            # ---- 从卫星仓库出发 ----
+            # ---- 从卫星出发，回到虚拟卫星 ----
             m.addConstr(
-                gp.quicksum(v.xT[s, i, s] for i in inst.N) == v.y[s],
-                name=f"truck_depart_{s}",
+                gp.quicksum(v.xT[s, j, s] for j in inst.N) == v.y[s],
+                name=f"T_depart_{s}",
+            )
+            m.addConstr(
+                gp.quicksum(v.xT[i, -s, s] for i in inst.N) == v.y[s],
+                name=f"T_arrive_{s}",
             )
 
-            # ---- 返回卫星仓库 ----
-            m.addConstr(
-                gp.quicksum(v.xT[j, s, s] for j in inst.N) == v.y[s],
-                name=f"truck_return_{s}",
-            )
-
-            # ---- 流平衡 ----
+            # ---- 二级流守恒 (顾客节点) ----
             for j in inst.N:
-                m.addConstr(
-                    gp.quicksum(v.xT[i, j, s] for i in Ns if i != j)
-                    == gp.quicksum(v.xT[j, k, s] for k in Ns if k != j),
-                    name=f"flow_T_{j}_{s}",
-                )
+                inflow = gp.quicksum(v.xT[i, j, s] for i in inst.V_s_minus[s] if i != j)
+                outflow = gp.quicksum(v.xT[j, k, s] for k in inst.V_s_plus[s] if k != j)
+                m.addConstr(inflow == outflow, name=f"T_flow_conservation_{s}_{j}")
+                m.addConstr(outflow <= v.y[s], name=f"T_flow_open_{s}_{j}")
 
     # ================================================================
     # 仓库激活约束
@@ -319,26 +325,21 @@ class ModelBuilder:
         v = self.vars
 
         for s in inst.S:
-            Ns = inst.N + [s]
-
             # 卡车路径只在激活的仓库存在
             m.addConstr(
-                gp.quicksum(v.xT[i, j, s] for i in Ns for j in Ns if i != j)
+                gp.quicksum(v.xT[i, j, s] for i in inst.V_s_minus[s] for j in inst.V_s_plus[s] if i != j)
                 <= self.big_m * v.y[s],
-                name=f"activate_T_{s}",
+                name=f"T_activation_{s}",
             )
 
             # 无人机路径只在激活的仓库存在
             m.addConstr(
                 gp.quicksum(
-                    v.xD[i, j, k, s]
-                    for i in Ns
-                    for j in inst.N
-                    for k in Ns
-                    if i != j and k != i and k != j
+                    v.xD[i, j, k, s] for i in inst.V_s_minus[s] for j in inst.N for k in inst.V_s_plus[s]
+                    if i != j and j != k and i != k
                 )
                 <= self.big_m * v.y[s],
-                name=f"activate_D_{s}",
+                name=f"D_activation_{s}",
             )
 
     # ================================================================
@@ -351,13 +352,13 @@ class ModelBuilder:
         v = self.vars
 
         for s in inst.S:
-            for i in inst.N:
+            for i in inst.V_s_minus[s]:
                 for j in inst.N:
                     if i != j:
                         m.addConstr(
                             v.uT[i, s] - v.uT[j, s] + 1
-                            <= (len(inst.N) + 1) * (1 - v.xT[i, j, s]),
-                            name=f"mtz_T_{i}_{j}_{s}",
+                            <= (len(inst.N) + 2) * (1 - v.xT[i, j, s]),
+                            name=f"T_MTZ_{s}_{i}_{j}",
                         )
 
     # ================================================================
@@ -370,62 +371,58 @@ class ModelBuilder:
         v = self.vars
 
         for s in inst.S:
-            Ns = inst.N + [s]
-
             # ---- 无人机起飞约束：起飞节点必须在卡车路径上 ----
-            for i in Ns:
+            for i in inst.V_s_minus[s]:
                 m.addConstr(
                     gp.quicksum(
                         v.xD[i, j, k, s]
                         for j in inst.N
-                        for k in Ns
+                        for k in inst.V_s_plus[s]
                         if i != j and j != k and i != k
                     )
-                    <= gp.quicksum(v.xT[i, h, s] for h in Ns if h != i),
-                    name=f"drone_launch_{i}_{s}",
+                    <= gp.quicksum(v.xT[i, h, s] for h in inst.V_s_plus[s] if h != i),
+                    name=f"D_takeoff_{s}_{i}",
                 )
 
             # ---- 无人机降落约束：降落节点必须在卡车路径上 ----
-            for k in Ns:
+            for k in inst.V_s_plus[s]:
                 m.addConstr(
                     gp.quicksum(
                         v.xD[i, j, k, s]
-                        for i in Ns
+                        for i in inst.V_s_minus[s]
                         for j in inst.N
                         if i != j and j != k and i != k
                     )
-                    <= gp.quicksum(v.xT[h, k, s] for h in Ns if h != k),
-                    name=f"drone_land_{k}_{s}",
+                    <= gp.quicksum(v.xT[h, k, s] for h in inst.V_s_minus[s] if h != k),
+                    name=f"D_landing_{s}_{k}",
                 )
 
         # ---- 无人机容量 ----
         for s in inst.S:
-            Ns = inst.N + [s]
             for j in inst.N:
                 m.addConstr(
-                    gp.quicksum(
-                        inst.q[j] * v.xD[i, j, k, s]
-                        for i in Ns
-                        for k in Ns
+                    inst.q[j] * gp.quicksum(
+                        v.xD[i, j, k, s]
+                        for i in inst.V_s_minus[s]
+                        for k in inst.V_s_plus[s]
                         if i != j and j != k and i != k
                     )
                     <= inst.QD,
-                    name=f"drone_cap_{j}_{s}",
+                    name=f"D_weight_{s}_{j}",
                 )
 
         # ---- 无人机电量 ----
         for s in inst.S:
-            Ns = inst.N + [s]
             for j in inst.N:
                 m.addConstr(
                     gp.quicksum(
                         (inst.e[i, j] + inst.e[j, k]) * v.xD[i, j, k, s]
-                        for i in Ns
-                        for k in Ns
+                        for i in inst.V_s_minus[s]
+                        for k in inst.V_s_plus[s]
                         if i != j and j != k and i != k
                     )
                     <= inst.E,
-                    name=f"drone_energy_{j}_{s}",
+                    name=f"D_battery_{s}_{j}",
                 )
 
     def _add_drone_takeoff_landing_limit_constraints(self):
@@ -434,96 +431,67 @@ class ModelBuilder:
         inst = self.inst
         v = self.vars
 
-        # 无人机在顾客节点和卫星仓库最多起飞一次
-        for i in inst.V2:
-            m.addConstr(
-                gp.quicksum(
-                    v.xD[i, j, k, s]
-                    for s in inst.S
-                    for j in inst.N
-                    for k in inst.V2
-                    if i != j and j != k and k != i
+        for s in inst.S:
+            # 每个节点（针对每个卫星）最多作为无人机起飞/降落点一次
+            for i in inst.V_s_minus[s]:
+                m.addConstr(
+                    gp.quicksum(
+                        v.xD[i, j, k, s]
+                        for j in inst.N
+                        for k in inst.V_s_plus[s]
+                        if i != j and j != k and i != k
+                    )
+                    <= 1,
+                    name=f"D_takeoff_once_{s}_{i}",
                 )
-                <= 1,
-                name=f"drone_takeoff_limit_{i}",
-            )
 
-        # 无人机在顾客节点和卫星仓库最多降落一次
-        for k in inst.V2:
-            m.addConstr(
-                gp.quicksum(
-                    v.xD[i, j, k, s]
-                    for s in inst.S
-                    for i in inst.V2
-                    for j in inst.N
-                    if i != j and j != k and i != k
+            for k in inst.V_s_plus[s]:
+                m.addConstr(
+                    gp.quicksum(
+                        v.xD[i, j, k, s]
+                        for i in inst.V_s_minus[s]
+                        for j in inst.N
+                        if i != j and j != k and i != k
+                    )
+                    <= 1,
+                    name=f"D_landing_once_{s}_{k}",
                 )
-                <= 1,
-                name=f"drone_landing_limit_{k}",
-            )
 
     def _add_drone_service_order_constraints(self):
-        """无人机服务顺序约束（无人机的服务顺序不能和卡车相反）"""
+        """无人机服务顺序约束（无人机的服务顺序与卡车一致）"""
         m = self.model
         inst = self.inst
         v = self.vars
 
         for s in inst.S:
-            Ns = inst.N + [s]
-            for i in Ns:
+            for i in inst.V_s_minus[s]:
                 for k in inst.N:
-                    if i == k:
-                        continue
-                    m.addConstr(
-                        v.uT[i, s] - v.uT[k, s] + 1
-                        <= (len(inst.N) + 1)
-                        * (
-                            1
-                            - gp.quicksum(
-                                v.xD[i, j, k, s] for j in inst.N if j != i and j != k
-                            )
-                        ),
-                        name=f"drone_order_{i}_{k}_{s}",
-                    )
+                    if i != k:
+                        m.addConstr(
+                            v.uT[i, s] - v.uT[k, s] + 1
+                            <= (len(inst.N) + 2) * (
+                                1
+                                - gp.quicksum(
+                                    v.xD[i, j, k, s] for j in inst.N if i != j and j != k
+                                )
+                            ),
+                            name=f"D_order_{s}_{i}_{k}",
+                        )
 
-    # def _add_drone_non_overlap_constraints(self):
-    #     """无人机出动非重叠约束"""
-    #     m = self.model
-    #     inst = self.inst
-    #     v = self.vars
+    def _add_drone_no_direct_return_constraint(self):
+        """禁止无人机路径 s → j → s'（卫星仓库直达顾客后直接返回虚拟仓库）"""
+        m = self.model
+        inst = self.inst
+        v = self.vars
 
-    #     for s in inst.S:
-    #         Ns = inst.N + [s]
-    #         for i in Ns:
-    #             for k in Ns:
-    #                 if i == k:
-    #                     continue
-    #                 for l in Ns:
-    #                     for n in Ns:
-    #                         if l == n:
-    #                             continue
-
-    #                         m.addConstr(
-    #                             v.uT[k, s] - v.uT[l, s]
-    #                             <= len(inst.N) * (
-    #                                 3
-    #                                 - gp.quicksum(v.xD[i, j, k, s] for j in inst.N if j != i and j != k)
-    #                                 - gp.quicksum(v.xD[l, m, n, s] for m in inst.N if m != l and m != n)
-    #                                 - v.delta[i, l, s]
-    #                             ),
-    #                             name=f"drone_no_overlap1_{i}_{k}_{l}_{n}_{s}",
-    #                         )
-
-    #                         m.addConstr(
-    #                             v.uT[n, s] - v.uT[i, s]
-    #                             <= len(inst.N) * (
-    #                                 2
-    #                                 - gp.quicksum(v.xD[i, j, k, s] for j in inst.N if j != i and j != k)
-    #                                 - gp.quicksum(v.xD[l, m, n, s] for m in inst.N if m != l and m != n)
-    #                                 + v.delta[i, l, s]
-    #                             ),
-    #                             name=f"drone_no_overlap2_{i}_{k}_{l}_{n}_{s}",
-    #                         )
+        for s in inst.S:
+            sp = -s  # 虚拟卫星仓库
+            for j in inst.N:
+                # 禁止路径：s -> j -> sp
+                m.addConstr(
+                    v.xD[s, j, sp, s] == 0,
+                    name=f"drone_no_direct_return_{s}_{j}",
+                )
 
     # ================================================================
     # 容量约束
@@ -535,70 +503,128 @@ class ModelBuilder:
         v = self.vars
 
         for s in inst.S:
-            Ns = inst.N + [s]
-
+            # 协同卡车载重 (含无人机自重)
             m.addConstr(
                 gp.quicksum(
-                    inst.q[j]
-                    * (
-                        gp.quicksum(v.xT[i, j, s] for i in Ns if i != j)
+                    inst.q[j] * (
+                        gp.quicksum(v.xT[i, j, s] for i in inst.V_s_minus[s] if i != j)
                         + gp.quicksum(
-                            v.xD[i, j, k, s]
-                            for i in Ns
-                            for k in Ns
+                            v.xD[i, j, k, s] for i in inst.V_s_minus[s] for k in inst.V_s_plus[s]
                             if i != j and j != k and i != k
                         )
                     )
                     for j in inst.N
+                ) + inst.w <= inst.QT,
+                name=f"T_weight_{s}",
+            )
+
+    # ================================================================
+    # 时间约束
+    # ================================================================
+
+    def _add_time_constraints(self):
+        """添加时间约束"""
+        m = self.model
+        inst = self.inst
+        v = self.vars
+
+        for s in inst.S:
+            # 初始条件
+            m.addConstr(v.tauT[s, s] == 0, f"tauT_init_{s}")
+            m.addConstr(v.tauD[s, s] == 0, f"tauD_init_{s}")
+            m.addConstr(v.rho[s, s] == 0, f"rho_init_{s}")
+
+            # 卡车到达时间
+            for i in inst.V_s_minus[s]:
+                for j in inst.V_s_plus[s]:
+                    if i != j:
+                        m.addConstr(
+                            v.tauT[j, s] >= v.rho[i, s] + inst.d[i, j] / inst.vT - self.big_m * (1 - v.xT[i, j, s]),
+                            f"tauT_{s}_{i}_{j}"
+                        )
+
+                # 无人机到达时间
+                for j in inst.N:
+                    for k in inst.V_s_plus[s]:
+                        if i != j and j != k and i != k:
+                            m.addConstr(
+                                v.tauD[k, s] >= v.rho[i, s] + (inst.d[i, j] + inst.d[j, k]) / inst.vD
+                                              - self.big_m * (1 - v.xD[i, j, k, s]),
+                                f"tauD_{s}_{i}_{j}_{k}"
+                            )
+
+            # 卡车组到达时间 = max{τ^T, τ^D}
+            for k in inst.V_s_plus[s]:
+                m.addConstr(v.rho[k, s] >= v.tauT[k, s], f"rho_T_{s}_{k}")
+                m.addConstr(v.rho[k, s] >= v.tauD[k, s], f"rho_D_{s}_{k}")
+
+    # ================================================================
+    # 非重叠无人机约束
+    # ================================================================
+
+    def _add_non_overlapping_drone_constraints(self):
+        """添加非重叠无人机约束"""
+        m = self.model
+        inst = self.inst
+        v = self.vars
+
+        for s in inst.S:
+            sat_prime = inst.sat_prime[s]
+
+            # δ 变量与卡车访问边绑定 (初始化)
+            # δ_{s, j, s} = 1 如果卡车直接从 s 驶向 j
+            for j in inst.V_s_plus[s]:
+                m.addConstr(
+                    v.delta[s, j, s] == gp.quicksum(v.xT[i, j, s] for i in inst.V_s_minus[s] if i != j),
+                    f"delta_init_depart_{s}_{j}"
                 )
-                + inst.w
-                <= inst.QT,
-                name=f"truck_cap_{s}",
-            )
 
-    # ================================================================
-    # 需求关联约束
-    # ================================================================
+            # δ_{i, s', s} = 1 如果卡车直接从 i 驶向 s'
+            for i in inst.V_s_minus[s]:
+                m.addConstr(
+                    v.delta[i, sat_prime, s] == gp.quicksum(v.xT[i, j, s] for j in inst.V_s_plus[s] if j != i),
+                    f"delta_init_arrive_{s}_{i}"
+                )
 
-    def _add_demand_linking_constraints(self):
-        m = self.model
-        inst = self.inst
-        v = self.vars
-
-        for s in inst.S:
-            Ns = inst.N + [s]
-
-            m.addConstr(
-                v.psi[s]
-                == gp.quicksum(
-                    inst.q[j]
-                    * (
-                        gp.quicksum(v.xT[i, j, s] for i in Ns if i != j)
-                        + gp.quicksum(
-                            v.xD[i, j, k, s]
-                            for i in Ns
-                            for k in Ns
-                            if i != j and j != k and i != k
+            # δ 的顺序关系 (针对顾客节点对)
+            for i in inst.N:
+                for j in inst.N:
+                    if i != j:
+                        m.addConstr(
+                            v.uT[j, s] - v.uT[i, s] <= (len(inst.N) + 2) * v.delta[i, j, s],
+                            f"delta_order1_{s}_{i}_{j}"
                         )
-                    )
-                    for j in inst.N
-                ),
-                name=f"demand_link_{s}",
-            )
+                        m.addConstr(
+                            v.uT[i, s] - v.uT[j, s] + 1 <= (len(inst.N) + 2) * (1 - v.delta[i, j, s]),
+                            f"delta_order2_{s}_{i}_{j}"
+                        )
 
-    # ================================================================
-    # 初始条件
-    # ================================================================
+            # 非重叠约束 (连续无人机飞行)
+            for i in inst.V_s_minus[s]:
+                for k in inst.V_s_plus[s]:
+                    if i == k:
+                        continue
+                    for l in inst.N:
+                        if l == i or l == k:
+                            continue
 
-    def _set_initial_conditions(self):
-        m = self.model
-        inst = self.inst
-        v = self.vars
+                        # 第一次无人机飞行 i -> j -> k
+                        first_flight = gp.quicksum(
+                            v.xD[i, j, k, s] for j in inst.N if j != i and j != k and j != l
+                        )
+                        # 第二次无人机飞行 l -> m -> n
+                        second_flight = gp.quicksum(
+                            v.xD[l, m, n, s]
+                            for m in inst.N
+                            for n in inst.V_s_plus[s]
+                            if (m != l and m != i and m != k and
+                                n != l and n != m and n != i and n != k)
+                        )
 
-        for s in inst.S:
-            m.addConstr(v.uT[s, s] == 0, name=f"init_uT_{s}")
-
-        m.addConstr(v.uL[inst.depot] == 0, name="init_uL_depot")
+                        m.addConstr(
+                            v.rho[l, s] >= v.rho[k, s] - self.big_m * (3 - first_flight - second_flight - v.delta[i, l, s]),
+                            f"non_overlap_{s}_{i}_{k}_{l}"
+                        )
 
     # ================================================================
     # 求解参数

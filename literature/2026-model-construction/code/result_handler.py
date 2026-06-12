@@ -37,6 +37,9 @@ class SolutionResult:
     # ---- 无人机 ----
     drone_trips: list[dict]
 
+    # ---- 时间变量 ----
+    time_variables: dict[str, dict]
+
 # ================================================================
 # 结果提取器
 # ================================================================
@@ -86,6 +89,7 @@ class SolutionExtractor:
                 second_level_truck_routes={},
                 second_level_mtz={},
                 drone_trips=[],
+                time_variables={}
             )
 
         # ---- 基本状态 ----
@@ -102,23 +106,23 @@ class SolutionExtractor:
 
         # ---- 一级网络 ----
         first_level_edges = self._extract_first_level_edges()
-        first_level_routes = self._build_routes_from_edges(
-            first_level_edges,
-            self.inst.depot,
-        )
+        first_level_routes = self._build_first_level_routes(first_level_edges)
         first_level_loads = self._extract_first_level_loads()
 
         # ---- 二级网络 ----
         second_level_truck_edges = self._extract_second_level_edges()
         second_level_truck_routes = {}
         for s, edges in second_level_truck_edges.items():
-            second_level_truck_routes[s] = self._build_routes_from_edges(
+            second_level_truck_routes[s] = self._build_second_level_routes(
                 edges, s
             )
         second_level_mtz = self._extract_second_level_mtz()
 
         # ---- 无人机 ----
         drone_trips = self._extract_drone_trips()
+
+        # ---- 时间变量 ----
+        time_variables = self._extract_time_variables()
 
         return SolutionResult(
             status=m.status,
@@ -135,6 +139,7 @@ class SolutionExtractor:
             second_level_truck_routes=second_level_truck_routes,
             second_level_mtz=second_level_mtz,
             drone_trips=drone_trips,
+            time_variables=time_variables
         )
 
     # ---- 目标函数分解 ----
@@ -163,26 +168,58 @@ class SolutionExtractor:
     def _extract_satellite_demand(self) -> dict[int, float]:
         demand = {}
         for s in self.inst.S:
-            val = self._val(self.vars.psi[s])
-            if val is not None:
-                demand[s] = val
+            # 计算卫星的需求量（由分配给它的客户决定）
+            demand[s] = sum(
+                self.inst.q[j] for j in self.inst.N
+                if any(self._val(self.vars.xT[i, j, s]) > 0.5 for i in self.inst.V_s_minus[s] if i != j) or
+                   any(self._val(self.vars.xD[i, j, k, s]) > 0.5
+                       for i in self.inst.V_s_minus[s]
+                       for k in self.inst.V_s_plus[s]
+                       if i != j and j != k and i != k)
+            )
         return demand
 
     # ---- 一级网络 ----
 
     def _extract_first_level_edges(self) -> list[tuple[int, int]]:
         edges = []
-        for i in self.inst.V1:
-            for j in self.inst.V1:
+        for i in self.inst.V1_minus:
+            for j in self.inst.V1_plus:
                 if i != j:
                     val = self._val(self.vars.xL[i, j])
                     if val is not None and val > 0.5:
                         edges.append((i, j))
         return edges
 
+    def _build_first_level_routes(self, edges: list[tuple[int, int]]) -> list[list[int]]:
+        """构建一级网络路径"""
+        if not edges:
+            return []
+
+        # 构建邻接表
+        adj = {}
+        for i, j in edges:
+            adj.setdefault(i, []).append(j)
+
+        routes = []
+        current_node = self.inst.depot
+        path = [current_node]
+
+        while current_node != self.inst.virtual_depot:
+            next_nodes = adj.get(current_node, [])
+            if not next_nodes:
+                break
+            # 找到下一个节点
+            next_node = next_nodes[0]
+            path.append(next_node)
+            current_node = next_node
+
+        routes.append(path)
+        return routes
+
     def _extract_first_level_loads(self) -> dict[int, float]:
         loads = {}
-        for i in self.inst.V1:
+        for i in self.inst.V1_minus:
             val = self._val(self.vars.uL[i])
             if val is not None:
                 loads[i] = val
@@ -194,8 +231,8 @@ class SolutionExtractor:
         result = {}
         for s in self.inst.S:
             edges = []
-            for i in self.inst.V2:
-                for j in self.inst.V2:
+            for i in self.inst.V_s_minus[s]:
+                for j in self.inst.V_s_plus[s]:
                     if i != j:
                         val = self._val(self.vars.xT[i, j, s])
                         if val is not None and val > 0.5:
@@ -203,11 +240,41 @@ class SolutionExtractor:
             result[s] = edges
         return result
 
+    def _build_second_level_routes(self, edges: list[tuple[int, int]], start_node: int) -> list[list[int]]:
+        """构建二级网络路径"""
+        if not edges:
+            return []
+
+        # 构建邻接表
+        adj = {}
+        for i, j in edges:
+            adj.setdefault(i, []).append(j)
+
+        routes = []
+        current_node = start_node
+        path = [current_node]
+
+        while True:
+            next_nodes = adj.get(current_node, [])
+            if not next_nodes:
+                break
+            # 找到下一个节点
+            next_node = next_nodes[0]
+            path.append(next_node)
+            current_node = next_node
+
+            # 如果到达虚拟卫星仓库，则停止
+            if current_node == -start_node:
+                break
+
+        routes.append(path)
+        return routes
+
     def _extract_second_level_mtz(self) -> dict[int, dict[int, float]]:
         result = {}
         for s in self.inst.S:
             result[s] = {}
-            for i in self.inst.V2:
+            for i in self.inst.V_s_minus[s]:
                 val = self._val(self.vars.uT[i, s])
                 if val is not None:
                     result[s][i] = val
@@ -220,9 +287,9 @@ class SolutionExtractor:
         inst = self.inst
 
         for s in inst.S:
-            for i in inst.V2:
+            for i in inst.V_s_minus[s]:
                 for j in inst.N:
-                    for k in inst.V2:
+                    for k in inst.V_s_plus[s]:
                         if i != j and j != k and i != k:
                             val = self._val(self.vars.xD[i, j, k, s])
                             if val is not None and val > 0.5:
@@ -236,70 +303,33 @@ class SolutionExtractor:
                                 })
         return trips
 
-    # ================================================================
-    # 路径重建
-    # ================================================================
+    # ---- 时间变量 ----
+    def _extract_time_variables(self) -> dict[str, dict]:
+        result = {
+            "tauT": {},
+            "tauD": {},
+            "rho": {}
+        }
 
-    @staticmethod
-    def _build_routes_from_edges(
-        edges: list[tuple[int, int]],
-        start_node: int,
-    ) -> list[list[int]]:
-        """
-        从边列表重建完整路径
+        for s in self.inst.S:
+            result["tauT"][s] = {}
+            result["tauD"][s] = {}
+            result["rho"][s] = {}
 
-        例如 edges = [(0,5),(5,6),(6,0)]
-        返回 [[0, 5, 6, 0]]
+            for i in self.inst.V_s[s]:
+                val = self._val(self.vars.tauT[i, s])
+                if val is not None:
+                    result["tauT"][s][i] = val
 
-        支持多条路径（多条从 start_node 出发的回路）。
-        """
-        if not edges:
-            return []
+                val = self._val(self.vars.tauD[i, s])
+                if val is not None:
+                    result["tauD"][s][i] = val
 
-        # 构建邻接表
-        adj: dict[int, list[int]] = {}
-        for i, j in edges:
-            adj.setdefault(i, []).append(j)
+                val = self._val(self.vars.rho[i, s])
+                if val is not None:
+                    result["rho"][s][i] = val
 
-        routes = []
-        visited_edges: set[tuple[int, int]] = set()
-
-        # 从 start_node 出发找回路
-        while True:
-            # 找到一条未使用的从 start_node 出发的边
-            start_edge = None
-            for nxt in adj.get(start_node, []):
-                if (start_node, nxt) not in visited_edges:
-                    start_edge = (start_node, nxt)
-                    break
-
-            if start_edge is None:
-                break
-
-            route = [start_node]
-            current = start_node
-
-            while True:
-                next_node = None
-                for nxt in adj.get(current, []):
-                    if (current, nxt) not in visited_edges:
-                        next_node = nxt
-                        break
-
-                if next_node is None:
-                    break
-
-                visited_edges.add((current, next_node))
-                route.append(next_node)
-                current = next_node
-
-                if current == start_node:
-                    break
-
-            if len(route) > 1:
-                routes.append(route)
-
-        return routes
+        return result
 
 # ================================================================
 # 结果打印器
@@ -328,6 +358,7 @@ class ResultPrinter:
         self._print_first_level()
         self._print_second_level()
         self._print_drones()
+        self._print_time_variables()
 
     # ---- 内部方法 ----
 
@@ -345,7 +376,7 @@ class ResultPrinter:
         if self.res.obj_val is not None:
             print(f"目标值:   {self.res.obj_val}")
             if self.res.mip_gap is not None:
-                print(f"MIPGap:   {self.res.mip_gap:.6f}")
+                print(f"MIPGap:   {self.res.mip_gap}")
             print(f"求解时间: {self.res.runtime:.2f}s")
 
     def _print_objective(self):
@@ -373,7 +404,7 @@ class ResultPrinter:
             print(f"  顾客 {j:>3d}  需求 = {demand:.2f}")
         print(f"  {'─' * 30}")
         print(f"  顾客总数: {len(self.inst.N)}")
-        print(f"  需求总和: {total:.1f}")
+        print(f"  需求总和: {total:.2f}")
 
     def _print_first_level(self):
         # 路径
@@ -391,9 +422,9 @@ class ResultPrinter:
             for i, j in self.res.first_level_edges:
                 print(f"  xL[{i},{j}] = 1  ✓  {i} -> {j}")
 
-        # 载重
-        self._section("一级载重 uL[i]")
-        for i in self.inst.V1:
+        # 访问顺序
+        self._section("一级访问顺序 uL[i]")
+        for i in self.inst.V1_minus:
             val = self.res.first_level_loads.get(i)
             if val is not None:
                 print(f"  uL[{i}] = {val:.4f}")
@@ -442,6 +473,25 @@ class ResultPrinter:
                 f"cost={c:.2f}  energy={e:.2f}"
             )
 
+    def _print_time_variables(self):
+        self._section("时间变量")
+        if not self.res.time_variables["tauT"]:
+            print("  (无时间变量)")
+            return
+
+        for s in self.inst.S:
+            print(f"\n  --- 卫星仓库 {s} ---")
+            tauT = self.res.time_variables["tauT"].get(s, {})
+            tauD = self.res.time_variables["tauD"].get(s, {})
+            rho = self.res.time_variables["rho"].get(s, {})
+
+            for i in self.inst.V_s[s]:
+                tauT_val = tauT.get(i, 0)
+                tauD_val = tauD.get(i, 0)
+                rho_val = rho.get(i, 0)
+                if tauT_val > 0 or tauD_val > 0 or rho_val > 0:
+                    print(f"    Node {i}: tauT={tauT_val:.2f}, tauD={tauD_val:.2f}, rho={rho_val:.2f}")
+
 # ================================================================
 # 可视化数据准备
 # ================================================================
@@ -456,19 +506,26 @@ class VisualizationData:
     @property
     def node_positions(self) -> dict[int, tuple[float, float]]:
         """所有节点坐标"""
-        return self.instance.coords
+        coords = self.instance.coords.copy()
+        # 添加虚拟节点坐标
+        coords[self.instance.virtual_depot] = self.instance.coords[self.instance.depot]
+        for s in self.instance.S:
+            coords[-s] = self.instance.coords[s]
+        return coords
 
     @property
     def node_types(self) -> dict[int, str]:
         """节点类型标记"""
         types = {}
         types[self.instance.depot] = "depot"
+        types[self.instance.virtual_depot] = "virtual_depot"
         for s in self.instance.S:
             types[s] = (
                 "satellite_open"
                 if s in self.solution.satellites_opened
                 else "satellite_closed"
             )
+            types[-s] = "virtual_satellite"
         for j in self.instance.N:
             types[j] = "customer"
         return types

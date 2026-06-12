@@ -35,7 +35,6 @@ class Instance:
     vD: float              # 无人机速度
 
     # ---- 容量 ----
-    QL: float              # 一级卡车容量
     QT: float              # 二级卡车容量
     QD: float              # 无人机容量
 
@@ -54,34 +53,84 @@ class Instance:
     # ================================================================
 
     @property
-    def V1(self) -> list[int]:
-        """一级网络节点: depot + satellites"""
+    def V1_minus(self) -> list[int]:
+        """一级网络起点集合: depot + satellites"""
         return [self.depot] + self.S
 
     @property
-    def V2(self) -> list[int]:
-        """二级网络节点: satellites + customers"""
-        return self.S + self.N
+    def V1_plus(self) -> list[int]:
+        """一级网络终点集合: satellites + virtual_depot"""
+        return self.S + [self.virtual_depot]
+
+    @property
+    def virtual_depot(self) -> int:
+        """虚拟终点仓库"""
+        return -2026
+
+    @property
+    def S_prime(self) -> list[int]:
+        """虚拟卫星仓库列表"""
+        return [-s for s in self.S]
 
     @property
     def V(self) -> list[int]:
         """全部节点"""
-        return [self.depot] + self.S + self.N
+        return [self.depot, self.virtual_depot] + self.S + self.S_prime + self.N
+
+    @property
+    def V_s(self) -> dict[int, list[int]]:
+        """每个卫星相关的节点集合"""
+        result = {}
+        for s in self.S:
+            sp = -s
+            result[s] = [s] + self.N + [sp]
+        return result
+
+    @property
+    def V_s_minus(self) -> dict[int, list[int]]:
+        """每个卫星相关的起点集合"""
+        result = {}
+        for s in self.S:
+            result[s] = [s] + self.N
+        return result
+
+    @property
+    def V_s_plus(self) -> dict[int, list[int]]:
+        """每个卫星相关的终点集合"""
+        result = {}
+        for s in self.S:
+            result[s] = self.N + [-s]
+        return result
+
+    @property
+    def sat_prime(self) -> dict[int, int]:
+        """卫星与其虚拟卫星的映射"""
+        return {s: -s for s in self.S}
 
     # ================================================================
     # 距离矩阵
     # ================================================================
 
     @property
+    def extended_coords(self) -> dict[int, tuple[float, float]]:
+        """扩展坐标字典，包括虚拟节点"""
+        coords = self.coords.copy()
+        coords[self.virtual_depot] = self.coords[self.depot]
+        for s in self.S:
+            coords[-s] = self.coords[s]
+        return coords
+
+    @property
     def d(self) -> dict[tuple[int, int], float]:
         """欧氏距离矩阵"""
         dist = {}
+        coords = self.extended_coords
         for i in self.V:
             for j in self.V:
                 if i != j:
                     dist[i, j] = math.dist(
-                        self.coords[i],
-                        self.coords[j],
+                        coords[i],
+                        coords[j],
                     )
         return dist
 
@@ -134,7 +183,6 @@ class Instance:
             f={5: 100, 6: 120},
             vT=40,
             vD=60,
-            QL=50,
             QT=15,
             QD=5,
             E=20,
@@ -174,7 +222,7 @@ class Instance:
         N = list(range(n_satellites + 1, n_satellites + 1 + n_customers))
         V = [depot] + S + N
 
-       # 随机坐标，depot 固定在 (0, 0)
+        # 随机坐标，depot 固定在 (0, 0)
         coords = {depot: (0.0, 0.0)}
         used = {(0.0, 0.0)}
         for v in V:
@@ -204,7 +252,6 @@ class Instance:
             f=f,
             vT=40,
             vD=60,
-            QL=50,
             QT=15,
             QD=5,
             E=20,
@@ -241,7 +288,6 @@ class Instance:
             f=f,
             vT=data["vT"],
             vD=data["vD"],
-            QL=data["QL"],
             QT=data["QT"],
             QD=data["QD"],
             E=data["E"],
@@ -268,7 +314,6 @@ class Instance:
             "f": {str(k): v for k, v in self.f.items()},
             "vT": self.vT,
             "vD": self.vD,
-            "QL": self.QL,
             "QT": self.QT,
             "QD": self.QD,
             "E": self.E,
@@ -292,6 +337,6 @@ class Instance:
             f"Customers:   {len(self.N)}\n"
             f"Satellites:  {len(self.S)}\n"
             f"Nodes:       {len(self.V)}\n"
-            f"QL={self.QL}, QT={self.QT}, QD={self.QD}\n"
+            f"QT={self.QT}, QD={self.QD}\n"
             f"vT={self.vT}, vD={self.vD}, E={self.E}"
         )

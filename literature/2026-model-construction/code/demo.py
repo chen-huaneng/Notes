@@ -477,7 +477,7 @@ for s in S:
                 )
 
                 model.addConstr(
-                    rho[l, s] >= tauD[k, s] - M * (3 - first_flight - second_flight - delta[i, l, s]),
+                    rho[l, s] >= rho[k, s] - M * (3 - first_flight - second_flight - delta[i, l, s]),
                     f"non_overlap_{s}_{i}_{k}_{l}"
                 )
 

@@ -14,7 +14,7 @@ def main():
     # ============================================================
 
     # 默认加载算例
-    inst = Instance.default()
+    # inst = Instance.default()
 
     # 也可以从 JSON 加载：
     # inst = Instance.from_json("data/default.json")
@@ -42,7 +42,9 @@ def main():
         big_m=1e6,
         gurobi_params={
             "TimeLimit": 3600,
-            "MIPGap": 0.00001,
+            "MIPGap": 1e-5,
+            "IntFeasTol": 1e-5,
+            "FeasibilityTol": 1e-09,
         },
     )
 

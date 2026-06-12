@@ -101,12 +101,14 @@ class NetworkVisualizer:
 
         # ---- 绘制路径（annotate 不参与图例） ----
 
-        # 一级路径
+        # 一级路径：如果路径连接到虚拟仓库，则改为连接到真实仓库
         style = cls.EDGE_STYLES["first_level"]
         for i, j in vis_data.first_level_edges:
+            # 将虚拟仓库替换为真实仓库
+            real_j = j if j != inst.virtual_depot else inst.depot
             ax.annotate(
                 "",
-                xy=positions[j],
+                xy=positions[real_j],
                 xytext=positions[i],
                 arrowprops=dict(
                     arrowstyle="-|>",
@@ -117,30 +119,40 @@ class NetworkVisualizer:
                 ),
             )
 
-        # 二级卡车路径
+        # 二级卡车路径：如果路径涉及虚拟卫星，则移除虚拟卫星，连接真实节点
         for s, edges in vis_data.second_level_edges.items():
             style = cls.EDGE_STYLES["second_level"]
             for i, j in edges:
-                ax.annotate(
-                    "",
-                    xy=positions[j],
-                    xytext=positions[i],
-                    arrowprops=dict(
-                        arrowstyle="-|>",
-                        color=style["color"],
-                        linestyle=style["linestyle"],
-                        lw=style["linewidth"],
-                        alpha=style["alpha"],
-                    ),
-                )
+                # 将虚拟卫星替换为真实卫星
+                real_i = i if i != -s else s
+                real_j = j if j != -s else s
+                # 只绘制非虚拟节点之间的路径
+                if real_i != s or real_j != s:  # 不绘制卫星到自己的路径
+                    ax.annotate(
+                        "",
+                        xy=positions[real_j],
+                        xytext=positions[real_i],
+                        arrowprops=dict(
+                            arrowstyle="-|>",
+                            color=style["color"],
+                            linestyle=style["linestyle"],
+                            lw=style["linewidth"],
+                            alpha=style["alpha"],
+                        ),
+                    )
 
-        # 无人机路径
+        # 无人机路径：如果路径涉及虚拟卫星，则改为连接真实卫星
         style = cls.EDGE_STYLES["drone"]
         for trip in vis_data.drone_trips:
             i = trip["launch_node"]
             j = trip["customer"]
             k = trip["land_node"]
-            for src, dst in [(i, j), (j, k)]:
+
+            # 替换虚拟节点为真实节点
+            real_i = i if i != -trip["satellite"] else trip["satellite"]
+            real_k = k if k != -trip["satellite"] else trip["satellite"]
+
+            for src, dst in [(real_i, j), (j, real_k)]:
                 ax.annotate(
                     "",
                     xy=positions[dst],
@@ -154,13 +166,22 @@ class NetworkVisualizer:
                     ),
                 )
 
-        # ---- 绘制节点 ----
+        # ---- 绘制节点（排除虚拟节点） ----
         for ntype, style in cls.NODE_STYLES.items():
-            nodes = [n for n, t in node_types.items() if t == ntype]
+            # 找出对应类型的非虚拟节点
+            nodes = []
+            for n, t in node_types.items():
+                if t == ntype:
+                    # 排除虚拟仓库和虚拟卫星
+                    if n != inst.virtual_depot and not (isinstance(n, int) and -n in inst.S):
+                        nodes.append(n)
+
             if not nodes:
                 continue
+
             xs = [positions[n][0] for n in nodes]
             ys = [positions[n][1] for n in nodes]
+
             ax.scatter(
                 xs, ys,
                 c=style["color"],
@@ -170,6 +191,7 @@ class NetworkVisualizer:
                 edgecolors="black",
                 linewidths=0.8,
             )
+
             for n in nodes:
                 ax.annotate(
                     str(n),
@@ -186,9 +208,17 @@ class NetworkVisualizer:
 
         # 节点图例
         for ntype, style in cls.NODE_STYLES.items():
-            nodes = [n for n, t in node_types.items() if t == ntype]
+            # 检查此类型是否有节点
+            nodes = []
+            for n, t in node_types.items():
+                if t == ntype:
+                    # 排除虚拟仓库和虚拟卫星
+                    if n != inst.virtual_depot and not (isinstance(n, int) and -n in inst.S):
+                        nodes.append(n)
+
             if not nodes:
                 continue
+
             legend_handles.append(
                 mpatches.Patch(
                     facecolor=style["color"],
